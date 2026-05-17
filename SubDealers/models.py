@@ -1,3 +1,4 @@
+from decimal import Decimal
 import random
 import string
 from django.db import models,transaction
@@ -57,8 +58,8 @@ class SubDealerSKUDiscount(models.Model):
 
 
 class Cylender_information(models.Model):
-    Subdealer = models.ForeignKey(Subdealer, on_delete=models.CASCADE)
-    product = models.ForeignKey(ProductInventory, on_delete=models.CASCADE)
+    Subdealer = models.ForeignKey('SubDealers.Subdealer', on_delete=models.CASCADE)
+    product = models.ForeignKey('inventory.ProductInventory', on_delete=models.CASCADE)
     due_cylender_qty = models.IntegerField()
 
     def __str__(self):
@@ -70,14 +71,15 @@ class Cylender_information(models.Model):
 
 
 class DailyInvoice(models.Model):
-    invoice_number = models.CharField(max_length=20, unique=True, editable=False)
-    invoice_date = models.DateField(auto_now_add=True)
-    employees = models.ManyToManyField('employees.Employee')
-    payment_mode = models.CharField(max_length=20)
+    invoice_number = models.CharField(max_length=30, unique=True, editable=False)
+    invoice_date = models.DateField()  # set from form
+    employees = models.ManyToManyField('employees.Employee', blank=True)
+    # invoice-level mode is derived from line items (convenience)
+    payment_mode = models.CharField(max_length=20, blank=True)
     notes = models.TextField(blank=True, null=True)
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    other_expense = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    subtotal = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
+    other_expense = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
+    grand_total = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
 
     class Meta:
         db_table = "DailyInvoice"
@@ -87,14 +89,16 @@ class DailyInvoice(models.Model):
         if not self.invoice_number:
             today = timezone.now().strftime("%Y%m%d")
             with transaction.atomic():
-                # Get latest invoice for today
                 last_invoice = (
                     DailyInvoice.objects.filter(invoice_number__startswith=f"INV-{today}")
                     .order_by("-invoice_number")
                     .first()
                 )
                 if last_invoice:
-                    last_seq = int(last_invoice.invoice_number.split("-")[-1])
+                    try:
+                        last_seq = int(last_invoice.invoice_number.split("-")[-1])
+                    except Exception:
+                        last_seq = 0
                     next_seq = last_seq + 1
                 else:
                     next_seq = 1
@@ -105,18 +109,38 @@ class DailyInvoice(models.Model):
         return self.invoice_number
 
 
+
 class DailyInvoiceLineItem(models.Model):
+    PAYMENT_MODE_CHOICES = [
+        ('Cash', 'Cash'),
+        ('Mixed', 'Mixed'),
+        ('AC', 'AC'),
+    ]
+    PAYMENT_STATUS_CHOICES = [
+        ('PAID', 'Paid'),
+        ('PENDING', 'Pending Verification'),
+    ]
+
     invoice = models.ForeignKey(DailyInvoice, on_delete=models.CASCADE, related_name='line_items')
     subdealer = models.ForeignKey('SubDealers.Subdealer', on_delete=models.PROTECT)
     product = models.ForeignKey('inventory.ProductInventory', on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField()
     submitted_blank = models.PositiveIntegerField(default=0)
-    discounted_price = models.DecimalField(max_digits=10, decimal_places=2)
-    line_total = models.DecimalField(max_digits=10, decimal_places=2)
-    due_cyl = models.PositiveIntegerField()
+    discounted_price = models.DecimalField(max_digits=12, decimal_places=2)
+    line_total = models.DecimalField(max_digits=14, decimal_places=2)
+    due_cyl = models.PositiveIntegerField(default=0)
+
+    # Payment fields per-line
+    payment_mode = models.CharField(max_length=10, choices=PAYMENT_MODE_CHOICES, default='Cash')
+    cash_amount = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
+    ac_amount = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
+    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='PENDING')
+
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.invoice.invoice_number} - {self.subdealer}"
+        return f"{self.invoice.invoice_number} - {self.subdealer} - {self.product}"
 
 
 class DailyInvoiceExpense(models.Model):

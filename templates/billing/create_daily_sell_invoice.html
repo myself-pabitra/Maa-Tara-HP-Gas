@@ -4,270 +4,490 @@
 {% block title %}Create Invoice{% endblock title %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto p-6">
-  <h1 class="text-3xl font-extrabold mb-6 text-primary">Create Daily Sell Invoice</h1>
 
-  <form method="post" id="invoiceForm" class="space-y-6 bg-base-200 p-6 rounded-2xl shadow-lg">
+<style>
+    /* ensure cash/ac are wider on small screens too */
+  .cash-ac-wrap { min-width: 220px; max-width: 320px; }
+    /* make buttons consistent */
+  .remove-row-btn img { filter: hue-rotate(330deg) saturate(120%); }
+</style>
+
+<div class="w-full mx-auto p-10">  <!-- wider container for horizontal layout -->
+  <h1 class="text-3xl font-extrabold mb-8 text-primary">Create Daily Sell Invoice</h1>
+
+  <form method="post" id="invoiceForm" class="space-y-8 bg-base-200 p-8 rounded-3xl shadow-xl">
     {% csrf_token %}
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-      <!-- Employees -->
-      <div class="col-span-1" x-data="employeeSelect()">
-        <label class="label"><span class="label-text font-medium">Employees (max 5)</span></label>
-        <div class="relative">
-          <button type="button" @click="open = !open" class="btn btn-outline w-full justify-between">
-            <span x-text="selectedNames.length ? selectedNames.join(', ') : 'Select Employees'"></span>
-            <i class="fa-solid fa-chevron-down ml-2"></i>
-          </button>
-          <div x-show="open" @click.outside="open=false" class="absolute z-50 w-full mt-1 bg-base-100 border rounded-lg shadow-lg p-2 max-h-60 overflow-y-auto">
-            {% for emp in employees %}
-              <label class="flex items-center gap-2 px-2 py-1 hover:bg-base-200 rounded cursor-pointer">
-                <input type="checkbox" value="{{ emp.id }}" x-model="selected" @change="updateSelected"
-                       class="checkbox checkbox-sm checkbox-primary">
-                <span>{{ emp.name }}</span>
-              </label>
-            {% endfor %}
-          </div>
-        </div>
-        <template x-for="id in selected" :key="id">
-          <input type="hidden" name="employee_ids" :value="id">
-        </template>
-        <p x-show="tooMany" class="text-sm text-red-500 mt-2">You can select up to 5 employees only.</p>
-      </div>
-
-      <!-- Invoice Date & Payment Mode -->
-      <div>
-        <label class="label"><span class="label-text font-medium">Invoice Date</span></label>
-        <input type="date" name="invoice_date" class="input input-bordered w-full"
-               value="{{ today|date:'Y-m-d' }}" readonly>
-
-        <label class="label mt-3"><span class="label-text font-medium">Payment Mode</span></label>
-        <div class="flex gap-2 items-center">
-          <label class="cursor-pointer"><input type="radio" name="payment_mode" value="Cash" checked class="radio radio-primary"><span class="ml-2">Cash</span></label>
-          <label class="cursor-pointer"><input type="radio" name="payment_mode" value="Mixed" class="radio radio-accent"><span class="ml-2">Mixed</span></label>
-          <label class="cursor-pointer"><input type="radio" name="payment_mode" value="AC" class="radio radio-secondary"><span class="ml-2">A/C</span></label>
-        </div>
-      </div>
+    <!-- Invoice Date -->
+    <div class="form-control w-full max-w-xs mb-4">
+      <label class="label"><span class="label-text font-medium">Invoice Date</span></label>
+      <input type="date" name="invoice_date" class="input input-bordered w-full" value="{{ today|date:'Y-m-d' }}" required>
     </div>
 
-    <!-- Invoice Line Items -->
-    <div class="bg-base-100 p-4 rounded-xl border mt-6">
-      <div class="flex justify-between items-center mb-3">
+    <!-- Employees -->
+    <div class="mb-4">
+      <label class="label"><span class="label-text font-medium">Employees (max 5)</span></label>
+      <div style="position:relative; max-width:100%;">
+        <button type="button" id="empToggle" class="btn btn-outline w-full flex justify-between items-center py-3">
+          <span id="empLabel" class="text-sm">Select Employees</span>
+          <i class="fa-solid fa-chevron-down ml-2"></i>
+        </button>
+
+        <div id="empPanel" class="bg-base-100 border rounded-lg shadow-lg p-3 mt-1 hidden"
+             style="position:absolute; z-index:50; width:100%; max-height:280px; overflow:auto;">
+          {% for emp in employees %}
+            <label class="flex items-center gap-3 px-3 py-2 hover:bg-base-200 rounded cursor-pointer">
+              <input type="checkbox" class="emp-checkbox" value="{{ emp.id }}"> <span class="text-sm">{{ emp.name }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+      <p id="empWarning" class="text-sm text-red-500 mt-2 hidden">You can select up to 5 employees only.</p>
+    </div>
+
+    <!-- Line items (horizontal rows/cards) -->
+    <div class="bg-base-100 p-6 rounded-2xl border mb-6">
+      <div class="flex justify-between items-center mb-4">
         <h3 class="text-xl font-semibold">Invoice Items</h3>
         <button id="addRowBtn" type="button" class="btn btn-sm btn-outline">+ Add Item</button>
       </div>
-      <div class="overflow-x-auto">
-        <table class="table w-full">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Subdealer (code)</th>
-              <th>Product</th>
-              <th>Qty</th>
-              <th>Submitted Blanks</th>
-              <th>Discounted Price (₹)</th>
-              <th>Line Total (₹)</th>
-              <th>Due Cyl</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="itemsTbody"></tbody>
-        </table>
+
+      <div id="itemsContainer" class="space-y-4 overflow-x-auto">
+        <!-- JS will append .item-row cards here -->
       </div>
     </div>
 
     <!-- Expenses -->
-    <div class="bg-base-200 p-6 rounded-xl shadow-md mt-6" x-data="expenseHandler()">
+    <div class="bg-base-200 p-6 rounded-2xl shadow-md mb-6">
       <h3 class="text-lg font-semibold mb-4 text-primary">Expenses</h3>
-      <template x-for="(expense,index) in expenses" :key="index">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mb-3">
-          <div class="form-control">
-            <label class="label"><span class="label-text font-medium">Expense Type</span></label>
-            <select :name="'expense_type_'+index" class="select select-bordered w-full" x-model="expense.type" @change="updateAmount(expense)">
-              <option value="">-- Select --</option>
-              <template x-for="(amt,name) in predefinedExpenses" :key="name">
-                <option :value="name" x-text="name+' - ₹'+amt"></option>
-              </template>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div class="form-control" x-show="expense.type==='other'">
-            <label class="label"><span class="label-text font-medium">Description</span></label>
-            <input type="text" :name="'expense_desc_'+index" x-model="expense.description" placeholder="Expense Description" class="input input-bordered w-full">
-          </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text font-medium">Amount</span></label>
-            <input type="number" step="0.01" :name="'expense_amount_'+index" 
-                   x-model.number="expense.amount"
-                   :readonly="expense.type!=='other'"
-                   @input="updateManual(expense)"
-                   class="input input-bordered w-full">
-          </div>
-          <div class="col-span-3 text-right mt-1">
-            <button type="button" class="btn btn-sm btn-error" @click="removeExpense(index)">Remove</button>
-          </div>
-        </div>
-      </template>
-      <button type="button" class="btn btn-sm btn-outline mt-2" @click="addExpense()">+ Add Expense</button>
+      <div id="expensesContainer" class="space-y-3"></div>
+      <div class="mt-3">
+        <button type="button" id="addExpenseBtn" class="btn btn-sm btn-outline">+ Add Expense</button>
+      </div>
     </div>
 
     <!-- Totals -->
-    <div class="flex flex-col md:flex-row gap-4 justify-end items-end mt-6">
-      <div class="bg-base-100 p-4 rounded-xl w-full md:w-1/3 shadow-sm">
+    <div class="flex flex-col md:flex-row gap-6 justify-end items-end mt-4">
+      <div class="bg-base-100 p-6 rounded-2xl w-full md:w-1/2 shadow-sm">
         <div class="flex justify-between"><span>Total Quantity</span><span id="totalQty" class="font-semibold">0</span></div>
-        <div class="flex justify-between mt-2"><span>Subtotal</span><span id="subTotal" class="font-semibold">₹0.00</span></div>
+        <div class="flex justify-between mt-3"><span>Subtotal</span><span id="subTotal" class="font-semibold">₹0.00</span></div>
+        <div class="flex justify-between mt-2"><span>Total Cash Amount</span><span id="totalCashAmount" class="font-semibold">₹0.00</span></div>
+        <div class="flex justify-between mt-2"><span>Total AC Amount</span><span id="totalAcAmount" class="font-semibold">₹0.00</span></div>
         <div class="flex justify-between mt-2"><span>Other Expenses</span><span id="totalOtherExpense" class="font-semibold">₹0.00</span></div>
-        <hr class="my-3">
+        <hr class="my-4">
         <div class="flex justify-between"><span class="text-lg font-bold">Grand Total</span><span id="grandTotal" class="text-lg font-bold">₹0.00</span></div>
       </div>
+
       <div class="w-full md:w-56">
-        <label class="label"><span class="label-text font-medium">Notes</span></label>
-        <textarea name="notes" class="textarea textarea-bordered w-full" rows="3" placeholder="Optional notes..."></textarea>
-        <button type="submit" class="btn btn-primary mt-4 w-full">Save Invoice</button>
+        <button type="submit" class="btn btn-primary mt-4 w-full py-4">Save Invoice</button>
       </div>
     </div>
   </form>
 </div>
 
-<!-- Hidden Template Row -->
-<table class="hidden">
-  <tbody>
-    <tr id="templateRow" class="align-top">
-      <td class="row-index">1</td>
-      <td>
-        <select name="subdealer_code[]" class="select select-bordered w-48 subdealer-select" required>
-          <option value="">Select Subdealer</option>
-          {% for sd in subdealers %}
-            <option value="{{ sd.subdealerCode }}">{{ sd.name }} ({{ sd.subdealerCode }})</option>
-          {% endfor %}
-        </select>
-      </td>
-      <td>
-        <select name="product_id[]" class="select select-bordered product-select" required>
-          <option value="">Select Product</option>
-          {% for p in products %}
-            <option value="{{ p.id }}" data-price="{{ p.product_price }}">{{ p.product_name }} — ₹{{ p.product_price }}</option>
-          {% endfor %}
-        </select>
-      </td>
-      <td><input type="number" name="quantity[]" class="input input-bordered qty-input w-24" min="1" value="1" required></td>
-      <td><input type="number" name="submitted_blank[]" class="input input-bordered submit-input w-24" min="0" value="0"></td>
-      <td><input type="text" name="discounted_price[]" class="input input-ghost discounted-input w-28" readonly></td>
-      <td><input type="text" name="line_total[]" class="input input-ghost line-total-input w-28" readonly></td>
-      <td><input type="text" name="due_cyl[]" class="input input-ghost due-input w-20" readonly></td>
-      <td class="text-right"><button type="button" class="btn btn-sm btn-error remove-row-btn">Remove</button></td>
-    </tr>
-  </tbody>
-</table>
+<!-- Hidden horizontal row template (card) -->
+<template id="rowTemplate">
+  <div class="item-row flex gap-4 items-start">
+    <!-- Index (will be updated visually by JS) -->
+    <div class="w-10 flex-shrink-0 text-center text-sm pt-2">
+      <div class="row-index text-sm">1</div>
+    </div>
 
-<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <!-- Subdealer -->
+    <div class="w-40 flex-shrink-0">
+      <label class="label"><span class="label-text text-xs">Subdealer</span></label>
+      <select name="subdealer_code[]" class="select select-bordered subdealer-select w-full">
+        <option value="">Select Subdealer</option>
+        {% for sd in subdealers %}
+          <option value="{{ sd.subdealerCode }}">{{ sd.name }} ({{ sd.subdealerCode }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Product -->
+    <div class="w-40 flex-shrink-0">
+      <label class="label"><span class="label-text text-xs">Product</span></label>
+      <select name="product_id[]" class="select select-bordered product-select w-full">
+        <option value="">Select Product</option>
+        {% for p in products %}
+          <option value="{{ p.id }}" data-price="{{ p.product_price }}">{{ p.product_name }} — ₹{{ p.product_price }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Qty -->
+    <div class="w-12 flex-shrink-0">
+      <label class="label"><span class="label-text text-xs">Qty</span></label>
+      <input type="number" name="quantity[]" class="input input-bordered qty-input w-full" min="1" value="1">
+    </div>
+
+    <!-- Submitted blanks -->
+    <div class="w-12 flex-shrink-0">
+      <label class="label"><span class="label-text text-xs">Submitted</span></label>
+      <input type="number" name="submitted_blank[]" class="input input-bordered submit-input w-full" min="0" value="0">
+    </div>
+
+    <!-- Discounted price -->
+     <div class="w-40 flex-shrink-0 hidden">
+      <label class="label"><span class="label-text text-xs">Disc. Price</span></label>
+      <input type="text" name="discounted_price[]" class="input input-ghost discounted-input w-full" readonly>
+    </div> 
+
+    <!-- Line total -->
+    <div class="w-44 flex-shrink-0">
+      <label class="label"><span class="label-text text-xs">Line Total</span></label>
+      <input type="text" name="line_total[]" class="input input-bordered line-total-input w-full" readonly>
+    </div>
+
+    <!-- Due cyl -->
+     <div class="w-28 flex-shrink-0 hidden">
+      <label class="label"><span class="label-text text-xs">Due Cyl</span></label>
+      <input type="text" name="due_cyl[]" class="input input-ghost due-input w-full" readonly>
+    </div>
+
+    <!-- Payment mode -->
+    <div class="w-24 flex-shrink-0">
+      <label class="label"><span class="label-text text-xs">Payment Mode</span></label>
+      <select name="payment_mode[]" class="select select-bordered payment-mode-select w-full">
+        <option value="Cash">Cash</option>
+        <option value="Mixed">Mixed</option>
+        <option value="AC">AC</option>
+      </select>
+    </div>
+
+    <!-- Cash & AC inputs (spacious) -->
+    <div class="cash-ac-wrap flex gap-2 flex-col">
+      <label class="label"><span class="label-text text-xs">Cash / AC</span></label>
+      <div class="flex gap-2">
+        <input type="number" step="0.01" name="cash_amount[]" class="input input-bordered cash-input w-1/2" value="0" placeholder="Cash">
+        <input type="number" step="0.01" name="ac_amount[]" class="input input-bordered ac-input w-1/2" value="0" placeholder="AC" style="display:none;">
+      </div>
+    </div>
+
+    <!-- Remove -->
+    <div class="w-12 flex-shrink-0 items-center justify-center">
+      <button type="button" class="remove-row-btn mt-6 p-1 hover:bg-error/20 rounded transition-colors">
+        <img src="{% static 'icons/trash.svg' %}" alt="Remove" class="w-6 h-6">
+      </button>
+    </div>
+  </div>
+</template>
+
 <script>
+/* server-side context */
 const discountsMap = {{ discounts_map_json|safe }};
+const predefinedExpenses = {{ predefined_expenses_json|safe }};
 
-document.addEventListener('alpine:init', () => {
+//// Employee dropdown ////
+const empToggle = document.getElementById('empToggle');
+const empPanel = document.getElementById('empPanel');
+const empLabel = document.getElementById('empLabel');
+const empWarning = document.getElementById('empWarning');
 
-  // 🌟 Global store to sync expense totals
-  Alpine.store('expense', {
-    total: 0,
-    updateTotal(amount) {
-      this.total = amount;
+empToggle.addEventListener('click', () => empPanel.classList.toggle('hidden'));
+document.addEventListener('click', (e) => {
+  if (!empToggle.contains(e.target) && !empPanel.contains(e.target)) empPanel.classList.add('hidden');
+});
+
+function updateEmployeeHiddenInputs() {
+  document.querySelectorAll('input[name="employee_ids"]').forEach(el => el.remove());
+  const checked = Array.from(document.querySelectorAll('.emp-checkbox:checked'));
+  empLabel.textContent = checked.length ? checked.map(ch => ch.nextElementSibling.textContent.trim()).join(', ') : 'Select Employees';
+  const form = document.getElementById('invoiceForm');
+  checked.forEach(ch => {
+    const inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = 'employee_ids'; inp.value = ch.value; form.appendChild(inp);
+  });
+  updateAllExpenseAmounts();
+  updateTotals();
+}
+empPanel.querySelectorAll('.emp-checkbox').forEach(ch => {
+  ch.addEventListener('change', () => {
+    const checked = empPanel.querySelectorAll('.emp-checkbox:checked');
+    if (checked.length > 5) {
+      ch.checked = false;
+      empWarning.classList.remove('hidden');
+      setTimeout(()=> empWarning.classList.add('hidden'), 2000);
+      return;
+    }
+    updateEmployeeHiddenInputs();
+  });
+});
+
+//// Items handling ////
+const itemsContainer = document.getElementById('itemsContainer');
+const rowTmpl = document.getElementById('rowTemplate');
+
+document.getElementById('addRowBtn').addEventListener('click', addRow);
+
+function addRow() {
+  const tpl = rowTmpl.content.cloneNode(true);
+  const row = tpl.querySelector('.item-row');
+  itemsContainer.appendChild(row);
+
+  // set index label
+  refreshRowIndices();
+
+  // grab elements in row
+  const subdealerSel = row.querySelector('.subdealer-select');
+  const productSel = row.querySelector('.product-select');
+  const qtyInput = row.querySelector('.qty-input');
+  const submitInput = row.querySelector('.submit-input');
+  const paymentModeSel = row.querySelector('.payment-mode-select');
+  const cashInput = row.querySelector('.cash-input');
+  const acInput = row.querySelector('.ac-input');
+  const removeBtn = row.querySelector('.remove-row-btn');
+
+  // events
+  qtyInput.addEventListener('input', () => {
+    // ensure integer-like value (optional)
+    const q = qtyInput.value ? Number(qtyInput.value) : 0;
+    // update submitted to mirror qty
+    submitInput.value = q;
+    recalcRow(row);
+  });
+    // when submitted is manually edited, clamp it between 0 and qty
+  submitInput.addEventListener('input', () => {
+    const q = qtyInput.value ? Number(qtyInput.value) : 0;
+    let s = submitInput.value ? Number(submitInput.value) : 0;
+    if (s < 0) s = 0;
+    if (s > q) s = q;
+    // keep integer if qty is integer
+    submitInput.value = s;
+    recalcRow(row);
+  });
+  subdealerSel.addEventListener('change', () => recalcRow(row));
+  productSel.addEventListener('change', () => recalcRow(row));
+
+  paymentModeSel.addEventListener('change', () => {
+    applyPaymentMode(paymentModeSel.value, row);
+    recalcRow(row);
+  });
+
+  // mixed auto-calc behavior
+  cashInput.addEventListener('input', () => {
+    if (paymentModeSel.value === 'Mixed') {
+      const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
+      const cash = parseFloat(cashInput.value || 0);
+      const ac = Math.max(lineTotal - (isFinite(cash) ? cash : 0), 0);
+      acInput.value = ac.toFixed(2);
+      updateTotals();
+    }
+  });
+  acInput.addEventListener('input', () => {
+    if (paymentModeSel.value === 'Mixed') {
+      const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
+      const ac = parseFloat(acInput.value || 0);
+      const cash = Math.max(lineTotal - (isFinite(ac) ? ac : 0), 0);
+      cashInput.value = cash.toFixed(2);
       updateTotals();
     }
   });
 
-  Alpine.data('employeeSelect', ()=>({
-    open:false, selected:[], tooMany:false,
-    get selectedNames(){
-      return Array.from(document.querySelectorAll('[x-data="employeeSelect()"] input[type=checkbox]'))
-                  .filter(ch=>this.selected.includes(ch.value))
-                  .map(ch=>ch.nextElementSibling.textContent.trim());
-    },
-    updateSelected(){
-      if(this.selected.length>5){ this.selected.pop(); this.tooMany=true; setTimeout(()=>this.tooMany=false,2500);}
-      this.$nextTick(()=>{ document.dispatchEvent(new Event('employeeChange')); });
-    }
-  }));
+  removeBtn.addEventListener('click', () => { row.remove(); refreshRowIndices(); updateTotals(); });
 
-  Alpine.data('expenseHandler', ()=>({
-    predefinedExpenses: {{ predefined_expenses_json|safe }},
-    selectedEmployeesCount:0,
-    expenses:[],
-    init(){
-      document.addEventListener('employeeChange', ()=> {
-        this.selectedEmployeesCount = document.querySelectorAll('[x-data="employeeSelect()"] input[type=checkbox]:checked').length;
-        this.expenses.forEach(e=>this.updateAmount(e));
-      });
-    },
-    addExpense(){ 
-      this.expenses.push({type:'', description:'', amount:0}); 
-      Alpine.store('expense').updateTotal(this.totalExpenses());
-    },
-    removeExpense(i){ 
-      this.expenses.splice(i,1); 
-      Alpine.store('expense').updateTotal(this.totalExpenses());
-    },
-    updateAmount(exp){
-      if(exp.type && exp.type!=='other'){ 
-        exp.amount = (parseFloat(this.predefinedExpenses[exp.type]||0)) * (this.selectedEmployeesCount||1);
-      }
-      Alpine.store('expense').updateTotal(this.totalExpenses());
-    },
-    updateManual(exp){
-      Alpine.store('expense').updateTotal(this.totalExpenses());
-    },
-    totalExpenses(){ 
-      return this.expenses.reduce((sum,e)=>sum+parseFloat(e.amount||0),0);
-    }
-  }));
-});
+  // initial sets
+  submitInput.value = qtyInput.value;
 
-// Line Items + Totals
-const itemsTbody = document.getElementById('itemsTbody');
-const templateRow = document.getElementById('templateRow');
-document.getElementById('addRowBtn').addEventListener('click', addRow);
-
-function addRow(){
-  const clone = templateRow.cloneNode(true); clone.removeAttribute('id'); clone.classList.remove('hidden');
-  clone.querySelectorAll('input, select').forEach(el=>{
-    el.addEventListener('input', updateTotals);
-    el.addEventListener('change', updateTotals);
-  });
-  clone.querySelector('.remove-row-btn').addEventListener('click', ()=>{ clone.remove(); updateTotals(); });
-  itemsTbody.appendChild(clone);
+  // force payment mode to Cash for new rows
+  paymentModeSel.value = 'Cash';
+  applyPaymentMode('Cash', row);
+  recalcRow(row);
   updateTotals();
 }
 
-function updateTotals(){
-  let totalQty=0, subTotal=0;
-  document.querySelectorAll('#itemsTbody tr').forEach(row=>{
-    const qty = parseFloat(row.querySelector('.qty-input')?.value||0);
-    const submitted = parseFloat(row.querySelector('.submit-input')?.value||0);
-    const subdealer = row.querySelector('.subdealer-select')?.value;
-    const product = row.querySelector('.product-select')?.value;
-    const price = parseFloat(row.querySelector('.product-select')?.selectedOptions[0]?.dataset.price||0);
+function refreshRowIndices() {
+  document.querySelectorAll('.item-row').forEach((r, idx) => {
+    r.querySelector('.row-index').textContent = idx + 1;
+  });
+}
 
-    let discount = 0;
-    if(subdealer && product && discountsMap[subdealer] && discountsMap[subdealer][product]){
-      discount = parseFloat(discountsMap[subdealer][product]);
+function recalcRow(row) {
+  const subdealer = row.querySelector('.subdealer-select').value;
+  const productSel = row.querySelector('.product-select');
+  const product = productSel.value;
+  const price = parseFloat(productSel.selectedOptions[0]?.dataset.price || 0);
+  const qty = parseFloat(row.querySelector('.qty-input').value || 0);
+  const submitted = parseFloat(row.querySelector('.submit-input').value || 0);
+
+  let discount = 0;
+  if (subdealer && product && discountsMap[subdealer] && discountsMap[subdealer][product]) {
+    discount = parseFloat(discountsMap[subdealer][product] || 0);
+  }
+
+  const discountedPrice = Math.max(price - discount, 0);
+  const lineTotal = discountedPrice * qty;
+  const due = Math.max(qty - submitted, 0);
+
+  row.querySelector('.discounted-input').value = discountedPrice.toFixed(2);
+  row.querySelector('.line-total-input').value = lineTotal.toFixed(2);
+  row.querySelector('.due-input').value = due;
+
+  // keep payment consistent
+  const pmode = row.querySelector('.payment-mode-select').value;
+  applyPaymentMode(pmode, row);
+
+  updateTotals();
+}
+
+function applyPaymentMode(mode, row) {
+  const cashInput = row.querySelector('.cash-input');
+  const acInput = row.querySelector('.ac-input');
+  const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
+
+  if (mode === 'Cash') {
+    cashInput.style.display = ''; cashInput.value = lineTotal.toFixed(2); cashInput.readOnly = true;
+    acInput.style.display = 'none'; acInput.value = '0.00';
+  } else if (mode === 'AC') {
+    acInput.style.display = ''; acInput.value = lineTotal.toFixed(2); acInput.readOnly = true;
+    cashInput.style.display = 'none'; cashInput.value = '0.00';
+  } else { // Mixed
+    cashInput.style.display = ''; acInput.style.display = '';
+    cashInput.readOnly = false; acInput.readOnly = false;
+    if (!cashInput.value || Number(cashInput.value) === 0) cashInput.value = '0.00';
+    if (!acInput.value || Number(acInput.value) === 0) acInput.value = '0.00';
+  }
+}
+
+//// Expenses ////
+const expensesContainer = document.getElementById('expensesContainer');
+const addExpenseBtn = document.getElementById('addExpenseBtn');
+let expenseIndex = 0;
+
+addExpenseBtn.addEventListener('click', () => addExpenseRow());
+
+function addExpenseRow(type='', desc='', amount='0.00') {
+  const idx = expenseIndex++;
+  const div = document.createElement('div');
+  div.className = 'grid grid-cols-1 md:grid-cols-3 gap-4 items-end mb-3';
+  div.dataset.idx = idx;
+
+  // build select options
+  let opts = `<option value="">-- Select --</option>`;
+  for (const [key, val] of Object.entries(predefinedExpenses || {})) {
+    opts += `<option value="${key}" data-amount="${val}">${key} - ₹${val}</option>`;
+  }
+  opts += `<option value="other">Other</option>`;
+
+  div.innerHTML = `
+    <div class="form-control">
+      <label class="label"><span class="label-text font-medium">Expense Type</span></label>
+      <select name="expense_type_${idx}" class="select select-bordered w-full expense-type">${opts}</select>
+    </div>
+    <div class="form-control expense-desc-container" style="display:none;">
+      <label class="label"><span class="label-text font-medium">Description</span></label>
+      <input type="text" name="expense_desc_${idx}" class="input input-bordered w-full expense-desc" placeholder="Expense Description" value="${desc}">
+    </div>
+    <div class="form-control">
+      <label class="label"><span class="label-text font-medium">Amount</span></label>
+      <input type="number" step="0.01" min="0" name="expense_amount_${idx}" class="input input-bordered w-full expense-amount" value="${amount}">
+    </div>
+    <div class="col-span-3 text-right mt-1">
+      <button type="button" class="btn btn-sm btn-error remove-expense">Remove</button>
+    </div>
+  `;
+  expensesContainer.appendChild(div);
+
+  const typeSel = div.querySelector('.expense-type');
+  const descContainer = div.querySelector('.expense-desc-container');
+  const amountInput = div.querySelector('.expense-amount');
+
+  typeSel.addEventListener('change', () => {
+    const val = typeSel.value;
+    if (val === 'other') {
+      descContainer.style.display = '';
+      amountInput.readOnly = false;
+      amountInput.value = amountInput.value || '0.00';
+    } else {
+      descContainer.style.display = 'none';
+      const rate = parseFloat(typeSel.selectedOptions[0]?.dataset.amount || 0);
+      const empCount = document.querySelectorAll('.emp-checkbox:checked').length || 0;
+      const calc = rate * (empCount || 1);
+      amountInput.value = calc.toFixed(2);
+      amountInput.readOnly = true;
     }
-    const discountedPrice = Math.max(price - discount,0);
-    const lineTotal = discountedPrice * qty;
-    const dueCyl = Math.max(qty - submitted,0);
-
-    row.querySelector('.discounted-input').value = discountedPrice.toFixed(2);
-    row.querySelector('.line-total-input').value = lineTotal.toFixed(2);
-    row.querySelector('.due-input').value = dueCyl;
-
-    totalQty += qty; subTotal += lineTotal;
+    updateTotals();
   });
 
-  const otherExp = Alpine.store('expense')?.total || 0;
+  amountInput.addEventListener('input', updateTotals);
+
+  div.querySelector('.remove-expense').addEventListener('click', () => {
+    div.remove();
+    updateTotals();
+  });
+}
+
+function updateAllExpenseAmounts() {
+  document.querySelectorAll('#expensesContainer .expense-type').forEach(sel => {
+    const val = sel.value;
+    const amountInput = sel.closest('div').querySelector('.expense-amount');
+    if (val && val !== 'other') {
+      const rate = parseFloat(sel.selectedOptions[0]?.dataset.amount || 0);
+      const empCount = document.querySelectorAll('.emp-checkbox:checked').length || 0;
+      amountInput.value = (rate * (empCount || 1)).toFixed(2);
+    }
+  });
+  updateTotals();
+}
+
+//// Totals ////
+function updateTotals() {
+  let totalQty = 0, subtotal = 0, totalCash = 0, totalAc = 0, totalExpenses = 0;
+
+  document.querySelectorAll('.item-row').forEach(row => {
+    const qty = parseFloat(row.querySelector('.qty-input')?.value || 0);
+    const lineTotal = parseFloat(row.querySelector('.line-total-input')?.value || 0);
+    const cashVal = parseFloat(row.querySelector('.cash-input')?.value || 0);
+    const acVal = parseFloat(row.querySelector('.ac-input')?.value || 0);
+
+    totalQty += qty;
+    subtotal += lineTotal;
+    totalCash += isFinite(cashVal) ? cashVal : 0;
+    totalAc += isFinite(acVal) ? acVal : 0;
+  });
+
+  document.querySelectorAll('#expensesContainer .expense-amount').forEach(inp => {
+    totalExpenses += parseFloat(inp.value || 0);
+  });
 
   document.getElementById('totalQty').textContent = totalQty;
-  document.getElementById('subTotal').textContent = '₹'+subTotal.toFixed(2);
-  document.getElementById('totalOtherExpense').textContent = '- ₹'+otherExp.toFixed(2);
-  document.getElementById('grandTotal').textContent = '₹'+(subTotal - otherExp).toFixed(2);
+  document.getElementById('subTotal').textContent = '₹' + subtotal.toFixed(2);
+  document.getElementById('totalCashAmount').textContent = '₹' + totalCash.toFixed(2);
+  document.getElementById('totalAcAmount').textContent = '₹' + totalAc.toFixed(2);
+  document.getElementById('totalOtherExpense').textContent = '₹' + totalExpenses.toFixed(2);
+  const grand = subtotal - totalExpenses;
+  document.getElementById('grandTotal').textContent = '₹' + (grand >= 0 ? grand.toFixed(2) : '0.00');
 }
+
+/* startup */
+document.addEventListener('DOMContentLoaded', () => {
+  addRow();
+  addExpenseRow(); // optional initial expense
+  updateTotals();
+});
+
+/* submit validation */
+document.getElementById('invoiceForm').addEventListener('submit', (e) => {
+  let invalid = false;
+  document.querySelectorAll('.item-row').forEach(row => {
+    const pmode = row.querySelector('.payment-mode-select').value;
+    const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
+    if (pmode === 'Mixed') {
+      const cash = parseFloat(row.querySelector('.cash-input').value || 0);
+      const ac = parseFloat(row.querySelector('.ac-input').value || 0);
+      if (Math.abs((cash + ac) - lineTotal) > 0.01) invalid = true;
+    }
+  });
+  if (invalid) {
+    e.preventDefault();
+    alert('For Mixed rows, Cash + AC must equal the line total.');
+    return;
+  }
+  if (document.querySelectorAll('.emp-checkbox:checked').length === 0) {
+    e.preventDefault();
+    alert('Please select at least one employee.');
+    return;
+  }
+});
 </script>
 {% endblock content %}

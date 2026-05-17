@@ -13,16 +13,19 @@
 <body>
     <main>
         <section>{% include "components/header.html" %}</section>
+        {% if page_type != 'create_invoice' %}
         <section class="flex">
             <section id="sidebarContainer" class="transition-all duration-300 overflow-hidden w-1/6">
                 {% include "components/sidebar.html" %}
             </section>
+            {% endif %}
             <section id="content" class="p-4 w-full">
                 {% block content %}
 
                 {% endblock content %}
             </section>
         </section>
+        
 
             <!--  alert component here -->
         {% include "components/alert.html" %}
