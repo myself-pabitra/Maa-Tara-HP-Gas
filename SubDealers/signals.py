@@ -3,6 +3,7 @@ from django.dispatch import receiver
 
 from SubDealers.models import DailySellInvoiceItem, SubdealerDue
 
+
 @receiver(post_save, sender=DailySellInvoiceItem)
 def create_due_record(sender, instance, created, **kwargs):
     if created and instance.payment_status == "Pending":

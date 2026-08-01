@@ -1,27 +1,24 @@
-from decimal import Decimal, InvalidOperation
 import json
-from django.db.models import Q, Sum, F, Count
-from django.db.models.functions import ExtractMonth, ExtractYear
-from django.shortcuts import get_object_or_404, redirect, render
+from decimal import Decimal, InvalidOperation
+
+from django.contrib import messages
 from django.db import transaction
-from django.db.models.deletion import ProtectedError
-from django.http import HttpResponse
-from io import BytesIO
+from django.shortcuts import redirect, render
+from django.utils import timezone
+
 from employees.models import Employee
 from inventory.models import ProductInventory
+
 from .models import (
     Cylender_information,
-    DACEntry,
     DailyInvoice,
     DailyInvoiceExpense,
     DailyInvoiceLineItem,
     PredefinedExpense,
-    SubDealerSKUDiscount,
     Subdealer,
+    SubDealerSKUDiscount,
 )
-from django.contrib import messages
-from django.utils import timezone
-from datetime import datetime, timedelta
+
 
 def CreateNewSubDealers(request):
     subDealer_name = request.POST.get("name")
@@ -46,117 +43,6 @@ def CreateNewSubDealers(request):
         return redirect("CreateNewSubDealers")
 
     return render(request,"SubDealers/Createnew_subdealers.html")
-
-
-def view_subdealers(request):
-    subdealers = Subdealer.objects.all().order_by('name')
-    return render(request, 'SubDealers/view_subdealers.html', {
-        'subdealers': subdealers,
-    })
-
-
-def pending_orders(request):
-    subdealer_filter = request.GET.get('subdealer')
-    dac_percentage_raw = request.GET.get('dac_percentage', '100')
-
-    try:
-        dac_percentage = Decimal(dac_percentage_raw)
-    except InvalidOperation:
-        dac_percentage = Decimal('100')
-
-    dac_percentage = max(Decimal('0'), min(dac_percentage, Decimal('100')))
-
-    subdealers = Subdealer.objects.all().order_by('name')
-    if subdealer_filter:
-        subdealers = subdealers.filter(id=subdealer_filter)
-
-    product_filter = (
-        Q(product__product_name__icontains='14.2') |
-        Q(product__product_name__icontains='14.2kg') |
-        Q(product__product_name__icontains='riffil') |
-        Q(product__product_name__icontains='rifil') |
-        Q(product__product_name__icontains='rifle')
-    )
-
-    rows = []
-    for subdealer in subdealers:
-        total_dac = DACEntry.objects.filter(subdealer=subdealer).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-        total_riffils = DailyInvoiceLineItem.objects.filter(subdealer=subdealer).filter(product_filter).aggregate(total=Sum('quantity'))['total'] or 0
-        effective_dac = (total_dac * subdealer.dac_percentage / Decimal('100')).quantize(Decimal('0.01'))
-        # Allow negative pending_order to indicate surplus (over-supplied)
-        pending_order = effective_dac - Decimal(total_riffils)
-
-        rows.append({
-            'subdealer': subdealer,
-            'total_riffils': total_riffils,
-            'total_dac': total_dac,
-            'dac_percentage': subdealer.dac_percentage,
-            'effective_dac': effective_dac,
-            'pending_order': pending_order,
-        })
-
-    # sort rows so positive pending_order values appear first (descending)
-    try:
-        rows.sort(key=lambda r: r.get('pending_order', 0), reverse=True)
-    except Exception:
-        # fallback: leave original ordering if any issue
-        pass
-
-    return render(request, 'SubDealers/pending_orders.html', {
-        'subdealers': Subdealer.objects.all().order_by('name'),
-        'selected_subdealer': subdealer_filter,
-        'dac_percentage': dac_percentage,
-        'rows': rows,
-    })
-
-
-def edit_subdealer(request, subdealer_id):
-    subdealer = get_object_or_404(Subdealer, pk=subdealer_id)
-
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        phone_number = request.POST.get('phone_number')
-        address = request.POST.get('address')
-        dac_percentage_raw = request.POST.get('dac_percentage', '100')
-
-        try:
-            dac_percentage = Decimal(dac_percentage_raw)
-        except InvalidOperation:
-            dac_percentage = Decimal('100')
-
-        if not name or not phone_number or not address:
-            messages.error(request, 'Please fill in all fields before saving.')
-            return redirect('edit_subdealer', subdealer_id=subdealer.id)
-
-        subdealer.name = name
-        subdealer.phone_number = phone_number
-        subdealer.address = address
-        subdealer.dac_percentage = dac_percentage
-        subdealer.save()
-
-        messages.success(request, 'Subdealer updated successfully.')
-        return redirect('view_subdealers')
-
-    return render(request, 'SubDealers/edit_subdealer.html', {
-        'subdealer': subdealer,
-    })
-
-
-def delete_subdealer(request, subdealer_id):
-    subdealer = get_object_or_404(Subdealer, pk=subdealer_id)
-
-    if request.method == 'POST':
-        try:
-            subdealer.delete()
-            messages.success(request, 'Subdealer deleted successfully.')
-        except ProtectedError:
-            messages.error(request, 'Cannot delete this subdealer because it is linked to other records.')
-        return redirect('view_subdealers')
-
-    messages.error(request, 'Invalid delete request.')
-    return redirect('view_subdealers')
-
-
 
 def addSubDealersProductDiscount(request):
     subdealer_code = request.GET.get("subdealer_code")
