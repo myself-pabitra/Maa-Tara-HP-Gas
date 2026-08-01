@@ -5,7 +5,19 @@
     <li><a href="/">{% include "icons/home.svg" %} Home</a></li>
     <li><a href="#"> {% include "icons/users.svg" %} SubDealers</a></li>
     <li><a href="{% url 'manage_products' %}"> {% include "icons/inventory.svg" %} Inventory</a></li>
-    <li><a href="{% url 'create_daily_sell_invoice' %}" target="_blank" > {% include "icons/invoice.svg" %} Billing</a></li>
+    <li>
+      <details class="group">
+        <summary onclick="handleDetailsToggle(event)">Billing</summary>
+        <ul class="pl-4">
+          <li><a href="{% url 'create_daily_sell_invoice' %}">Create Bill</a></li>
+          <li><a href="{% url 'view_daily_sell_invoices' %}">View Bills</a></li>
+          <li><a href="{% url 'mismatch_records' %}">Mismatch Records</a></li>
+          <li><a href="{% url 'payment_verification' %}">Payments Verification</a></li>
+          <li><a href="{% url 'payment_due_list' %}">Due Payments</a></li>
+          <li><a href="{% url 'monthly_summary' %}">Monthly Summary</a></li>
+        </ul>
+      </details>
+    </li>
 
     <li>
       <details open class="group">
