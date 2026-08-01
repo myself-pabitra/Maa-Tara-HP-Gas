@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% load static %}
 
-{% block title %}Create Invoice{% endblock title %}
+{% block title %}{% if invoice %}Edit Invoice {{ invoice.invoice_number }}{% else %}Create Invoice{% endif %}{% endblock title %}
 
 {% block content %}
 
@@ -13,7 +13,7 @@
 </style>
 
 <div class="w-full mx-auto p-10">  <!-- wider container for horizontal layout -->
-  <h1 class="text-3xl font-extrabold mb-8 text-primary">Create Daily Sell Invoice</h1>
+  <h1 class="text-3xl font-extrabold mb-8 text-primary">{% if invoice %}Edit Invoice {{ invoice.invoice_number }}{% else %}Create Daily Sell Invoice{% endif %}</h1>
 
   <form method="post" id="invoiceForm" class="space-y-8 bg-base-200 p-8 rounded-3xl shadow-xl">
     {% csrf_token %}
@@ -21,8 +21,9 @@
     <!-- Invoice Date -->
     <div class="form-control w-full max-w-xs mb-4">
       <label class="label"><span class="label-text font-medium">Invoice Date</span></label>
-      <input type="date" name="invoice_date" class="input input-bordered w-full" value="{{ today|date:'Y-m-d' }}" required>
+      <input type="date" name="invoice_date" class="input input-bordered w-full" value="{% if invoice %}{{ invoice.invoice_date|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" required>
     </div>
+
 
     <!-- Employees -->
     <div class="mb-4">
@@ -37,7 +38,7 @@
              style="position:absolute; z-index:50; width:100%; max-height:280px; overflow:auto;">
           {% for emp in employees %}
             <label class="flex items-center gap-3 px-3 py-2 hover:bg-base-200 rounded cursor-pointer">
-              <input type="checkbox" class="emp-checkbox" value="{{ emp.id }}"> <span class="text-sm">{{ emp.name }}</span>
+              <input type="checkbox" class="emp-checkbox" value="{{ emp.id }}" {% if emp.id in selected_employee_ids %}checked{% endif %}> <span class="text-sm">{{ emp.name }}</span>
             </label>
           {% endfor %}
         </div>
@@ -69,7 +70,12 @@
     <!-- Totals -->
     <div class="flex flex-col md:flex-row gap-6 justify-end items-end mt-4">
       <div class="bg-base-100 p-6 rounded-2xl w-full md:w-1/2 shadow-sm">
-        <div class="flex justify-between"><span>Total Quantity</span><span id="totalQty" class="font-semibold">0</span></div>
+        <div class="flex justify-between"><span>Total Quantity</span><span id="totalQty" class="font-semibold">0</span>
+        </div>
+        <div class="mt-3">
+          <div class="text-xs font-medium mb-2">Selected Items</div>
+          <div id="selectedProductDisplay" class="rounded-lg border border-base-300 bg-base-50 p-3 min-h-[48px] text-sm space-y-2"></div>
+        </div>
         <div class="flex justify-between mt-3"><span>Subtotal</span><span id="subTotal" class="font-semibold">₹0.00</span></div>
         <div class="flex justify-between mt-2"><span>Total Cash Amount</span><span id="totalCashAmount" class="font-semibold">₹0.00</span></div>
         <div class="flex justify-between mt-2"><span>Total AC Amount</span><span id="totalAcAmount" class="font-semibold">₹0.00</span></div>
@@ -157,10 +163,10 @@
 
     <!-- Cash & AC inputs (spacious) -->
     <div class="cash-ac-wrap flex gap-2 flex-col">
-      <label class="label"><span class="label-text text-xs">Cash / AC</span></label>
+      <label class="label"><span class="label-text text-xs">Paid Cash / Paid AC</span></label>
       <div class="flex gap-2">
-        <input type="number" step="0.01" name="cash_amount[]" class="input input-bordered cash-input w-1/2" value="0" placeholder="Cash">
-        <input type="number" step="0.01" name="ac_amount[]" class="input input-bordered ac-input w-1/2" value="0" placeholder="AC" style="display:none;">
+        <input type="number" step="0.01" name="cash_amount[]" class="input input-bordered cash-input w-1/2" value="0" placeholder="Cash paid">
+        <input type="number" step="0.01" name="ac_amount[]" class="input input-bordered ac-input w-1/2" value="0" placeholder="AC paid" style="display:none;">
       </div>
     </div>
 
@@ -177,6 +183,9 @@
 /* server-side context */
 const discountsMap = {{ discounts_map_json|safe }};
 const predefinedExpenses = {{ predefined_expenses_json|safe }};
+const existingInvoice = {{ invoice_json|default:'null'|safe }};
+const existingLineItems = {{ line_items_json|default:'null'|safe }};
+const existingExpenses = {{ expenses_json|default:'null'|safe }};
 
 //// Employee dropdown ////
 const empToggle = document.getElementById('empToggle');
@@ -220,7 +229,7 @@ const rowTmpl = document.getElementById('rowTemplate');
 
 document.getElementById('addRowBtn').addEventListener('click', addRow);
 
-function addRow() {
+function addRow(data = null) {
   const tpl = rowTmpl.content.cloneNode(true);
   const row = tpl.querySelector('.item-row');
   itemsContainer.appendChild(row);
@@ -240,58 +249,65 @@ function addRow() {
 
   // events
   qtyInput.addEventListener('input', () => {
-    // ensure integer-like value (optional)
     const q = qtyInput.value ? Number(qtyInput.value) : 0;
-    // update submitted to mirror qty
     submitInput.value = q;
     recalcRow(row);
   });
     // when submitted is manually edited, clamp it between 0 and qty
   submitInput.addEventListener('input', () => {
-    const q = qtyInput.value ? Number(qtyInput.value) : 0;
     let s = submitInput.value ? Number(submitInput.value) : 0;
     if (s < 0) s = 0;
-    if (s > q) s = q;
-    // keep integer if qty is integer
     submitInput.value = s;
     recalcRow(row);
   });
   subdealerSel.addEventListener('change', () => recalcRow(row));
-  productSel.addEventListener('change', () => recalcRow(row));
+  productSel.addEventListener('change', () => {
+    updateSelectedProductDisplay(row);
+    recalcRow(row);
+  });
 
   paymentModeSel.addEventListener('change', () => {
     applyPaymentMode(paymentModeSel.value, row);
     recalcRow(row);
   });
 
-  // mixed auto-calc behavior
-  cashInput.addEventListener('input', () => {
-    if (paymentModeSel.value === 'Mixed') {
-      const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
-      const cash = parseFloat(cashInput.value || 0);
-      const ac = Math.max(lineTotal - (isFinite(cash) ? cash : 0), 0);
-      acInput.value = ac.toFixed(2);
-      updateTotals();
-    }
-  });
-  acInput.addEventListener('input', () => {
-    if (paymentModeSel.value === 'Mixed') {
-      const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
-      const ac = parseFloat(acInput.value || 0);
-      const cash = Math.max(lineTotal - (isFinite(ac) ? ac : 0), 0);
-      cashInput.value = cash.toFixed(2);
-      updateTotals();
-    }
-  });
+  const syncCash = () => {
+    if (paymentModeSel.value !== 'Mixed') return;
+    syncMixedFromCash(row);
+    updateTotals();
+  };
+  const syncAc = () => {
+    if (paymentModeSel.value !== 'Mixed') return;
+    syncMixedFromAc(row);
+    updateTotals();
+  };
 
-  removeBtn.addEventListener('click', () => { row.remove(); refreshRowIndices(); updateTotals(); });
+  cashInput.addEventListener('input', syncCash);
+  cashInput.addEventListener('change', syncCash);
+  cashInput.addEventListener('blur', syncCash);
 
-  // initial sets
-  submitInput.value = qtyInput.value;
+  acInput.addEventListener('input', syncAc);
+  acInput.addEventListener('change', syncAc);
+  acInput.addEventListener('blur', syncAc);
 
-  // force payment mode to Cash for new rows
-  paymentModeSel.value = 'Cash';
-  applyPaymentMode('Cash', row);
+  removeBtn.addEventListener('click', () => { row.remove(); refreshRowIndices(); updateSelectedProductDisplay(); updateTotals(); });
+
+  if (data) {
+    if (data.subdealer_code) subdealerSel.value = data.subdealer_code;
+    if (data.product_id) productSel.value = data.product_id;
+    if (data.quantity !== undefined) qtyInput.value = data.quantity;
+    submitInput.value = data.submitted_blank !== undefined ? data.submitted_blank : qtyInput.value;
+    paymentModeSel.value = data.payment_mode || 'Cash';
+    cashInput.value = data.cash_amount !== undefined ? parseFloat(data.cash_amount).toFixed(2) : '0.00';
+    acInput.value = data.ac_amount !== undefined ? parseFloat(data.ac_amount).toFixed(2) : '0.00';
+  } else {
+    submitInput.value = qtyInput.value;
+    paymentModeSel.value = 'Cash';
+    cashInput.value = '0.00';
+    acInput.value = '0.00';
+  }
+
+  applyPaymentMode(paymentModeSel.value, row);
   recalcRow(row);
   updateTotals();
 }
@@ -300,6 +316,61 @@ function refreshRowIndices() {
   document.querySelectorAll('.item-row').forEach((r, idx) => {
     r.querySelector('.row-index').textContent = idx + 1;
   });
+}
+
+function updateSelectedProductDisplay() {
+  const display = document.getElementById('selectedProductDisplay');
+  if (!display) return;
+
+  const rows = Array.from(document.querySelectorAll('.item-row'));
+  const items = rows
+    .map(row => {
+      const productSel = row.querySelector('.product-select');
+      const subdealerSel = row.querySelector('.subdealer-select');
+      const qty = parseFloat(row.querySelector('.qty-input')?.value || 0);
+      const submitted = parseFloat(row.querySelector('.submit-input')?.value || 0);
+      const productText = productSel?.selectedOptions[0]?.textContent?.trim() || '';
+      const subdealerText = subdealerSel?.selectedOptions[0]?.textContent?.trim() || '';
+      const price = parseFloat(productSel?.selectedOptions[0]?.dataset.price || 0);
+      const lineTotal = parseFloat(row.querySelector('.line-total-input')?.value || 0);
+      const productValue = productSel?.value;
+
+      if (!productValue || !productText) return null;
+      return { productText, subdealerText, price, qty, submitted, lineTotal };
+    })
+    .filter(Boolean);
+
+  display.replaceChildren();
+
+  if (!items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'text-xs text-base-content/60';
+    empty.textContent = 'Select products from the invoice items';
+    display.appendChild(empty);
+    return;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'space-y-2';
+
+  items.forEach(item => {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'flex justify-between items-center gap-3';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'font-medium';
+    nameSpan.textContent = `${item.subdealerText ? item.subdealerText + ' • ' : ''}${item.productText}`;
+
+    const qtySpan = document.createElement('span');
+    qtySpan.className = 'text-right font-semibold';
+    qtySpan.textContent = `${item.qty} / ${item.submitted} — ₹${item.lineTotal.toFixed(2)}`;
+
+    rowDiv.appendChild(nameSpan);
+    rowDiv.appendChild(qtySpan);
+    list.appendChild(rowDiv);
+  });
+
+  display.appendChild(list);
 }
 
 function recalcRow(row) {
@@ -326,8 +397,57 @@ function recalcRow(row) {
   // keep payment consistent
   const pmode = row.querySelector('.payment-mode-select').value;
   applyPaymentMode(pmode, row);
+  if (pmode === 'Mixed') syncMixedAmounts(row);
 
+  updateSelectedProductDisplay();
   updateTotals();
+}
+
+function syncMixedAmounts(row) {
+  const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
+  const cashInput = row.querySelector('.cash-input');
+  const acInput = row.querySelector('.ac-input');
+  const cashVal = parseFloat(cashInput.value ?? '') || 0;
+  const acVal = parseFloat(acInput.value ?? '') || 0;
+
+  if (lineTotal <= 0) return;
+
+  const cashEmpty = cashInput.value === '' || cashVal === 0;
+  const acEmpty = acInput.value === '' || acVal === 0;
+
+  if (cashVal > 0 && acEmpty) {
+    acInput.value = Math.max(lineTotal - cashVal, 0).toFixed(2);
+  } else if (acVal > 0 && cashEmpty) {
+    cashInput.value = Math.max(lineTotal - acVal, 0).toFixed(2);
+  }
+}
+
+function syncMixedFromCash(row) {
+  const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
+  const cashInput = row.querySelector('.cash-input');
+  const acInput = row.querySelector('.ac-input');
+  const cashVal = parseFloat(cashInput.value ?? '') || 0;
+
+  if (lineTotal <= 0) return;
+  if (cashVal > 0) {
+    acInput.value = Math.max(lineTotal - cashVal, 0).toFixed(2);
+  } else {
+    acInput.value = '';
+  }
+}
+
+function syncMixedFromAc(row) {
+  const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
+  const cashInput = row.querySelector('.cash-input');
+  const acInput = row.querySelector('.ac-input');
+  const acVal = parseFloat(acInput.value ?? '') || 0;
+
+  if (lineTotal <= 0) return;
+  if (acVal > 0) {
+    cashInput.value = Math.max(lineTotal - acVal, 0).toFixed(2);
+  } else {
+    cashInput.value = '';
+  }
 }
 
 function applyPaymentMode(mode, row) {
@@ -336,16 +456,23 @@ function applyPaymentMode(mode, row) {
   const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
 
   if (mode === 'Cash') {
-    cashInput.style.display = ''; cashInput.value = lineTotal.toFixed(2); cashInput.readOnly = true;
+    cashInput.style.display = ''; 
+    const cashVal = parseFloat(cashInput.value || '0') || 0;
+    cashInput.value = cashVal > 0 ? cashInput.value : lineTotal.toFixed(2);
+    cashInput.readOnly = false;
     acInput.style.display = 'none'; acInput.value = '0.00';
   } else if (mode === 'AC') {
-    acInput.style.display = ''; acInput.value = lineTotal.toFixed(2); acInput.readOnly = true;
+    acInput.style.display = ''; 
+    const acVal = parseFloat(acInput.value || '0') || 0;
+    acInput.value = acVal > 0 ? acInput.value : lineTotal.toFixed(2);
+    acInput.readOnly = false;
     cashInput.style.display = 'none'; cashInput.value = '0.00';
   } else { // Mixed
     cashInput.style.display = ''; acInput.style.display = '';
     cashInput.readOnly = false; acInput.readOnly = false;
-    if (!cashInput.value || Number(cashInput.value) === 0) cashInput.value = '0.00';
-    if (!acInput.value || Number(acInput.value) === 0) acInput.value = '0.00';
+    if (!cashInput.value || Number(cashInput.value) === 0) cashInput.value = '';
+    if (!acInput.value || Number(acInput.value) === 0) acInput.value = '';
+    syncMixedAmounts(row);
   }
 }
 
@@ -411,6 +538,16 @@ function addExpenseRow(type='', desc='', amount='0.00') {
 
   amountInput.addEventListener('input', updateTotals);
 
+  if (type) {
+    typeSel.value = type;
+    typeSel.dispatchEvent(new Event('change'));
+    if (type === 'other') {
+      descContainer.style.display = '';
+      amountInput.readOnly = false;
+      amountInput.value = amount;
+    }
+  }
+
   div.querySelector('.remove-expense').addEventListener('click', () => {
     div.remove();
     updateTotals();
@@ -460,27 +597,43 @@ function updateTotals() {
 }
 
 /* startup */
-document.addEventListener('DOMContentLoaded', () => {
-  addRow();
-  addExpenseRow(); // optional initial expense
+function loadExistingInvoice() {
+  itemsContainer.innerHTML = '';
+  if (existingLineItems && existingLineItems.length) {
+    existingLineItems.forEach(item => addRow(item));
+  }
+
+  expensesContainer.innerHTML = '';
+  if (existingExpenses && existingExpenses.length) {
+    existingExpenses.forEach(exp => addExpenseRow(exp.expense_type, exp.expense_desc || '', exp.expense_amount));
+  }
+
+  updateEmployeeHiddenInputs();
+  updateSelectedProductDisplay();
   updateTotals();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (existingLineItems && existingLineItems.length) {
+    loadExistingInvoice();
+  } else {
+    addRow();
+    addExpenseRow(); // optional initial expense
+    updateTotals();
+  }
 });
 
 /* submit validation */
 document.getElementById('invoiceForm').addEventListener('submit', (e) => {
   let invalid = false;
   document.querySelectorAll('.item-row').forEach(row => {
-    const pmode = row.querySelector('.payment-mode-select').value;
-    const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
-    if (pmode === 'Mixed') {
-      const cash = parseFloat(row.querySelector('.cash-input').value || 0);
-      const ac = parseFloat(row.querySelector('.ac-input').value || 0);
-      if (Math.abs((cash + ac) - lineTotal) > 0.01) invalid = true;
-    }
+    const cash = parseFloat(row.querySelector('.cash-input').value || 0);
+    const ac = parseFloat(row.querySelector('.ac-input').value || 0);
+    if (cash < 0 || ac < 0) invalid = true;
   });
   if (invalid) {
     e.preventDefault();
-    alert('For Mixed rows, Cash + AC must equal the line total.');
+    alert('Cash and AC amounts cannot be negative.');
     return;
   }
   if (document.querySelectorAll('.emp-checkbox:checked').length === 0) {

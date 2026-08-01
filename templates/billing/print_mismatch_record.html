@@ -1,0 +1,82 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}Mismatch Record {{ invoice.invoice_number }}{% endblock title %}
+
+{% block content %}
+<div class="w-full mx-auto p-10">
+  <div class="flex flex-col xl:flex-row justify-between items-start gap-4 mb-8">
+    <div class="space-y-2">
+      <div class="text-sm uppercase tracking-widest text-gray-500">Maa Tara HP Gas</div>
+      <h1 class="text-3xl font-extrabold text-primary">Mismatch Record {{ invoice.invoice_number }}</h1>
+      <p class="text-sm text-gray-600">Date: {{ invoice.invoice_date }}</p>
+    </div>
+    <div class="space-x-2 no-print">
+      <button type="button" onclick="window.print()" class="btn btn-primary">Print Record</button>
+      <a href="{% url 'print_daily_sell_invoice' invoice.id %}" class="btn btn-outline">Back to invoice</a>
+    </div>
+  </div>
+
+  <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-200">
+    <div class="mb-6">
+      <p class="text-sm text-gray-600">The following line items have submitted quantities different from the billed quantities.</p>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="table w-full">
+        <thead>
+          <tr>
+            <th>Subdealer</th>
+            <th>Product</th>
+            <th>Billed Qty</th>
+            <th>Submitted</th>
+            <th>Difference</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in mismatch_items %}
+            <tr>
+              <td>{{ item.item.subdealer.name }}</td>
+              <td>{{ item.item.product.product_name }}</td>
+              <td>{{ item.item.quantity }}</td>
+              <td>{{ item.item.submitted_blank }}</td>
+              <td>{{ item.shortage }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-6">No mismatch items found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media print {
+    .no-print,
+    #sidebarContainer,
+    header,
+    .alert,
+    .btn,
+    a.btn {
+      display: none !important;
+    }
+    body {
+      margin: 0 !important;
+    }
+    .w-full.mx-auto.p-10 {
+      padding: 0 !important;
+    }
+    .bg-white,
+    .bg-base-200,
+    .bg-base-100 {
+      background: white !important;
+    }
+    .table {
+      width: 100% !important;
+    }
+  }
+</style>
+{% endblock content %}

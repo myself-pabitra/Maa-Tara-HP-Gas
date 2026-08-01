@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}View Bills{% endblock title %}
+
+{% block content %}
+<div class="w-full mx-auto p-10">
+  <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+    <div>
+      <h1 class="text-3xl font-extrabold text-primary">View Bills</h1>
+      <p class="text-sm text-gray-600 mt-2">List of saved invoices with edit access.</p>
+    </div>
+    <div>
+      <a href="{% url 'create_daily_sell_invoice' %}" class="btn btn-primary">Create New Bill</a>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto bg-base-200 shadow-lg rounded-3xl p-6">
+    <table class="table w-full">
+      <thead>
+        <tr>
+          <th>Invoice</th>
+          <th>Date</th>
+          <th>Payment Mode</th>
+          <th>Subtotal</th>
+          <th>Expenses</th>
+          <th>Total</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for invoice in invoices %}
+          <tr>
+            <td>{{ invoice.invoice_number }}</td>
+            <td>{{ invoice.invoice_date }}</td>
+            <td>{{ invoice.payment_mode }}</td>
+            <td>₹{{ invoice.subtotal }}</td>
+            <td>₹{{ invoice.other_expense }}</td>
+            <td>₹{{ invoice.grand_total }}</td>
+            <td class="flex gap-2">
+              <a href="{% url 'edit_daily_sell_invoice' invoice.id %}" class="btn btn-sm btn-outline">Edit</a>
+              <a href="{% url 'download_invoice_pdf' invoice.id %}" class="btn btn-sm btn-primary">PDF</a>
+              <a href="{% url 'print_daily_sell_invoice' invoice.id %}" target="_blank" class="btn btn-sm btn-secondary">Print</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-6">No bills have been created yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock content %}

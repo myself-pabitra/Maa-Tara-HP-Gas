@@ -13,6 +13,12 @@ class Subdealer(models.Model):
         max_length=15, help_text="Phone number of the subdealer"
     )
     address = models.TextField(help_text="Address of the subdealer")
+    dac_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=100,
+        help_text="DAC percentage to apply for this subdealer"
+    )
 
     class Meta:
         db_table = "SubDealers"
@@ -150,6 +156,21 @@ class DailyInvoiceExpense(models.Model):
 
     def __str__(self):
         return f"{self.invoice.invoice_number} - {self.expense_name}: ₹{self.expense_amount}"
+
+
+class DACEntry(models.Model):
+    subdealer = models.ForeignKey(Subdealer, on_delete=models.CASCADE, related_name='dac_entries')
+    entry_date = models.DateField()
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "DACEntry"
+        ordering = ['-entry_date', '-created_at']
+
+    def __str__(self):
+        return f"{self.subdealer.name} - {self.entry_date} - ₹{self.amount}"
 
 
 class PredefinedExpense(models.Model):

@@ -1,16 +1,30 @@
-<nav id="sidebar" class="bg-white text-gray-800 h-[calc(100vh-60px)] transform translate-x-0 transition-opacity duration-300 z-50 border-r border-gray-200">
+<nav id="sidebar"
+  class="bg-white text-gray-800 h-[calc(100vh-60px)] transform translate-x-0 transition-opacity duration-300 z-50 border-r border-gray-200">
 
   <ul class="p-4 space-y-4 menu rounded-box w-full">
     <li><a href="/">{% include "icons/home.svg" %} Home</a></li>
     <li><a href="#"> {% include "icons/users.svg" %} SubDealers</a></li>
     <li><a href="{% url 'manage_products' %}"> {% include "icons/inventory.svg" %} Inventory</a></li>
-    <li><a href="{% url 'create_daily_sell_invoice' %}" target="_blank" > {% include "icons/inventory.svg" %} Billing</a></li>
+    <li>
+      <details class="group">
+        <summary onclick="handleDetailsToggle(event)">Billing</summary>
+        <ul class="pl-4">
+          <li><a href="{% url 'create_daily_sell_invoice' %}">Create Bill</a></li>
+          <li><a href="{% url 'view_daily_sell_invoices' %}">View Bills</a></li>
+          <li><a href="{% url 'mismatch_records' %}">Mismatch Records</a></li>
+          <li><a href="{% url 'payment_verification' %}">Payments Verification</a></li>
+          <li><a href="{% url 'payment_due_list' %}">Due Payments</a></li>
+          <li><a href="{% url 'monthly_summary' %}">Monthly Summary</a></li>
+        </ul>
+      </details>
+    </li>
 
     <li>
       <details open class="group">
         <summary onclick="handleDetailsToggle(event)">Sub Dealers</summary>
         <ul class="pl-4">
           <li><a href="{% url 'CreateNewSubDealers' %}">Add Subdealer</a></li>
+          <li><a href="{% url 'view_subdealers' %}">View Subdealers</a></li>
           <li><a href="{% url 'addSubDealersProductDiscount' %}">Add Discount</a></li>
           <li><a href="{% url 'view_subdealer_discounts' %}">View Discount</a></li>
         </ul>
@@ -27,11 +41,30 @@
       </details>
     </li>
 
-        <li>
+    <li>
       <details class="group">
         <summary onclick="handleDetailsToggle(event)">Employees</summary>
         <ul class="pl-4">
           <li><a href="{% url 'add_new_employees' %}">Add Employees</a></li>
+        </ul>
+      </details>
+    </li>
+    </li>
+
+    <li>
+      <details class="group">
+        <summary onclick="handleDetailsToggle(event)">DAC</summary>
+        <ul class="pl-4">
+          <li><a href="{% url 'dac_entry' %}">Entry DAC</a></li>
+          <li><a href="{% url 'view_dac' %}">View DAC</a></li>
+        </ul>
+      </details>
+    </li>
+    <li>
+      <details class="group">
+        <summary onclick="handleDetailsToggle(event)">Orders</summary>
+        <ul class="pl-4">
+          <li><a href="{% url 'pending_orders' %}">Pending Orders</a></li>
         </ul>
       </details>
     </li>

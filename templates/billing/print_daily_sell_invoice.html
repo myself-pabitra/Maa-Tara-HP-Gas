@@ -1,0 +1,164 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}Print Invoice {{ invoice.invoice_number }}{% endblock title %}
+
+{% block content %}
+<div class="w-full mx-auto p-10">
+  <div class="flex flex-col xl:flex-row justify-between items-start gap-4 mb-8">
+    <div class="space-y-2">
+      <div class="text-sm uppercase tracking-widest text-gray-500">Maa Tara HP Gas</div>
+      <h1 class="text-3xl font-extrabold text-primary">Invoice {{ invoice.invoice_number }}</h1>
+      <p class="text-sm text-gray-600">Date: {{ invoice.invoice_date }}</p>
+
+      <!-- <p class="text-sm text-gray-600">Payment Mode: {{ invoice.payment_mode }}</p> -->
+    </div>
+    <div class="space-x-2 no-print">
+      <button type="button" onclick="window.print()" class="btn btn-primary">Print Invoice</button>
+      <a href="{% url 'view_daily_sell_invoices' %}" class="btn btn-outline">Back to invoices</a>
+    </div>
+  </div>
+
+  <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-200">
+    {% if invoice.notes %}
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold mb-2">Notes</h2>
+      <p>{{ invoice.notes }}</p>
+    </div>
+    {% endif %}
+
+
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold mb-2">Invoice Summary</h2>
+      <div class="space-y-2 text-sm">
+        <!-- <div class="flex justify-between"><span>Invoice No.</span><span>{{ invoice.invoice_number }}</span></div> -->
+        <div class="flex justify-between"><span>Date</span><span>{{ invoice.invoice_date }}</span></div>
+        <div class="flex justify-between font-bold text-lg"><span>Subtotal</span><span>₹{{ invoice.subtotal }}</span>
+        </div>
+        {% if expense_summaries %}
+        {% for expense in expense_summaries %}
+        <div class="flex justify-between text-sm"><span>{{ expense.label }}</span><span>₹{{ expense.amount }}</span>
+        </div>
+        {% endfor %}
+        {% if ac_summaries %}
+        <div class="pt-2 border-t border-base-300">
+          {% for ac in ac_summaries %}
+          <div class="flex justify-between text-sm"><span>{{ ac.label }}</span><span>₹{{ ac.amount }}</span></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div class="pt-2 border-t border-base-300 font-bold text-lg">
+          <div class="flex justify-between"><span>Total Cash</span><span>₹{{ total_cash_amount }}</span></div>
+        </div>
+        {% endif %}
+        {% for summary in summary_items %}
+        <div class="flex justify-between font-bold text-lg"><span>{{ summary.text }}</span><span></span></div>
+        {% endfor %}
+        <div class="pt-2 border-t border-base-300">
+          {% for item in product_totals %}
+          <div class="flex justify-between text-sm">
+            <span>{{ item.product_name }}</span>
+            <span>Total: {{ item.quantity }} | Submitted: {{ item.submitted }}</span>
+          </div>
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+
+    <div class="overflow-x-auto mb-6">
+      <table class="table w-full">
+        <thead>
+          <tr>
+            <th>Subdealer</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Submitted</th>
+            <th>Line Total</th>
+            <th>Cash</th>
+            <th>AC</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in invoice.line_items.all %}
+          <tr>
+            <td>{{ item.subdealer.name }}</td>
+            <td>{{ item.product.product_name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.submitted_blank }}</td>
+            <td>₹{{ item.line_total }}</td>
+            <td>₹{{ item.cash_amount }}</td>
+            <td>₹{{ item.ac_amount }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-6">No line items available.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if invoice.expenses.exists %}
+    <!-- <div class="mb-6">
+        <h2 class="text-lg font-semibold mb-3">Expenses</h2>
+        <div class="bg-base-100 p-4 rounded-2xl">
+          <table class="table w-full">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for expense in invoice.expenses.all %}
+                <tr>
+                  <td>{{ expense.expense_name }}</td>
+                  <td>₹{{ expense.expense_amount }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div> -->
+    {% endif %}
+  </div>
+
+</div>
+
+<style>
+  @media print {
+
+    .no-print,
+    #sidebarContainer,
+    header,
+    .alert,
+    .btn,
+    a.btn {
+      display: none !important;
+    }
+
+    body {
+      margin: 0 !important;
+    }
+
+    .w-full.mx-auto.p-10 {
+      padding: 0 !important;
+    }
+
+    .bg-white,
+    .bg-base-200,
+    .bg-base-100 {
+      background: white !important;
+    }
+
+    .table {
+      width: 100% !important;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+  }
+</style>
+{% endblock content %}

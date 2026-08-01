@@ -1,0 +1,55 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block title %}View Subdealers{% endblock title %}
+
+{% block content %}
+<div class="px-6 py-8">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+    <div>
+      <h2 class="text-3xl font-semibold text-primary">Subdealers</h2>
+      <p class="text-sm text-gray-600">Manage your subdealer list, update details, or delete entries.</p>
+    </div>
+    <div>
+      <a href="{% url 'CreateNewSubDealers' %}" class="btn btn-primary">Add New Subdealer</a>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto bg-base-200 rounded-2xl shadow-sm">
+    <table class="table w-full">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <!-- <th>Code</th> -->
+          <th>Phone</th>
+          <th>Address</th>
+          <th>DAC Percentage</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for subdealer in subdealers %}
+        <tr>
+          <td>{{ subdealer.name }}</td>
+          <!-- <td>{{ subdealer.subdealerCode }}</td> -->
+          <td>{{ subdealer.phone_number }}</td>
+          <td>{{ subdealer.address|linebreaksbr }}</td>
+          <td>{{ subdealer.dac_percentage }}%</td>
+          <td class="space-x-2 text-center">
+            <a href="{% url 'edit_subdealer' subdealer.id %}" class="btn btn-sm btn-info">Edit</a>
+            <form method="post" action="{% url 'delete_subdealer' subdealer.id %}" class="inline-block">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-error" onclick="return confirm('Delete this subdealer?');">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center py-8 text-gray-500">No subdealers found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock content %}
