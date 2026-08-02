@@ -53,6 +53,7 @@ def manage_products(request):
 
     context = {
         "products": products,
+        "page_type": "manage_products",
     }
 
     return render(

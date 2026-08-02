@@ -1,24 +1,20 @@
 <nav id="sidebar"
-     class="bg-white text-gray-800 h-[calc(100vh-60px)] transform translate-x-0 transition-opacity duration-300 z-50 border-r border-gray-200">
-  <ul class="p-4 space-y-3 menu rounded-box w-full">
+     class="relative bg-white text-gray-800 h-[calc(100vh-60px)] border-r border-gray-200">
+  <ul class="menu p-4 space-y-2 w-full pb-24">
     <li>
-      <a href="/">
+      <a href="{% url 'dashboard' %}">
         {% include "icons/home.svg" %}
-      Home</a>
-    </li>
-    <li>
-      <a href="#">
-        {% include "icons/users.svg" %}
-      SubDealers</a>
+        <span>Dashboard</span>
+      </a>
     </li>
     <li>
       <a href="{% url 'manage_products' %}">
         {% include "icons/inventory.svg" %}
-      Inventory</a>
+        <span>Inventory</span>
+      </a>
     </li>
     <li>
-      <details {% if page_type == "view_invoices" or page_type == "cylinder_mismatch" or page_type == "payment_due_list"  or page_type == "payment_verification" or page_type == "monthly_summary" %} open {% endif %}
-               class="group">
+      <details {% if page_type == "view_invoices" or page_type == "create_invoice" or page_type == "cylinder_mismatch" or page_type == "payment_due_list" or page_type == "payment_verification" or page_type == "monthly_summary" %}open{% endif %}>
         <summary onclick="handleDetailsToggle(event)">Billing</summary>
         <ul>
           <li>
@@ -28,7 +24,7 @@
             <a href="{% url 'view_daily_sell_invoices' %}">View Bills</a>
           </li>
           <li>
-            <a href="{% url 'Cylender_Mismatch' %}">Cylender Mismatch</a>
+            <a href="{% url 'Cylender_Mismatch' %}">Cylinder Mismatch</a>
           </li>
           <li>
             <a href="{% url 'CheckPendingVerification' %}">Pending Verification</a>
@@ -43,8 +39,7 @@
       </details>
     </li>
     <li>
-      <details {% if page_type == "create_subdealer" or page_type == "view_subdealers" or page_type == "edit_subdealer" or page_type == "add_discount" or page_type == "view_discount" %} open {% endif %}
-               class="group">
+      <details {% if page_type == "create_subdealer" or page_type == "view_subdealers" or page_type == "edit_subdealer" or page_type == "add_discount" or page_type == "view_discount" %}open{% endif %}>
         <summary onclick="handleDetailsToggle(event)">Sub Dealers</summary>
         <ul>
           <li>
@@ -57,32 +52,30 @@
             <a href="{% url 'addSubDealersProductDiscount' %}">Add Discount</a>
           </li>
           <li>
-            <a href="{% url 'view_subdealer_discounts' %}">View Discount</a>
+            <a href="{% url 'view_subdealer_discounts' %}">View Discounts</a>
           </li>
         </ul>
       </details>
     </li>
     <li>
-      <details {% if page_type == "add_product" or page_type == "view_products" or page_type == "edit_product" %}open{% endif %}
-               class="group">
-        <summary onclick="handleDetailsToggle(event)">Productus</summary>
+      <details {% if page_type == "add_product" or page_type == "view_products" or page_type == "edit_product" or page_type == "manage_products" %}open{% endif %}>
+        <summary onclick="handleDetailsToggle(event)">Products</summary>
         <ul>
           <li>
-            <a href="{% url 'Add_product' %}">Add to Inventory</a>
+            <a href="{% url 'Add_product' %}">Add Product</a>
           </li>
           <li>
-            <a href="#">Submenu 2</a>
+            <a href="{% url 'manage_products' %}">View Products</a>
           </li>
         </ul>
       </details>
     </li>
     <li>
-      <details {% if page_type == "add_new_employees" or page_type == "view_employees" %}open{% endif %}
-               class="group">
+      <details {% if page_type == "add_new_employees" or page_type == "view_employees" or page_type == "edit_employee" %}open{% endif %}>
         <summary onclick="handleDetailsToggle(event)">Employees</summary>
         <ul>
           <li>
-            <a href="{% url 'add_new_employees' %}">Add Employees</a>
+            <a href="{% url 'add_new_employees' %}">Add Employee</a>
           </li>
           <li>
             <a href="{% url 'view_employees' %}">View Employees</a>
@@ -90,50 +83,56 @@
         </ul>
       </details>
     </li>
-  </li>
-  <li>
-    <details {% if page_type == "entry_dac" or page_type == "view_dac" or page_type == "pending_dac_orders" %}open{% endif %}
-             class="group">
-      <summary onclick="handleDetailsToggle(event)">DAC</summary>
-      <ul>
-        <li>
-          <a href="{% url 'dac_entry' %}">Entry DAC</a>
-        </li>
-        <li>
-          <a href="{% url 'view_dac' %}">View DAC</a>
-        </li>
-        <li>
-          <a href="{% url 'pending_dac_orders' %}">Pending DAC</a>
-        </li>
-      </ul>
-    </details>
-  </li>
-  {% comment %} <li>
-      <details class="group">
-        <summary onclick="handleDetailsToggle(event)">Orders</summary>
-        <ul class="pl-4">
-
+    <li>
+      <details {% if page_type == "entry_dac" or page_type == "view_dac" or page_type == "pending_dac_orders" %}open{% endif %}>
+        <summary onclick="handleDetailsToggle(event)">DAC</summary>
+        <ul>
+          <li>
+            <a href="{% url 'dac_entry' %}">Entry DAC</a>
+          </li>
+          <li>
+            <a href="{% url 'view_dac' %}">View DAC</a>
+          </li>
+          <li>
+            <a href="{% url 'pending_dac_orders' %}">Pending DAC</a>
+          </li>
         </ul>
       </details>
-  </li> {% endcomment %}
-</ul>
+    </li>
+  </ul>
+  <div class="absolute bottom-0 left-0 w-full border-t border-gray-200 bg-white">
+    {% if request.user.is_authenticated %}
+      <div class="px-4 pt-3 pb-2">
+        <p class="text-xs text-gray-500">Logged in as</p>
+        <p class="font-semibold truncate">{{ request.user.username }}</p>
+      </div>
+    {% endif %}
+    <a href="{% url 'logout' %}"
+       class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 font-medium transition">
+      <svg xmlns="http://www.w3.org/2000/svg"
+           class="h-5 w-5"
+           fill="none"
+           viewBox="0 0 24 24"
+           stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H9m4 8H7a2 2 0 01-2-2V6a2 2 0 012-2h6" />
+      </svg>
+      Logout
+    </a>
+  </div>
 </nav>
 <script>
-  function handleDetailsToggle(event) {
+function handleDetailsToggle(event){
     event.preventDefault();
-    const currentDetails = event.target.closest('details');
-    const allDetails = document.querySelectorAll('#sidebar details');
-
-    allDetails.forEach(details => {
-      if (details !== currentDetails) {
-        details.removeAttribute('open');
-      }
+    const current = event.target.closest("details");
+    document.querySelectorAll("#sidebar details").forEach(function(item){
+        if(item !== current){
+            item.removeAttribute("open");
+        }
     });
-
-    if (currentDetails.hasAttribute('open')) {
-      currentDetails.removeAttribute('open');
-    } else {
-      currentDetails.setAttribute('open', '');
+    if(current.hasAttribute("open")){
+        current.removeAttribute("open");
+    }else{
+        current.setAttribute("open","");
     }
-  }
+}
 </script>

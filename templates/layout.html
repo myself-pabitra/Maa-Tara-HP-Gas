@@ -16,16 +16,25 @@
         <section>{% include "components/header.html" %}</section>
         {% endif %}
         <section class="flex">
-            {% if page_type != 'create_invoice' and page_type != 'print_invoice' %}
-            <section id="sidebarContainer" class="transition-all duration-300 overflow-hidden w-1/6">
-                {% include "components/sidebar.html" %}
-            </section>
-            {% endif %}
-            <section id="content" class="p-4 w-full">
-                {% block content %}
 
-                {% endblock content %}
-            </section>
+            {% if page_type != 'create_invoice' and page_type != 'print_invoice' %}
+
+            <aside id="sidebarContainer"
+                class="w-72 shrink-0">
+
+                {% include "components/sidebar.html" %}
+
+            </aside>
+
+            {% endif %}
+
+            <main id="content"
+                class="flex-1 p-4">
+
+                {% block content %}{% endblock %}
+
+            </main>
+
         </section>
         
 
