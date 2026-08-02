@@ -4,7 +4,7 @@ from . import views
 
 urlpatterns = [
     path(
-        "payments/payments-pending-verification/",
+        "payments-pending-verification/",
         views.CheckPendingVerification,
         name="CheckPendingVerification",
     ),
@@ -13,5 +13,5 @@ urlpatterns = [
         views.verify_payment,
         name="verify_payment",
     ),
-    path("payments/payments-due/", views.due_payments, name="payment_due_list"),
+    path("payments-due/", views.due_payments, name="payment_due_list"),
 ]
