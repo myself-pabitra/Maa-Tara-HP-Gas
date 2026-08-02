@@ -113,10 +113,10 @@
     <!-- Product -->
     <div class="w-40 flex-shrink-0">
       <label class="label"><span class="label-text text-xs">Product</span></label>
-      <select name="product_id[]" class="select select-bordered product-select w-full">
+      <select name="product_code[]" class="select select-bordered product-select w-full">
         <option value="">Select Product</option>
         {% for p in products %}
-          <option value="{{ p.id }}" data-price="{{ p.product_price }}">{{ p.product_name }} — ₹{{ p.product_price }}</option>
+          <option value="{{ p.productCode }}" data-price="{{ p.product_price }}">{{ p.product_name }} — ₹{{ p.product_price }}</option>
         {% endfor %}
       </select>
     </div>

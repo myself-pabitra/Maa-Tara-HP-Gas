@@ -35,22 +35,49 @@ class ProductInventory(models.Model):
         return self.product_price - discount_amount
 
     def generate_product_code(self):
+        """
+        Generate a readable product code.
 
-        # Keep only letters and digits
-        cleaned = re.sub(r"[^A-Za-z0-9 ]", "", self.product_name.upper())
+        Examples:
+        -------------------------------------
+        Lighter120         -> LIGHT120
+        HP Gas 14.2 KG     -> HPGA142KG
+        Commercial Cylinder-> COMCY
+        Stove              -> STOVE
+        Regulator          -> REGUL
+        """
+
+        # Keep only letters, numbers and spaces
+        cleaned = re.sub(r"[^A-Za-z0-9 ]", "", self.product_name.upper()).strip()
 
         words = cleaned.split()
 
         code = ""
 
-        for word in words:
-            if word.isdigit():
-                code += word
+        if len(words) == 1:
+            word = words[0]
+
+            letters = "".join(ch for ch in word if ch.isalpha())
+            digits = "".join(ch for ch in word if ch.isdigit())
+
+            if digits:
+                # LIGHTER120 -> LIGHT120
+                code = letters[:5] + digits
             else:
-                code += word[:2]
+                # STOVE -> STOVE
+                code = letters[:5]
 
-        code = code[:10]
+        else:
+            # Multi-word product names
+            for word in words:
+                if word.isdigit():
+                    code += word
+                else:
+                    code += word[:2]
 
+            code = code[:10]
+
+        # Ensure uniqueness
         if not ProductInventory.objects.filter(productCode=code).exists():
             return code
 
@@ -63,7 +90,7 @@ class ProductInventory(models.Model):
                 return new_code
 
             counter += 1
-
+            
     def save(self, *args, **kwargs):
 
         if not self.productCode:

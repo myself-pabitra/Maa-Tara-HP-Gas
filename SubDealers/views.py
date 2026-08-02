@@ -50,7 +50,11 @@ def CreateNewSubDealers(request):
         messages.success(request, f"Subdealer '{subDealer_name}' created successfully!")
         return redirect("CreateNewSubDealers")
 
-    return render(request, "SubDealers/Createnew_subdealers.html",context={"page_type": "create_subdealer"})
+    return render(
+        request,
+        "SubDealers/Createnew_subdealers.html",
+        context={"page_type": "create_subdealer"},
+    )
 
 
 def view_subdealers(request):
@@ -203,11 +207,12 @@ def view_subdealer_discounts(request):
     return render(request, "SubDealers/view_subdealer_discounts.html", context)
 
 
-
-
 def create_invoice(request):
     subdealers = Subdealer.objects.all()
-    products = ProductInventory.objects.all()
+    products = ProductInventory.objects.filter(
+        product_quantity__gt=0,
+        in_stock=True,
+    )
     employees = Employee.objects.all()
 
     # Predefined expenses
@@ -223,7 +228,7 @@ def create_invoice(request):
     discounts_map = {}
     for d in SubDealerSKUDiscount.objects.select_related("subdealer", "product").all():
         sub_code = d.subdealer.subdealerCode
-        discounts_map.setdefault(sub_code, {})[str(d.product.id)] = float(
+        discounts_map.setdefault(sub_code, {})[d.product.productCode] = float(
             d.product_discount or 0
         )
     discounts_map_json = json.dumps(discounts_map)
@@ -247,7 +252,7 @@ def create_invoice(request):
                     invoice.employees.set(employee_ids)
 
                 # Line items arrays
-                products_ids = request.POST.getlist("product_id[]")
+                product_codes = request.POST.getlist("product_code[]")
                 subdealers_codes = request.POST.getlist("subdealer_code[]")
                 qtys = request.POST.getlist("quantity[]")
                 submitted_list = request.POST.getlist("submitted_blank[]")
@@ -259,7 +264,7 @@ def create_invoice(request):
                 ac_amounts = request.POST.getlist("ac_amount[]")
 
                 # Basic length validation
-                n = len(products_ids)
+                n = len(product_codes)
                 if not (
                     n
                     and len(subdealers_codes)
@@ -280,13 +285,15 @@ def create_invoice(request):
                 modes_seen = set()
 
                 for i in range(n):
-                    prod_id = products_ids[i]
+                    product_code = product_codes[i]
                     sub_code = subdealers_codes[i]
                     try:
-                        product = ProductInventory.objects.get(id=prod_id)
+                        product = ProductInventory.objects.select_for_update().get(
+                            productCode=product_code
+                        )
                     except ProductInventory.DoesNotExist:
                         raise ValueError(
-                            f"Product id {prod_id} not found (row {i + 1})."
+                            f"Product '{product_code}' not found (row {i + 1})."
                         )
                     try:
                         subdealer = Subdealer.objects.get(subdealerCode=sub_code)
@@ -365,6 +372,32 @@ def create_invoice(request):
                         due_amount = ac_amt
                     else:  # Mixed
                         due_amount = ac_amt
+
+                    # ----------------------------------------------------------
+                    # Inventory Validation
+                    # ----------------------------------------------------------
+
+                    if product.product_quantity < qty:
+                        raise ValueError(
+                            f"Insufficient stock for {product.product_name} "
+                            f"(Available: {product.product_quantity}, "
+                            f"Requested: {qty})"
+                        )
+
+                    # ----------------------------------------------------------
+                    # Reduce Stock
+                    # ----------------------------------------------------------
+
+                    product.product_quantity -= qty
+
+                    product.in_stock = product.product_quantity > 0
+
+                    product.save(
+                        update_fields=[
+                            "product_quantity",
+                            "in_stock",
+                        ]
+                    )
 
                     # create line item with per-line payment_status
                     DailyInvoiceLineItem.objects.create(
