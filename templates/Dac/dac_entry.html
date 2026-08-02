@@ -1,0 +1,191 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}DAC Entry{% endblock %}
+
+{% block content %}
+
+<div class="max-w-5xl mx-auto p-8">
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-primary">
+            DAC Ledger Entry
+        </h1>
+        <p class="text-base-content/70 mt-1">
+            Create Credit / Debit DAC transactions for Subdealers.
+        </p>
+    </div>
+
+    <form method="POST"
+          class="bg-base-200 rounded-3xl shadow-xl p-8">
+
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Subdealer -->
+
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-semibold">
+                        Subdealer
+                    </span>
+                </label>
+
+                <select
+                    name="subdealer_code"
+                    class="select select-bordered select-lg w-full"
+                    required>
+
+                    <option value="">
+                        Select Subdealer
+                    </option>
+
+                    {% for subdealer in subdealers %}
+
+                    <option value="{{ subdealer.subdealerCode }}">
+                        {{ subdealer.name }} ({{ subdealer.subdealerCode }})
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+            </div>
+
+            <!-- Date -->
+
+            <div class="form-control">
+
+                <label class="label">
+                    <span class="label-text font-semibold">
+                        Entry Date
+                    </span>
+                </label>
+
+                <input
+                    type="date"
+                    name="dac_date"
+                    value="{{ today|date:'Y-m-d' }}"
+                    class="input input-bordered input-lg w-full"
+                    required>
+
+            </div>
+
+            <!-- Transaction Type -->
+
+            <div class="form-control">
+
+                <label class="label">
+                    <span class="label-text font-semibold">
+                        Transaction Type
+                    </span>
+                </label>
+
+                <select
+                    name="transaction_type"
+                    class="select select-bordered select-lg w-full"
+                    required>
+
+                    <option value="CR">
+                        Credit (+)
+                    </option>
+
+                    <option value="DR">
+                        Debit (-)
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- Quantity -->
+
+            <div class="form-control">
+
+                <label class="label">
+                    <span class="label-text font-semibold">
+                        DAC Quantity
+                    </span>
+                </label>
+
+                <input
+                    type="number"
+                    name="transaction_quantity"
+                    min="0"
+                    step="1"
+                    placeholder="Enter Quantity"
+                    class="input input-bordered input-lg w-full"
+                    required>
+
+            </div>
+
+        </div>
+
+        <!-- Description -->
+
+        <div class="form-control mt-6">
+
+            <label class="label">
+                <span class="label-text font-semibold">
+                    Description
+                </span>
+            </label>
+
+            <textarea
+                name="description"
+                rows="4"
+                class="textarea textarea-bordered"
+                placeholder="Optional remarks..."></textarea>
+
+        </div>
+
+        <!-- Information Card -->
+
+        <div class="alert alert-info mt-6">
+
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="stroke-current shrink-0 h-6 w-6"
+                 fill="none"
+                 viewBox="0 0 24 24">
+
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M12 8v.01M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+
+            </svg>
+
+            <span>
+                Credit transactions increase the DAC balance, while Debit
+                transactions decrease it. Opening and Closing balances are
+                calculated automatically.
+            </span>
+
+        </div>
+
+        <!-- Buttons -->
+
+        <div class="flex justify-end gap-4 mt-8">
+
+            <a href="{% url 'view_dac' %}"
+               class="btn btn-outline btn-lg">
+
+                View Ledger
+
+            </a>
+
+            <button
+                type="submit"
+                class="btn btn-primary btn-lg px-10">
+
+                Save Entry
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

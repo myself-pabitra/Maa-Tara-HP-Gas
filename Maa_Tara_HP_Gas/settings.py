@@ -28,6 +28,8 @@ INSTALLED_APPS = [
     "inventory",
     "SubDealers",
     "employees",
+    "UserDAC",
+    "Payments",
 ]
 
 MIDDLEWARE = [

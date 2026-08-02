@@ -1,0 +1,172 @@
+{% extends "layout.html" %}
+{% load static %}
+{% block title %}View Employees{% endblock %}
+{% block content %}
+    <div class="max-w-7xl mx-auto p-8">
+        <!-- Header -->
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-primary">Employee Directory</h1>
+                <p class="text-base-content/70 mt-2">View, search, edit and manage all employees.</p>
+            </div>
+            <a href="{% url 'add_new_employees' %}" class="btn btn-primary btn-lg">
+                <i class="fa-solid fa-user-plus mr-2"></i>
+                Add Employee
+            </a>
+        </div>
+        <!-- Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="stats shadow bg-primary text-primary-content">
+                <div class="stat">
+                    <div class="stat-title text-primary-content">Total Employees</div>
+                    <div class="stat-value">{{ total_employees }}</div>
+                </div>
+            </div>
+            <div class="stats shadow bg-success text-success-content">
+                <div class="stat">
+                    <div class="stat-title">Active</div>
+                    <div class="stat-value">{{ employees|length }}</div>
+                </div>
+            </div>
+            <div class="stats shadow">
+                <div class="stat">
+                    <div class="stat-title">Search Result</div>
+                    <div class="stat-value text-primary">{{ employees|length }}</div>
+                </div>
+            </div>
+        </div>
+        <!-- Filter -->
+        <div class="card bg-base-200 shadow-xl mb-8">
+            <div class="card-body">
+                <form method="GET" class="grid lg:grid-cols-12 gap-4 items-end">
+                    <div class="lg:col-span-9">
+                        <label class="label">
+                            <span class="label-text font-semibold">Search Employee</span>
+                        </label>
+                        <input type="text"
+                               name="search"
+                               class="input input-bordered w-full"
+                               value="{{ search }}"
+                               placeholder="Search Name / Employee Code / Mobile">
+                    </div>
+                    <div class="lg:col-span-3 flex gap-3">
+                        <button class="btn btn-primary flex-1">Search</button>
+                        <a href="{% url 'view_employees' %}" class="btn btn-outline">Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- Table -->
+        <div class="overflow-x-auto rounded-3xl shadow-xl bg-base-200">
+            <table class="table table-zebra">
+                <thead class="bg-primary text-primary-content">
+                    <tr>
+                        <th>#</th>
+                        <th>Employee Code</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <span class="badge badge-primary badge-outline font-mono">{{ employee.employeeCode }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ employee.name }}</strong>
+                            </td>
+                            <td>{{ employee.phone }}</td>
+                            <td>{{ employee.address }}</td>
+                            <td>
+                                {% if employee.is_active %}
+                                    <span class="badge badge-success">Active</span>
+                                {% else %}
+                                    <span class="badge badge-error">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="flex justify-center gap-2">
+                                    <a href="{% url 'edit_employee' employee.employeeCode %}"
+                                       class="btn btn-primary btn-sm">{% include "icons/edit.svg" %}</a>
+                                    <button class="btn btn-error btn-sm delete-btn"
+                                            data-url="{% url 'delete_employee' employee.id %}"
+                                            data-name="{{ employee.name }}">{% include "icons/delete.svg" %}</button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-12 text-base-content/60">No Employees Found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Delete Modal -->
+    <dialog id="deleteModal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-xl">Delete Employee</h3>
+            <p class="py-4">
+                Are you sure you want to delete
+                <strong id="empName"></strong>?
+            </p>
+            <div class="modal-action">
+                <button class="btn" onclick="deleteModal.close()">Cancel</button>
+                <form id="deleteForm" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-error">Delete</button>
+                </form>
+            </div>
+        </div>
+    </dialog>
+    <script>
+
+const modal=document.getElementById("deleteModal");
+
+document.querySelectorAll(".delete-btn").forEach(btn=>{
+
+    btn.onclick=function(){
+
+        document.getElementById("empName").innerHTML=this.dataset.name;
+
+        document.getElementById("deleteForm").action=this.dataset.url;
+
+        modal.showModal();
+
+    }
+
+});
+
+    </script>
+    <style>
+
+.table thead th{
+
+position:sticky;
+
+top:0;
+
+z-index:20;
+
+}
+
+.table tbody tr{
+
+transition:.2s;
+
+}
+
+.table tbody tr:hover{
+
+transform:scale(1.002);
+
+}
+
+    </style>
+{% endblock %}

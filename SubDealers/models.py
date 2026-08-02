@@ -1,14 +1,16 @@
 from decimal import Decimal
 import random
 import string
-from django.db import models,transaction
+from django.db import models, transaction
 from inventory.models import ProductInventory
 from django.utils import timezone
 
 
 class Subdealer(models.Model):
     name = models.CharField(max_length=100, help_text="Name of the subdealer")
-    subdealerCode = models.CharField(max_length=50,unique=True,help_text="Unique Subdealer Code")
+    subdealerCode = models.CharField(
+        max_length=50, unique=True, help_text="Unique Subdealer Code"
+    )
     phone_number = models.CharField(
         max_length=15, help_text="Phone number of the subdealer"
     )
@@ -17,7 +19,7 @@ class Subdealer(models.Model):
         max_digits=5,
         decimal_places=2,
         default=100,
-        help_text="DAC percentage to apply for this subdealer"
+        help_text="DAC percentage to apply for this subdealer",
     )
 
     class Meta:
@@ -25,7 +27,7 @@ class Subdealer(models.Model):
 
     def __str__(self):
         return self.name
-    
+
     def create_subdealer_code(self):
         """
         Generate a subdealer code like:
@@ -33,9 +35,9 @@ class Subdealer(models.Model):
         """
         name_part = self.name[:4].upper()
         phone_part = self.phone_number[-6:]
-        random_part = ''.join(random.choices(string.ascii_uppercase, k=2))
+        random_part = "".join(random.choices(string.ascii_uppercase, k=2))
         return f"{name_part}{phone_part}{random_part}"
-    
+
     def save(self, *args, **kwargs):
         """
         Automatically assign subdealerCode before saving.
@@ -53,39 +55,43 @@ class SubDealerSKUDiscount(models.Model):
     class Meta:
         db_table = "SubDealer_SKU_Discount"
         # Ensure each subdealer-product combination is unique
-        unique_together = ('subdealer', 'product')
+        unique_together = ("subdealer", "product")
 
     def __str__(self):
         return f"{self.subdealer.name} - {self.product.product_name} (Discount: {self.product_discount}%)"
-    
+
     def get_subdealer_discounted_product_price(self, product):
         return product.price_after_discount(self.product_discount)
-    
 
 
 class Cylender_information(models.Model):
-    Subdealer = models.ForeignKey('SubDealers.Subdealer', on_delete=models.CASCADE)
-    product = models.ForeignKey('inventory.ProductInventory', on_delete=models.CASCADE)
+    Subdealer = models.ForeignKey("SubDealers.Subdealer", on_delete=models.CASCADE)
+    product = models.ForeignKey("inventory.ProductInventory", on_delete=models.CASCADE)
     due_cylender_qty = models.IntegerField()
 
     def __str__(self):
         return f"{self.Subdealer.name} - {self.product.product_name} (Due Cylender: {self.due_cylender_qty})"
-    
+
     class Meta:
         db_table = "Cylender_information"
-
 
 
 class DailyInvoice(models.Model):
     invoice_number = models.CharField(max_length=30, unique=True, editable=False)
     invoice_date = models.DateField()  # set from form
-    employees = models.ManyToManyField('employees.Employee', blank=True)
+    employees = models.ManyToManyField("employees.Employee", blank=True)
     # invoice-level mode is derived from line items (convenience)
     payment_mode = models.CharField(max_length=20, blank=True)
     notes = models.TextField(blank=True, null=True)
-    subtotal = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
-    other_expense = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
-    grand_total = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
+    subtotal = models.DecimalField(
+        max_digits=14, decimal_places=2, default=Decimal("0.00")
+    )
+    other_expense = models.DecimalField(
+        max_digits=14, decimal_places=2, default=Decimal("0.00")
+    )
+    grand_total = models.DecimalField(
+        max_digits=14, decimal_places=2, default=Decimal("0.00")
+    )
 
     class Meta:
         db_table = "DailyInvoice"
@@ -96,7 +102,9 @@ class DailyInvoice(models.Model):
             today = timezone.now().strftime("%Y%m%d")
             with transaction.atomic():
                 last_invoice = (
-                    DailyInvoice.objects.filter(invoice_number__startswith=f"INV-{today}")
+                    DailyInvoice.objects.filter(
+                        invoice_number__startswith=f"INV-{today}"
+                    )
                     .order_by("-invoice_number")
                     .first()
                 )
@@ -115,21 +123,23 @@ class DailyInvoice(models.Model):
         return self.invoice_number
 
 
-
 class DailyInvoiceLineItem(models.Model):
-    PAYMENT_MODE_CHOICES = [
-        ('Cash', 'Cash'),
-        ('Mixed', 'Mixed'),
-        ('AC', 'AC'),
-    ]
-    PAYMENT_STATUS_CHOICES = [
-        ('PAID', 'Paid'),
-        ('PENDING', 'Pending Verification'),
-    ]
+    PAYMENT_MODE_CHOICES = (
+        ("Cash", "Cash"),
+        ("Mixed", "Mixed"),
+        ("AC", "AC"),
+    )
+    PAYMENT_STATUS_CHOICES = (
+        ("PAID", "Paid"),
+        ("PENDING", "Pending Verification"),
+        ("PARTIAL", "Partial Payment"),
+    )
 
-    invoice = models.ForeignKey(DailyInvoice, on_delete=models.CASCADE, related_name='line_items')
-    subdealer = models.ForeignKey('SubDealers.Subdealer', on_delete=models.PROTECT)
-    product = models.ForeignKey('inventory.ProductInventory', on_delete=models.PROTECT)
+    invoice = models.ForeignKey(
+        DailyInvoice, on_delete=models.CASCADE, related_name="line_items"
+    )
+    subdealer = models.ForeignKey("SubDealers.Subdealer", on_delete=models.PROTECT)
+    product = models.ForeignKey("inventory.ProductInventory", on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField()
     submitted_blank = models.PositiveIntegerField(default=0)
     discounted_price = models.DecimalField(max_digits=12, decimal_places=2)
@@ -137,10 +147,35 @@ class DailyInvoiceLineItem(models.Model):
     due_cyl = models.PositiveIntegerField(default=0)
 
     # Payment fields per-line
-    payment_mode = models.CharField(max_length=10, choices=PAYMENT_MODE_CHOICES, default='Cash')
-    cash_amount = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
-    ac_amount = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
-    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='PENDING')
+    payment_mode = models.CharField(
+        max_length=10, choices=PAYMENT_MODE_CHOICES, default="Cash"
+    )
+    cash_amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text="Cash collected during invoice creation",
+    )
+
+    ac_amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text="Original AC amount billed",
+    )
+
+    verified_ac_amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text="Actual AC amount received after verification",
+    )
+
+    due_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    payment_status = models.CharField(
+        max_length=10, choices=PAYMENT_STATUS_CHOICES, default="PENDING"
+    )
 
     created_at = models.DateTimeField(default=timezone.now, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
@@ -150,27 +185,14 @@ class DailyInvoiceLineItem(models.Model):
 
 
 class DailyInvoiceExpense(models.Model):
-    invoice = models.ForeignKey(DailyInvoice, on_delete=models.CASCADE, related_name='expenses')
+    invoice = models.ForeignKey(
+        DailyInvoice, on_delete=models.CASCADE, related_name="expenses"
+    )
     expense_name = models.CharField(max_length=100)
     expense_amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
         return f"{self.invoice.invoice_number} - {self.expense_name}: ₹{self.expense_amount}"
-
-
-class DACEntry(models.Model):
-    subdealer = models.ForeignKey(Subdealer, on_delete=models.CASCADE, related_name='dac_entries')
-    entry_date = models.DateField()
-    amount = models.DecimalField(max_digits=14, decimal_places=2)
-    description = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = "DACEntry"
-        ordering = ['-entry_date', '-created_at']
-
-    def __str__(self):
-        return f"{self.subdealer.name} - {self.entry_date} - ₹{self.amount}"
 
 
 class PredefinedExpense(models.Model):
@@ -182,4 +204,3 @@ class PredefinedExpense(models.Model):
 
     def __str__(self):
         return f"{self.name} - ₹{self.default_amount}"
-    

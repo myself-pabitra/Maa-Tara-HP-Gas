@@ -1,0 +1,231 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}Edit Employee{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto px-6 py-8">
+
+    <!-- Header -->
+
+    <div class="flex justify-between items-center mb-8">
+
+        <div>
+
+            <h1 class="text-4xl font-bold text-primary">
+
+                Employee Management
+
+            </h1>
+
+            <p class="text-base-content/70 mt-2">
+
+                Update employee information.
+
+            </p>
+
+        </div>
+
+        <a href="{% url 'view_employees' %}"
+           class="btn btn-outline btn-primary">
+
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="w-5 h-5 mr-2"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor">
+
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 19l-7-7 7-7"/>
+
+            </svg>
+
+            Back
+
+        </a>
+
+    </div>
+
+    <!-- Form -->
+
+    <div class="card bg-base-200 shadow-xl border border-base-300">
+
+        <div class="card-body">
+
+            <h2 class="text-2xl font-bold mb-6">
+
+                Edit Employee
+
+            </h2>
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <!-- Employee Code -->
+
+                <div class="form-control mb-5">
+
+                    <label class="label">
+
+                        <span class="label-text font-semibold">
+
+                            Employee Code
+
+                        </span>
+
+                    </label>
+
+                    <input
+                        type="text"
+                        class="input input-bordered bg-base-100"
+                        value="{{ employee.employeeCode }}"
+                        readonly>
+
+                </div>
+
+                <!-- Name -->
+
+                <div class="form-control mb-5">
+
+                    <label class="label">
+
+                        <span class="label-text font-semibold">
+
+                            Employee Name
+
+                        </span>
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="employee_name"
+                        class="input input-bordered"
+                        value="{{ employee.name }}"
+                        required>
+
+                </div>
+
+                <!-- Phone -->
+
+                <div class="form-control mb-5">
+
+                    <label class="label">
+
+                        <span class="label-text font-semibold">
+
+                            Mobile Number
+
+                        </span>
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="phone"
+                        maxlength="10"
+                        class="input input-bordered"
+                        value="{{ employee.phone }}"
+                        required>
+
+                </div>
+
+                <!-- Address -->
+
+                <div class="form-control mb-5">
+
+                    <label class="label">
+
+                        <span class="label-text font-semibold">
+
+                            Address
+
+                        </span>
+
+                    </label>
+
+                    <textarea
+                        name="address"
+                        rows="4"
+                        class="textarea textarea-bordered"
+                        required>{{ employee.address }}</textarea>
+
+                </div>
+
+                <!-- Status -->
+
+                <div class="flex justify-between items-center py-4 border-t border-base-300">
+
+                    <div>
+
+                        <h3 class="font-semibold">
+
+                            Employee Status
+
+                        </h3>
+
+                        <p class="text-sm text-base-content/60">
+
+                            Enable if employee is currently active.
+
+                        </p>
+
+                    </div>
+
+                    <input
+                        type="checkbox"
+                        name="is_active"
+                        class="toggle toggle-success toggle-lg"
+                        {% if employee.is_active %}
+                        checked
+                        {% endif %}>
+
+                </div>
+
+                <!-- Buttons -->
+
+                <div class="flex justify-end gap-3 mt-8">
+
+                    <a href="{% url 'view_employees' %}"
+                       class="btn btn-outline">
+
+                        Cancel
+
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
+
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             class="w-5 h-5 mr-2"
+                             fill="none"
+                             viewBox="0 0 24 24"
+                             stroke="currentColor">
+
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M5 13l4 4L19 7"/>
+
+                        </svg>
+
+                        Update Employee
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,64 +1,119 @@
+
 {% extends 'layout.html' %}
 {% load static %}
 
-{% block title %}Add Product{% endblock title %}
+{% block title %}Add Product{% endblock %}
 
 {% block content %}
-<div class="flex justify-center mt-10">
-  <form method="post" class="w-full max-w-lg bg-base-200 p-8 rounded-2xl shadow-xl space-y-6">
-    {% csrf_token %}
-    <h2 class="text-2xl font-semibold text-center mb-6 text-primary">Add New Product</h2>
 
-    <!-- Product Name -->
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-medium">Product Name</span>
-      </label>
-      <input type="text" name="product_name" placeholder="Enter product name"
-        class="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary" required />
+<div class="p-8 max-w-6xl mx-auto">
+
+    <div class="mb-8">
+        <h2 class="text-4xl font-bold text-primary">Add New Product</h2>
+        <p class="text-gray-500 mt-2">
+            Create a new product for inventory and billing.
+        </p>
     </div>
 
-        <!-- Product Price -->
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-medium">Product Price</span>
-      </label>
-      <input type="number" name="product_price" placeholder="Enter Product MRP"
-        class="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary" min="0" step="0.01" required />
+    <div class="bg-base-100 rounded-3xl shadow-xl border border-base-300">
+
+        <form method="post" class="p-8">
+            {% csrf_token %}
+
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-12 h-12 rounded-xl bg-primary text-primary-content flex items-center justify-center">
+                    <i class="fa-solid fa-box text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold">Product Information</h3>
+                    <p class="text-sm text-gray-500">Fill the product details below.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-semibold">Product Name</span></label>
+                    <input type="text" name="product_name" class="input input-bordered input-lg w-full"
+                           placeholder="Example : HP 14.2 Kg Refill" required>
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-semibold">Product Code</span></label>
+                    <div class="alert alert-info rounded-xl">
+                        <i class="fa-solid fa-barcode"></i>
+                        <span>Generated Automatically</span>
+                    </div>
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-semibold">Opening Quantity</span></label>
+                    <input type="number" name="product_quantity" min="0" value="0"
+                           class="input input-bordered input-lg w-full" required>
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-semibold">Selling Price (MRP)</span></label>
+                    <label class="input input-bordered input-lg flex items-center gap-2">
+                        <span>₹</span>
+                        <input class="grow" type="number" name="product_price" min="0" step="0.01"
+                               placeholder="0.00" required>
+                    </label>
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-semibold">Buying Price</span></label>
+                    <label class="input input-bordered input-lg flex items-center gap-2">
+                        <span>₹</span>
+                        <input class="grow" type="number" name="buy_price" min="0" step="0.01"
+                               placeholder="0.00" required>
+                    </label>
+                </div>
+
+            </div>
+
+            <div class="divider text-base font-semibold mt-8">Configuration</div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <label class="border border-base-300 rounded-2xl p-5 flex justify-between items-center cursor-pointer hover:bg-base-200">
+                    <div>
+                        <div class="font-bold">Product In Stock</div>
+                        <div class="text-sm text-gray-500">Available for billing</div>
+                    </div>
+                    <input type="checkbox" name="in_stock" class="toggle toggle-primary toggle-lg" checked>
+                </label>
+
+                <label class="border border-base-300 rounded-2xl p-5 flex justify-between items-center cursor-pointer hover:bg-base-200">
+                    <div>
+                        <div class="font-bold">DAC Applicable</div>
+                        <div class="text-sm text-gray-500">Deduct DAC during invoice</div>
+                    </div>
+                    <input type="checkbox" name="dac_applicable" class="toggle toggle-success toggle-lg">
+                </label>
+
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="flex justify-end gap-3">
+
+                <a href="{% url 'manage_products' %}" class="btn btn-outline">
+                    <i class="fa-solid fa-arrow-left mr-2"></i>
+                    Back
+                </a>
+
+                <button class="btn btn-primary btn-wide">
+                    <i class="fa-solid fa-plus mr-2"></i>
+                    Add Product
+                </button>
+
+            </div>
+
+        </form>
+
     </div>
 
-    <!-- Quantity -->
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-medium">Quantity</span>
-      </label>
-      <input type="number" name="product_quantity" placeholder="Enter quantity"
-        class="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary" min="0" required />
-    </div>
-
-    <!-- Buy Price -->
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-medium">Buy Price</span>
-      </label>
-      <input type="number" name="buy_price" placeholder="Enter buy price"
-        class="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary" min="0" step="0.01" required />
-    </div>
-
-    <!-- In Stock -->
-    <div class="form-control">
-      <label class="cursor-pointer label">
-        <span class="label-text font-medium">In Stock?</span>
-        <input type="checkbox" name="in_stock" class="checkbox checkbox-success ml-2" />
-      </label>
-    </div>
-
-    <!-- Submit Button -->
-    <div class="form-control mt-6">
-      <button type="submit" class="btn btn-primary w-full">
-        <i class="fa-solid fa-plus mr-2"></i> Add Product
-      </button>
-    </div>
-  </form>
 </div>
-{% endblock content %}
+
+{% endblock %}

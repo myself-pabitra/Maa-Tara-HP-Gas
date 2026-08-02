@@ -1,0 +1,213 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}Pending DAC Orders{% endblock %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto p-8">
+
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mb-8">
+
+        <div>
+            <h1 class="text-3xl font-bold text-primary">
+                Pending DAC Orders
+            </h1>
+
+            <p class="text-base-content/70 mt-1">
+                Pending refill quantity for
+                <span class="font-semibold text-primary">
+                    {{ selected_month }}
+                </span>
+                based on monthly DAC allocation.
+            </p>
+        </div>
+
+        <a href="{% url 'CreateNewSubDealers' %}" class="btn btn-primary btn-lg">
+            + Add Subdealer
+        </a>
+
+    </div>
+
+    <div class="bg-base-200 rounded-3xl shadow-lg p-6 mb-8">
+
+        <form method="GET">
+
+            <div class="grid grid-cols-12 gap-4 items-end">
+
+                <div class="col-span-12 lg:col-span-6">
+
+                    <label class="label">
+                        <span class="label-text font-semibold">
+                            Subdealer
+                        </span>
+                    </label>
+
+                    <select
+                        name="subdealer"
+                        class="select select-bordered select-lg w-full">
+
+                        <option value="">All Subdealers</option>
+
+                        {% for subdealer in subdealers %}
+
+                        <option value="{{ subdealer.id }}"
+                            {% if selected_subdealer == subdealer.id|stringformat:"s" %}
+                            selected
+                            {% endif %}>
+
+                            {{ subdealer.name }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <div class="col-span-12 lg:col-span-3">
+
+                    <label class="label">
+                        <span class="label-text font-semibold">
+                            Month
+                        </span>
+                    </label>
+
+                    <input
+                        type="month"
+                        name="month"
+                        value="{{ selected_month }}"
+                        class="input input-bordered input-lg w-full">
+
+                </div>
+
+                <div class="col-span-12 lg:col-span-3 flex gap-3">
+
+                    <button type="submit"
+                            class="btn btn-primary btn-lg flex-1">
+                        Apply
+                    </button>
+
+                    <a href="{% url 'pending_dac_orders' %}"
+                       class="btn btn-outline btn-lg">
+                        Reset
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <div class="overflow-x-auto bg-base-200 rounded-3xl shadow-xl p-6">
+
+        <table class="table table-zebra">
+
+            <thead>
+
+                <tr>
+
+                    <th>Subdealer</th>
+
+                    <th class="text-right">
+                        Refills (Month)
+                    </th>
+
+                    <th class="text-right">
+                        Current DAC Balance
+                    </th>
+
+                    <th class="text-center">
+                        DAC %
+                    </th>
+
+                    <th class="text-right">
+                        Effective DAC (Month)
+                    </th>
+
+                    <th class="text-right">
+                        Pending Cylinders
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for row in rows %}
+
+                <tr>
+
+                    <td class="font-semibold">
+                        {{ row.subdealer.name }}
+                    </td>
+
+                    <td class="text-right">
+                        {{ row.total_refills }}
+                    </td>
+
+                    <td class="text-right">
+                        {{ row.current_dac }}
+                    </td>
+
+                    <td class="text-center">
+                        <span class="badge badge-primary badge-lg">
+                            {{ row.dac_percentage }}%
+                        </span>
+                    </td>
+
+                    <td class="text-right font-semibold">
+                        {{ row.effective_dac }}
+                    </td>
+
+                    <td class="text-right">
+
+                        {% if row.pending_order > 0 %}
+
+                        <span class="badge badge-success badge-lg w-28 justify-center">
+                            +{{ row.pending_order }}
+                        </span>
+
+                        {% elif row.pending_order < 0 %}
+
+                        <span class="badge badge-error badge-lg w-28 justify-center">
+                            {{ row.pending_order }}
+                        </span>
+
+                        {% else %}
+
+                        <span class="badge badge-neutral badge-lg w-28 justify-center">
+                            0
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+
+                    <td colspan="6" class="text-center py-10 text-base-content/60">
+                        No pending order data found.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

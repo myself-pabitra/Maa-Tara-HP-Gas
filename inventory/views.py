@@ -1,61 +1,113 @@
-from django.shortcuts import render, redirect
+from decimal import Decimal
+
 from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+
 from .models import ProductInventory
 
 
-def manage_products(request):
-    products = ProductInventory.objects.all()
-
-    if request.method == "POST":
-        for product in products:
-            # Update stock status
-            stock_key = f"in_stock_{product.id}"
-            product.in_stock = bool(request.POST.get(stock_key))
-
-            # Update prices
-            buy_key = f"buy_price_{product.id}"
-            product_price_key = f"product_price_{product.id}"
-            quantity_key = f"product_quantity_{product.id}"
-
-            product.buy_price = float(request.POST.get(buy_key, product.buy_price))
-            product.product_price = float(request.POST.get(product_price_key, product.product_price))
-            product.product_quantity = int(request.POST.get(quantity_key, product.product_quantity))
-
-            product.save()
-        
-        messages.success(request, "Products updated successfully!")
-        return redirect("manage_products")  # your URL name
-
-    context = {"products": products}
-    return render(request, "inventory/manage_products.html", context)
-
-
 def add_product(request):
+
     if request.method == "POST":
-        # Extract form data
-        product_name = request.POST.get("product_name")
-        product_price = request.POST.get("product_price")
-        product_quantity = request.POST.get("product_quantity")
-        buy_price = request.POST.get("buy_price")
-        in_stock = request.POST.get("in_stock") == "on"
+        try:
+            product_name = request.POST.get("product_name", "").strip()
 
-        # Validate required fields
-        if not product_name or not product_quantity or not buy_price or not product_price:
-            messages.error(request, "Please fill in all required fields.")
-            return redirect("Add_product")  # Replace with your URL name
+            if not product_name:
+                messages.error(request, "Product name is required.")
+                return redirect("Add_product")
 
-        # Create ProductInventory instance
-        product = ProductInventory.objects.create(
-            product_name=product_name,
-            product_price = product_price,
-            product_quantity=int(product_quantity),
-            buy_price=float(buy_price),
-            in_stock=in_stock
+            product = ProductInventory.objects.create(
+                product_name=product_name,
+                product_quantity=int(request.POST.get("product_quantity", 0)),
+                buy_price=Decimal(request.POST.get("buy_price", "0")),
+                product_price=Decimal(request.POST.get("product_price", "0")),
+                in_stock="in_stock" in request.POST,
+                dac_applicable="dac_applicable" in request.POST,
+            )
+
+            messages.success(
+                request, f"Product '{product.product_name}' added successfully."
+            )
+
+            return redirect("manage_products")
+
+        except Exception as e:
+            messages.error(request, f"Unable to add product. {e}")
+
+            return redirect("Add_product")
+
+    return render(
+        request,
+        "inventory/Add_product_to_inventory.html",
+        {
+            "page_type": "add_product",
+        },
+    )
+
+
+def manage_products(request):
+    """
+    Display all products.
+    """
+    products = ProductInventory.objects.all().order_by("product_name")
+
+    context = {
+        "products": products,
+    }
+
+    return render(
+        request,
+        "inventory/manage_products.html",
+        context,
+    )
+
+
+def update_product(request, product_id):
+
+    if request.method != "POST":
+        return redirect("manage_products")
+
+    product = get_object_or_404(ProductInventory, id=product_id)
+
+    try:
+        product.product_quantity = int(request.POST.get("product_quantity", 0))
+
+        product.buy_price = Decimal(request.POST.get("buy_price", 0))
+
+        product.product_price = Decimal(request.POST.get("product_price", 0))
+
+        # IMPORTANT
+        product.in_stock = request.POST.get("in_stock") == "1"
+        product.dac_applicable = request.POST.get("dac_applicable") == "1"
+
+        product.save()
+
+        messages.success(request, f"{product.product_name} updated successfully.")
+
+    except Exception as e:
+        messages.error(request, str(e))
+
+    return redirect("manage_products")
+
+
+def delete_product(request, product_id):
+    """
+    Delete a product.
+    """
+
+    product = get_object_or_404(
+        ProductInventory,
+        id=product_id,
+    )
+
+    if request.method == "POST":
+        name = product.product_name
+
+        product.delete()
+
+        messages.success(
+            request,
+            f"{name} deleted successfully.",
         )
 
-        # Trigger success message
-        messages.success(request, f"Product '{product_name}' added successfully!")
-        return redirect("Add_product")  # Redirect to the same form or product list
-
-    # GET request: render the form
-    return render(request, 'inventory/Add_product_to_inventory.html')
+    return redirect("manage_products")

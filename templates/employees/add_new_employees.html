@@ -1,60 +1,271 @@
-{% extends 'layout.html' %}
+{% extends "layout.html" %}
 {% load static %}
 
-{% block title %}Add New Employee{% endblock title %}
+{% block title %}Add Employee{% endblock %}
 
 {% block content %}
-<div class="flex justify-center mt-10">
-  <div class="w-full max-w-lg bg-base-200 p-8 rounded-2xl shadow-xl space-y-6">
-    <h2 class="text-2xl font-bold text-center text-primary mb-6">Add New Employee</h2>
 
-    <form method="post" class="space-y-4">
-      {% csrf_token %}
-      <div class="form-control">
-        <label class="label"><span class="label-text">Employee Name</span></label>
-        <input type="text" name="employee_name" placeholder="Enter name" class="input input-bordered w-full" required>
-      </div>
+<div class="max-w-7xl mx-auto px-6 py-8">
 
-      <div class="form-control">
-        <label class="label"><span class="label-text">Phone</span></label>
-        <input type="text" name="phone" placeholder="Enter phone number" class="input input-bordered w-full" required>
-      </div>
+    <!-- Header -->
 
-      <div class="form-control">
-        <label class="label"><span class="label-text">Address</span></label>
-        <textarea name="address" placeholder="Enter address" class="textarea textarea-bordered w-full" required></textarea>
-      </div>
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mb-8">
 
-      <div class="form-control mt-4">
-        <button type="submit" class="btn btn-primary w-full">
-          <i class="fa-solid fa-plus mr-2"></i> Add Employee
-        </button>
-      </div>
-    </form>
+        <div>
 
-    {% if employees %}
-      <h3 class="text-xl font-semibold mt-8 mb-4">All Employees</h3>
-      <div class="overflow-x-auto">
-        <table class="table table-zebra w-full">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Address</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for emp in employees %}
-              <tr>
-                <td>{{ emp.name }}</td>
-                <td>{{ emp.phone }}</td>
-                <td>{{ emp.address }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% endif %}
-  </div>
+            <h1 class="text-4xl font-bold text-primary">
+                Employee Management
+            </h1>
+
+            <p class="text-base-content/70 mt-2">
+                Create and manage employees working in Maa Tara HP Gas.
+            </p>
+
+        </div>
+
+        <a href="{% url 'view_employees' %}"
+           class="btn btn-primary btn-lg">
+
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="w-5 h-5 mr-2"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor">
+
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 20h5V4H2v16h5m10 0v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2m12 0H7m10-10a4 4 0 11-8 0 4 4 0 018 0z"/>
+
+            </svg>
+
+            View Employees
+
+        </a>
+
+    </div>
+
+    <div class="grid lg:grid-cols-5 gap-8">
+
+        <!-- Left Card -->
+
+        <div class="lg:col-span-2">
+
+            <div class="card bg-primary text-primary-content shadow-xl h-full">
+
+                <div class="card-body justify-center">
+
+                    <div class="text-center">
+
+                        <div class="text-7xl mb-5">
+                            👨‍💼
+                        </div>
+
+                        <h2 class="text-3xl font-bold mb-3">
+
+                            Employee Registration
+
+                        </h2>
+
+                        <p class="leading-7 opacity-90">
+
+                            Register employees who work under your agency.
+
+                        </p>
+
+                        <div class="divider"></div>
+
+                        <div class="space-y-3 text-left">
+
+                            <div class="flex items-center gap-3">
+
+                                ✅ Employee Code generated automatically
+
+                            </div>
+
+                            <div class="flex items-center gap-3">
+
+                                ✅ Mobile Number must be unique
+
+                            </div>
+
+                            <div class="flex items-center gap-3">
+
+                                ✅ Employees can be edited later
+
+                            </div>
+
+                            <div class="flex items-center gap-3">
+
+                                ✅ Active / Inactive status supported
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Right Card -->
+
+        <div class="lg:col-span-3">
+
+            <div class="card bg-base-200 shadow-xl">
+
+                <div class="card-body">
+
+                    <h2 class="card-title text-2xl mb-6">
+
+                        Add New Employee
+
+                    </h2>
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+                        <div class="grid md:grid-cols-2 gap-5">
+
+                            <div class="form-control">
+
+                                <label class="label">
+
+                                    <span class="label-text font-semibold">
+
+                                        Employee Name
+
+                                    </span>
+
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="employee_name"
+                                    class="input input-bordered"
+                                    placeholder="Enter employee name"
+                                    required>
+
+                            </div>
+
+                            <div class="form-control">
+
+                                <label class="label">
+
+                                    <span class="label-text font-semibold">
+
+                                        Mobile Number
+
+                                    </span>
+
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="phone"
+                                    maxlength="10"
+                                    class="input input-bordered"
+                                    placeholder="9876543210"
+                                    required>
+
+                            </div>
+
+                        </div>
+
+                        <div class="form-control mt-5">
+
+                            <label class="label">
+
+                                <span class="label-text font-semibold">
+
+                                    Address
+
+                                </span>
+
+                            </label>
+
+                            <textarea
+                                rows="4"
+                                name="address"
+                                class="textarea textarea-bordered"
+                                placeholder="Enter complete employee address"
+                                required></textarea>
+
+                        </div>
+
+                        <div class="flex justify-between items-center mt-6 border rounded-xl p-5 bg-base-100">
+
+                            <div>
+
+                                <h3 class="font-semibold">
+
+                                    Employee Status
+
+                                </h3>
+
+                                <p class="text-sm opacity-70">
+
+                                    Disable this employee whenever required.
+
+                                </p>
+
+                            </div>
+
+                            <input
+                                type="checkbox"
+                                name="is_active"
+                                class="toggle toggle-success toggle-lg"
+                                checked>
+
+                        </div>
+
+                        <div class="flex justify-end gap-4 mt-8">
+
+                            <button
+                                type="reset"
+                                class="btn btn-outline">
+
+                                Clear
+
+                            </button>
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary">
+
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     class="w-5 h-5 mr-2"
+                                     fill="none"
+                                     viewBox="0 0 24 24"
+                                     stroke="currentColor">
+
+                                    <path stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          stroke-width="2"
+                                          d="M12 4v16m8-8H4"/>
+
+                                </svg>
+
+                                Add Employee
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
-{% endblock content %}
+
+{% endblock %}

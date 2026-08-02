@@ -4,58 +4,711 @@
 {% block title %}Manage Products{% endblock %}
 
 {% block content %}
-<div class="p-6">
-  <h2 class="text-3xl font-bold mb-6 text-primary">Manage Products</h2>
 
+<div class="max-w-7xl mx-auto px-6 py-8">
 
-  <form method="post" class="overflow-x-auto">
-    {% csrf_token %}
-    <table class="table table-zebra w-full">
-      <thead>
-        <tr>
-          <th>Product Name</th>
-          <th>Quantity</th>
-          <th>In Stock</th>
-          <th>Buy Price</th>
-          <th>Product MRP</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for product in products %}
-        <tr class="hover">
-          <td>{{ product.product_name }}</td>
-          <td>
-            <input type="number" step="1" min="0"
-                   name="product_quantity_{{ product.id }}" 
-                   value="{{ product.product_quantity }}" 
-                   class="input input-bordered w-24 focus:outline-none">
-          </td>
-          <td>
-            <input type="checkbox" name="in_stock_{{ product.id }}" 
-                   class="checkbox checkbox-primary" {% if product.in_stock %}checked{% endif %}>
-          </td>
-          <td>
-            <input type="number" step="0.01" min="0"
-                   name="buy_price_{{ product.id }}" 
-                   value="{{ product.buy_price }}" 
-                   class="input input-bordered w-24 focus:outline-none">
-          </td>
-          <td>
-            <input type="number" step="0.01" min="0"
-                   name="product_price_{{ product.id }}" 
-                   value="{{ product.product_price }}" 
-                   class="input input-bordered w-24 focus:outline-none">
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="flex justify-between items-center mb-8">
 
-    <div class="mt-6">
-      <button type="submit" class="btn btn-primary">
-        <i class="fa-solid fa-save mr-2"></i> Save Changes
-      </button>
+        <div>
+
+            <h1 class="text-4xl font-bold text-primary">
+                Product Inventory
+            </h1>
+
+            <p class="text-gray-500 mt-2">
+                Manage Products, Prices, DAC & Inventory
+            </p>
+
+        </div>
+
+        <a href="{% url 'Add_product' %}" class="btn btn-primary">
+
+            <i class="fa fa-plus mr-2"></i>
+
+            Add Product
+
+        </a>
+
     </div>
-  </form>
+
+    <div class="card bg-base-200 shadow-xl mb-8">
+
+        <div class="card-body">
+
+            <div class="flex justify-between items-end gap-5">
+
+                <div class="form-control w-full">
+
+                    <label class="label">
+
+                        <span class="label-text font-semibold">
+
+                            Search Product
+
+                        </span>
+
+                    </label>
+
+                    <input
+                        id="productSearch"
+                        type="text"
+                        class="input input-bordered"
+                        placeholder="Search Product Name or Code">
+
+                </div>
+
+                <div class="stats shadow">
+
+                    <div class="stat">
+
+                        <div class="stat-title">
+
+                            Total Products
+
+                        </div>
+
+                        <div class="stat-value text-primary">
+
+                            {{ products|length }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="overflow-x-auto rounded-xl shadow-xl border">
+
+        <table class="table table-zebra">
+
+            <thead class="bg-primary text-primary-content">
+
+                <tr>
+
+                    <th>#</th>
+
+                    <th>Code</th>
+
+                    <th>Name</th>
+
+                    <th>DAC</th>
+
+                    <th>Stock</th>
+
+                    <th>Qty</th>
+
+                    <th>Buy Price</th>
+
+                    <th>MRP</th>
+
+                    <th width="220">
+
+                        Actions
+
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="productTable">
+
+            {% for product in products %}
+
+            <tr class="product-row" data-update-url="{% url 'update_product' product.id %}">
+
+                <td>
+
+                    {{ forloop.counter }}
+
+                </td>
+
+                <td>
+
+                    <span class="badge badge-primary badge-outline font-mono">
+
+                        {{ product.productCode }}
+
+                    </span>
+
+                </td>
+
+                <td>
+
+                    <strong>
+
+                        {{ product.product_name }}
+
+                    </strong>
+
+                </td>
+
+                <td>
+
+                    <input
+
+                        type="checkbox"
+
+                        class="toggle toggle-success dac-toggle"
+
+                        {% if product.dac_applicable %}
+
+                        checked
+
+                        {% endif %}
+
+                    >
+
+                </td>
+
+                <td>
+
+                    <input
+
+                        type="checkbox"
+
+                        class="toggle toggle-primary stock-toggle"
+
+                        {% if product.in_stock %}
+
+                        checked
+
+                        {% endif %}
+
+                    >
+
+                </td>
+
+                <td>
+
+                    <input
+
+                        class="input input-bordered qty-input w-24"
+
+                        type="number"
+
+                        value="{{ product.product_quantity }}">
+
+                </td>
+
+                <td>
+
+                    <input
+
+                        class="input input-bordered buy-input w-32"
+
+                        type="number"
+
+                        step="0.01"
+
+                        value="{{ product.buy_price }}">
+
+                </td>
+
+                <td>
+
+                    <input
+
+                        class="input input-bordered mrp-input w-32"
+
+                        type="number"
+
+                        step="0.01"
+
+                        value="{{ product.product_price }}">
+
+                </td>
+
+                <td>
+
+                    <div class="flex gap-2">
+
+                        <button
+
+                            class="btn btn-primary btn-sm update-btn"
+
+                            data-url="{% url 'update_product' product.id %}">
+
+                            <i class="fa fa-pen"></i>
+
+                            Update
+
+                        </button>
+
+                        <button
+
+                            class="btn btn-error btn-sm delete-btn"
+
+                            data-url="{% url 'delete_product' product.id %}">
+
+                            <i class="fa fa-trash"></i>
+
+                            Delete
+
+                        </button>
+
+                    </div>
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    </div>
+
+<!-- Hidden Form -->
+<form id="actionForm" method="post" style="display:none;">
+    {% csrf_token %}
+
+    <input type="hidden" name="product_quantity" id="hiddenQty">
+    <input type="hidden" name="buy_price" id="hiddenBuyPrice">
+    <input type="hidden" name="product_price" id="hiddenMrp">
+    <input type="hidden" name="in_stock" id="hiddenStock">
+    <input type="hidden" name="dac_applicable" id="hiddenDAC">
+
+</form>
+
+
+<!-- Confirmation Modal -->
+
+<dialog id="confirmModal" class="modal">
+
+    <div class="modal-box">
+
+        <h3 class="font-bold text-xl mb-3">
+
+            Confirmation
+
+        </h3>
+
+        <p id="confirmMessage" class="py-4">
+
+        </p>
+
+        <div class="modal-action">
+
+            <button
+                id="cancelBtn"
+                type="button"
+                class="btn">
+
+                Cancel
+
+            </button>
+
+            <button
+                id="confirmBtn"
+                type="button"
+                class="btn btn-primary">
+
+                Yes
+
+            </button>
+
+        </div>
+
+    </div>
+
+</dialog>
+
+
+<script>
+
+const modal = document.getElementById("confirmModal");
+const confirmBtn = document.getElementById("confirmBtn");
+const cancelBtn = document.getElementById("cancelBtn");
+const message = document.getElementById("confirmMessage");
+
+let confirmAction = null;
+
+cancelBtn.onclick = () => {
+
+    modal.close();
+
+};
+
+modal.addEventListener("click", function(e){
+
+    const box = modal.querySelector(".modal-box");
+
+    if(!box.contains(e.target)){
+
+        modal.close();
+
+    }
+
+});
+
+confirmBtn.onclick = function(){
+
+    if(confirmAction){
+
+        confirmAction();
+
+        confirmAction = null;
+
+    }
+
+    modal.close();
+
+};
+
+function askConfirmation(text, callback){
+
+    message.innerText = text;
+
+    confirmAction = callback;
+
+    if (typeof modal.showModal === "function") {
+        modal.showModal();
+    } else {
+        const confirmed = window.confirm(text);
+        if (confirmed) {
+            callback();
+        } else {
+            confirmAction = null;
+        }
+    }
+
+}
+
+const actionForm = document.getElementById("actionForm");
+const hiddenStock = document.getElementById("hiddenStock");
+const hiddenDAC = document.getElementById("hiddenDAC");
+
+function setFormCheckboxFields(stockChecked, dacChecked){
+    hiddenStock.disabled = !stockChecked;
+    hiddenStock.value = stockChecked ? "on" : "";
+    hiddenDAC.disabled = !dacChecked;
+    hiddenDAC.value = dacChecked ? "on" : "";
+}
+
+function getUpdateUrlFromRow(row) {
+    if (row.dataset.updateUrl) {
+        return row.dataset.updateUrl;
+    }
+    const updateBtn = row.querySelector(".update-btn");
+    return updateBtn ? updateBtn.dataset.url : "";
+}
+
+function submitProductUpdate(row, stockValue, dacValue) {
+
+    const updateUrl = row.dataset.updateUrl;
+
+    const tempForm = document.createElement("form");
+    tempForm.method = "POST";
+    tempForm.action = updateUrl;
+
+    const csrf = document.querySelector(
+        "#actionForm input[name='csrfmiddlewaretoken']"
+    ).cloneNode();
+
+    tempForm.appendChild(csrf);
+
+    function add(name, value){
+        const input = document.createElement("input");
+        input.type="hidden";
+        input.name=name;
+        input.value=value;
+        tempForm.appendChild(input);
+    }
+
+    add("product_quantity", row.querySelector(".qty-input").value);
+    add("buy_price", row.querySelector(".buy-input").value);
+    add("product_price", row.querySelector(".mrp-input").value);
+
+    add("in_stock", stockValue ? "1" : "0");
+    add("dac_applicable", dacValue ? "1" : "0");
+
+    document.body.appendChild(tempForm);
+    tempForm.submit();
+
+}
+
+//////////////////////////////////////////////////////////
+// SEARCH
+//////////////////////////////////////////////////////////
+
+document.getElementById("productSearch")
+.addEventListener("keyup", function(){
+
+    const value = this.value.toLowerCase();
+
+    document.querySelectorAll(".product-row").forEach(row=>{
+
+        row.style.display =
+            row.innerText.toLowerCase().includes(value)
+            ? ""
+            : "none";
+
+    });
+
+});
+
+//////////////////////////////////////////////////////////
+// UPDATE BUTTON
+//////////////////////////////////////////////////////////
+
+document.querySelectorAll(".update-btn").forEach(btn=>{
+
+    btn.addEventListener("click", function(){
+
+        const row = this.closest("tr");
+
+        askConfirmation(
+
+            "Update this product?",
+
+            function(){
+
+                submitProductUpdate(row);
+
+            }
+
+        );
+
+    });
+
+});
+
+//////////////////////////////////////////////////////////
+// DELETE BUTTON
+//////////////////////////////////////////////////////////
+
+document.querySelectorAll(".delete-btn").forEach(btn=>{
+
+    btn.addEventListener("click", function(){
+
+        askConfirmation(
+
+            "Delete this product permanently?",
+
+            function(){
+
+                const form = document.getElementById("actionForm");
+
+                form.action = btn.dataset.url;
+
+                form.submit();
+
+            }
+
+        );
+
+    });
+
+});
+
+//////////////////////////////////////////////////////////
+// DAC TOGGLE CONFIRMATION
+//////////////////////////////////////////////////////////
+document.querySelectorAll(".dac-toggle").forEach(toggle=>{
+
+    toggle.addEventListener("click",function(e){
+
+        e.preventDefault();
+
+        const row=this.closest("tr");
+
+        const newDAC=!this.checked;
+
+        askConfirmation(
+
+            newDAC
+                ? "Enable DAC?"
+                : "Disable DAC?",
+
+            ()=>{
+
+                this.checked=newDAC;
+
+                submitProductUpdate(
+                    row,
+                    row.querySelector(".stock-toggle").checked,
+                    newDAC
+                );
+
+            }
+
+        );
+
+    });
+
+});
+
+//////////////////////////////////////////////////////////
+// STOCK TOGGLE CONFIRMATION
+//////////////////////////////////////////////////////////
+document.querySelectorAll(".stock-toggle").forEach(toggle=>{
+
+    toggle.addEventListener("click",function(e){
+
+        e.preventDefault();
+
+        const row=this.closest("tr");
+
+        const newStock=!this.checked;
+
+        askConfirmation(
+
+            newStock
+                ? "Mark as In Stock?"
+                : "Mark as Out Of Stock?",
+
+            ()=>{
+
+                this.checked=newStock;
+
+                submitProductUpdate(
+                    row,
+                    newStock,
+                    row.querySelector(".dac-toggle").checked
+                );
+
+            }
+
+        );
+
+    });
+
+});
+
+
+//////////////////////////////////////////////////////////
+// ESC CLOSES MODAL
+//////////////////////////////////////////////////////////
+
+document.addEventListener("keydown", function(e){
+
+    if(e.key === "Escape"){
+
+        modal.close();
+
+    }
+
+});
+
+//////////////////////////////////////////////////////////
+// PREVENT ENTER FROM SUBMITTING ROWS
+//////////////////////////////////////////////////////////
+
+document.querySelectorAll("input").forEach(inp=>{
+
+    inp.addEventListener("keydown",function(e){
+
+        if(e.key==="Enter"){
+
+            e.preventDefault();
+
+        }
+
+    });
+
+});
+
+//////////////////////////////////////////////////////////
+// HIGHLIGHT MODIFIED ROWS
+//////////////////////////////////////////////////////////
+
+document.querySelectorAll(".product-row").forEach(row=>{
+
+    row.querySelectorAll("input").forEach(inp=>{
+
+        inp.addEventListener("change",()=>{
+
+            row.classList.add("bg-warning/10");
+
+        });
+
+    });
+
+});
+
+//////////////////////////////////////////////////////////
+// REMOVE HIGHLIGHT AFTER SUCCESSFUL UPDATE
+//////////////////////////////////////////////////////////
+
+window.addEventListener("pageshow",function(){
+
+    document.querySelectorAll(".product-row").forEach(r=>{
+
+        r.classList.remove("bg-warning/10");
+
+    });
+
+});
+
+</script>
+
+<style>
+
+.product-row{
+    transition:.25s ease;
+}
+
+.product-row:hover{
+    transform:scale(1.002);
+}
+
+.product-row td{
+    vertical-align:middle;
+}
+
+.table thead th{
+    position:sticky;
+    top:0;
+    z-index:20;
+}
+
+.badge{
+    letter-spacing:.5px;
+}
+
+.input{
+    transition:.2s;
+}
+
+.input:focus{
+    transform:scale(1.02);
+}
+
+.toggle{
+    transition:.2s;
+}
+
+.btn{
+    transition:.2s;
+}
+
+.btn:hover{
+    transform:translateY(-1px);
+}
+
+@media (max-width:1200px){
+
+    .table{
+
+        min-width:1300px;
+
+    }
+
+}
+
+</style>
+
 </div>
+
 {% endblock %}

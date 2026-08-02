@@ -1,0 +1,202 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}DAC Ledger{% endblock %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto p-8">
+
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mb-8">
+        <div>
+            <h1 class="text-4xl font-bold text-primary">DAC Ledger</h1>
+            <p class="text-gray-500 mt-2">
+                Credit / Debit transactions with running balance.
+            </p>
+        </div>
+
+        <a href="{% url 'dac_entry' %}" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-plus mr-2"></i>
+            New DAC Entry
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-base-100 rounded-3xl shadow-xl border border-base-300 p-6 mb-8">
+
+        <form method="get" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5 items-end">
+
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-semibold">Subdealer</span>
+                </label>
+
+                <select name="subdealer" class="select select-bordered select-lg">
+                    <option value="">All Subdealers</option>
+
+                    {% for subdealer in subdealers %}
+                    <option value="{{ subdealer.id }}"
+                        {% if selected_subdealer == subdealer.id|stringformat:"s" %}selected{% endif %}>
+                        {{ subdealer.name }} ({{ subdealer.subdealerCode }})
+                    </option>
+                    {% endfor %}
+
+                </select>
+            </div>
+
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-semibold">From Date</span>
+                </label>
+
+                <input
+                    type="date"
+                    name="from_date"
+                    value="{{ from_date }}"
+                    class="input input-bordered input-lg">
+            </div>
+
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-semibold">To Date</span>
+                </label>
+
+                <input
+                    type="date"
+                    name="to_date"
+                    value="{{ to_date }}"
+                    class="input input-bordered input-lg">
+            </div>
+
+            <button class="btn btn-primary btn-lg">
+                <i class="fa-solid fa-filter mr-2"></i>
+                Apply
+            </button>
+
+            <a href="{% url 'view_dac' %}" class="btn btn-outline btn-lg">
+                Clear Filter
+            </a>
+
+        </form>
+
+    </div>
+
+    <!-- Stats -->
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+        <div class="stats bg-success text-success-content shadow-xl">
+            <div class="stat">
+                <div class="stat-title text-success-content">Credit (Filtered)</div>
+                <div class="stat-value">{{ total_credit }}</div>
+            </div>
+        </div>
+
+        <div class="stats bg-error text-error-content shadow-xl">
+            <div class="stat">
+                <div class="stat-title text-error-content">Debit (Filtered)</div>
+                <div class="stat-value">{{ total_debit }}</div>
+            </div>
+        </div>
+
+        <div class="stats bg-primary text-primary-content shadow-xl">
+            <div class="stat">
+                <div class="stat-title text-primary-content">Balance</div>
+                <div class="stat-value">{{ current_balance }}</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Table -->
+
+    <div class="overflow-x-auto bg-base-100 rounded-3xl shadow-xl border border-base-300">
+
+        <table class="table table-zebra">
+
+            <thead class="bg-primary text-primary-content">
+
+                <tr>
+                    <th>#</th>
+                    <th>Date</th>
+                    <th>Subdealer</th>
+                    <th>Type</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Opening</th>
+                    <th class="text-right">Closing</th>
+                    <th>Description</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            {% for entry in entries %}
+
+                <tr class="hover">
+
+                    <td>{{ forloop.counter }}</td>
+
+                    <td>{{ entry.entry_date|date:"d M Y" }}</td>
+
+                    <td>
+                        <div class="font-semibold">{{ entry.subdealer.name }}</div>
+                        <div class="text-xs text-gray-500">{{ entry.subdealer.subdealerCode }}</div>
+                    </td>
+
+                    <td>
+                        {% if entry.transaction_type == "CR" %}
+                        <span class="badge badge-success badge-lg">Credit</span>
+                        {% else %}
+                        <span class="badge badge-error badge-lg">Debit</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-right font-bold">
+                        {% if entry.transaction_type == "CR" %}
+                        <span class="text-success">+{{ entry.transaction_quantity }}</span>
+                        {% else %}
+                        <span class="text-error">-{{ entry.transaction_quantity }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-right">{{ entry.opening_balance }}</td>
+
+                    <td class="text-right font-bold">{{ entry.closing_balance }}</td>
+
+                    <td>{{ entry.description|default:"-" }}</td>
+
+                    <td>
+                        <div class="flex justify-center gap-2">
+                            <a href="{% url 'dac_edit' entry.id %}" class="btn btn-sm btn-primary">Edit</a>
+                            <a href="{% url 'dac_delete' entry.id %}"
+                               onclick="return confirm('Delete this transaction?')"
+                               class="btn btn-sm btn-error">Delete</a>
+                        </div>
+                    </td>
+
+                </tr>
+
+            {% empty %}
+
+                <tr>
+                    <td colspan="9" class="text-center py-16">
+                        <i class="fa-solid fa-file-circle-xmark text-5xl text-gray-400 mb-3"></i>
+                        <div class="text-xl font-semibold text-gray-500">
+                            No DAC Transactions Found
+                        </div>
+                    </td>
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

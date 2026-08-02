@@ -12,4 +12,8 @@ urlpatterns = [
     path("subdealers/", include("SubDealers.urls")),
     # Employee Application URLs
     path("employees/",include("employees.urls")),
+    #UserDAC Application URLs
+    path("userdac/",include("UserDAC.urls")),
+    #Payments Application URLs
+    path("payments/",include("Payments.urls")),
 ]
