@@ -55,5 +55,4 @@ urlpatterns = [
         views.print_mismatch_record,
         name="print_mismatch_record",
     ),
-    path("billing/monthly-summary/", views.monthly_summary, name="monthly_summary"),
 ]

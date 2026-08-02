@@ -1,48 +1,244 @@
 <!DOCTYPE html>
 {% load static %}
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}{% endblock title %}</title>
-    <link rel="stylesheet" href="{% static 'src/output.css' %}" />
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-</head>
-
-<body>
-    <main>
-        {% if page_type != 'print_invoice' %}
-        <section>{% include "components/header.html" %}</section>
-        {% endif %}
-        <section class="flex">
-
-            {% if page_type != 'create_invoice' and page_type != 'print_invoice' %}
-
-            <aside id="sidebarContainer"
-                class="w-72 shrink-0">
-
-                {% include "components/sidebar.html" %}
-
-            </aside>
-
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            {% block title %}
+            {% endblock title %}
+        </title>
+        <link rel="stylesheet" href="{% static 'src/output.css' %}" />
+        <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+                defer></script>
+    </head>
+    <body>
+        <main>
+            {% if page_type != 'print_invoice' %}
+                <section>
+                    {% include "components/header.html" %}
+                </section>
             {% endif %}
-
-            <main id="content"
-                class="flex-1 p-4">
-
-                {% block content %}{% endblock %}
-
-            </main>
-
-        </section>
-        
-
+            <section class="flex h-[calc(100vh-64px)]">
+                {% if page_type != 'create_invoice' and page_type != 'print_invoice' %}
+                    <aside id="sidebarContainer"
+                           class="w-72 flex-shrink-0 border-r border-gray-200 bg-base-100 overflow-y-auto">
+                        {% include "components/sidebar.html" %}
+                    </aside>
+                {% endif %}
+                <main id="content" class="flex-1 overflow-y-auto p-6 bg-base-100">
+                    {% block content %}{% endblock %}
+                </main>
+            </section>
             <!--  alert component here -->
-        {% include "components/alert.html" %}
+            {% include "components/alert.html" %}
+            {% block js %}
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <script>
+const labels={{ chart_labels|safe }};
 
-        {% block js %}{% endblock js %}
-    </main>
-</body>
+//
+// SALES
+//
 
+new Chart(
+
+document.getElementById("salesChart"),
+
+{
+
+type:"line",
+
+data:{
+
+labels:labels,
+
+datasets:[{
+
+label:"Sales",
+
+data:{{ chart_sales|safe }},
+
+borderWidth:3,
+
+fill:true,
+
+tension:.35,
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{
+
+display:false
+
+}
+
+}
+
+}
+
+}
+
+);
+
+//
+// Revenue
+//
+
+new Chart(
+
+document.getElementById("revenueChart"),
+
+{
+
+type:"bar",
+
+data:{
+
+labels:labels,
+
+datasets:[
+
+{
+
+label:"Revenue",
+
+data:{{ chart_revenue|safe }}
+
+},
+
+{
+
+label:"Expenses",
+
+data:{{ chart_expenses|safe }}
+
+}
+
+]
+
+},
+
+options:{
+
+responsive:true
+
+}
+
+}
+
+);
+
+//
+// Cylinders
+//
+
+new Chart(
+
+document.getElementById("cylinderChart"),
+
+{
+
+type:"line",
+
+data:{
+
+labels:labels,
+
+datasets:[{
+
+label:"Cylinder Sold",
+
+data:{{ chart_cylinders|safe }},
+
+borderWidth:3,
+
+fill:true,
+
+tension:.4
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{
+
+display:false
+
+}
+
+}
+
+}
+
+}
+
+);
+
+//
+// DAC
+//
+
+new Chart(
+
+document.getElementById("dacChart"),
+
+{
+
+type:"bar",
+
+data:{
+
+labels:labels,
+
+datasets:[
+
+{
+
+label:"Credit",
+
+data:{{ chart_credit|safe }}
+
+},
+
+{
+
+label:"Debit",
+
+data:{{ chart_debit|safe }}
+
+}
+
+]
+
+},
+
+options:{
+
+responsive:true
+
+}
+
+}
+
+);
+
+                </script>
+            {% endblock js %}
+        </main>
+    </body>
 </html>

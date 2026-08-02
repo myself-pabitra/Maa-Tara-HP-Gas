@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "employees",
     "UserDAC",
     "Payments",
+    "analytics",
 ]
 
 MIDDLEWARE = [

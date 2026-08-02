@@ -1,0 +1,1202 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}Business Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- ====================================================== -->
+    <!-- Dashboard Header -->
+    <!-- ====================================================== -->
+
+    <div class="flex flex-col lg:flex-row justify-between items-center gap-6 mb-8">
+
+        <div>
+
+            <h1 class="text-4xl font-bold text-primary">
+
+                Business Dashboard
+
+            </h1>
+
+            <p class="text-base-content/70 mt-2">
+
+                Monitor sales, revenue, expenses, DAC, employees and business performance.
+
+            </p>
+
+        </div>
+
+        <div class="badge badge-primary badge-lg p-5">
+
+            Maa Tara HP Gas
+
+        </div>
+
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- Filters -->
+    <!-- ====================================================== -->
+
+    <div class="card bg-base-200 shadow-xl mb-8">
+
+        <div class="card-body">
+
+            <form method="GET"
+                  class="grid lg:grid-cols-12 gap-4">
+
+                <!-- Year -->
+
+                <div class="lg:col-span-3">
+
+                    <label class="label">
+
+                        <span class="label-text font-semibold">
+
+                            Year
+
+                        </span>
+
+                    </label>
+
+                    <select
+                        name="year"
+                        class="select select-bordered w-full">
+
+                        <option value="">
+
+                            All Years
+
+                        </option>
+
+                        {% for year in year_choices %}
+
+                        <option
+                            value="{{ year }}"
+                            {% if selected_year == year|stringformat:"s" %}
+                            selected
+                            {% endif %}>
+
+                            {{ year }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <!-- Month -->
+
+                <div class="lg:col-span-3">
+
+                    <label class="label">
+
+                        <span class="label-text font-semibold">
+
+                            Month
+
+                        </span>
+
+                    </label>
+
+                    <select
+                        name="month"
+                        class="select select-bordered w-full">
+
+                        <option value="">
+
+                            All Months
+
+                        </option>
+
+                        {% for m in "123456789101112"|make_list %}
+
+                        {% endfor %}
+
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+
+                    </select>
+
+                </div>
+
+                <!-- Buttons -->
+
+                <div class="lg:col-span-6 flex items-end gap-3">
+
+                    <button
+                        class="btn btn-primary">
+
+                        Apply Filter
+
+                    </button>
+
+                    <a href="{% url 'monthly_summary' %}"
+                       class="btn btn-outline">
+
+                        Reset
+
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- KPI Cards -->
+    <!-- ====================================================== -->
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+
+        <div class="stats shadow bg-primary text-primary-content">
+
+            <div class="stat">
+
+                <div class="stat-title text-primary-content">
+
+                    Total Revenue
+
+                </div>
+
+                <div class="stat-value">
+
+                    ₹ {{ invoice_summary.total_revenue }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="stats shadow bg-success text-success-content">
+
+            <div class="stat">
+
+                <div class="stat-title">
+
+                    Total Sales
+
+                </div>
+
+                <div class="stat-value">
+
+                    ₹ {{ invoice_summary.total_sales }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="stats shadow bg-warning text-warning-content">
+
+            <div class="stat">
+
+                <div class="stat-title">
+
+                    Total Expenses
+
+                </div>
+
+                <div class="stat-value">
+
+                    ₹ {{ invoice_summary.total_expenses }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="stats shadow bg-info text-info-content">
+
+            <div class="stat">
+
+                <div class="stat-title">
+
+                    Total Invoices
+
+                </div>
+
+                <div class="stat-value">
+
+                    {{ invoice_summary.total_invoices }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- KPI Row 2 -->
+    <!-- ====================================================== -->
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+
+        <div class="stats shadow">
+
+            <div class="stat">
+
+                <div class="stat-title">
+
+                    Cylinders Sold
+
+                </div>
+
+                <div class="stat-value text-primary">
+
+                    {{ cylinder_summary.cylinders_sold }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="stats shadow">
+
+            <div class="stat">
+
+                <div class="stat-title">
+
+                    Outstanding Due
+
+                </div>
+
+                <div class="stat-value text-error">
+
+                    ₹ {{ due_summary.total_due }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="stats shadow">
+
+            <div class="stat">
+
+                <div class="stat-title">
+
+                    Pending Verification
+
+                </div>
+
+                <div class="stat-value text-warning">
+
+                    {{ due_summary.pending_verification }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="stats shadow">
+
+            <div class="stat">
+
+                <div class="stat-title">
+
+                    Cylinder Mismatch
+
+                </div>
+
+                <div class="stat-value text-error">
+
+                    {{ mismatch_summary.mismatch_records }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- Business Insights -->
+    <!-- ====================================================== -->
+
+    <div class="card bg-base-200 shadow-xl mb-8">
+
+        <div class="card-body">
+
+            <h2 class="card-title text-2xl mb-6">
+
+                Business Insights
+
+            </h2>
+
+            <div class="grid md:grid-cols-3 gap-6">
+
+                <div class="alert">
+
+                    <div>
+
+                        <h3 class="font-bold">
+
+                            Average Invoice Value
+
+                        </h3>
+
+                        <p>
+
+                            ₹ {{ dashboard_highlights.average_invoice_value }}
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="alert alert-success">
+
+                    <div>
+
+                        <h3 class="font-bold">
+
+                            Total Profit
+
+                        </h3>
+
+                        <p>
+
+                            ₹ {{ dashboard_highlights.total_profit }}
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="alert alert-warning">
+
+                    <div>
+
+                        <h3 class="font-bold">
+
+                            Average Cylinders / Invoice
+
+                        </h3>
+
+                        <p>
+
+                            {{ dashboard_highlights.average_cylinder_invoice }}
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ====================================================== -->
+<!-- Business Charts -->
+<!-- ====================================================== -->
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+
+    <!-- Sales Trend -->
+
+    <div class="card bg-base-200 shadow-xl">
+
+        <div class="card-body">
+
+            <h2 class="card-title">
+
+                Monthly Sales Trend
+
+            </h2>
+
+            <canvas id="salesChart" height="120"></canvas>
+
+        </div>
+
+    </div>
+
+    <!-- Revenue vs Expense -->
+
+    <div class="card bg-base-200 shadow-xl">
+
+        <div class="card-body">
+
+            <h2 class="card-title">
+
+                Revenue vs Expenses
+
+            </h2>
+
+            <canvas id="revenueChart" height="120"></canvas>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+
+    <!-- Cylinder Trend -->
+
+    <div class="card bg-base-200 shadow-xl">
+
+        <div class="card-body">
+
+            <h2 class="card-title">
+
+                Cylinder Sales
+
+            </h2>
+
+            <canvas id="cylinderChart" height="120"></canvas>
+
+        </div>
+
+    </div>
+
+    <!-- DAC -->
+
+    <div class="card bg-base-200 shadow-xl">
+
+        <div class="card-body">
+
+            <h2 class="card-title">
+
+                DAC Credit vs Debit
+
+            </h2>
+
+            <canvas id="dacChart" height="120"></canvas>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ====================================================== -->
+<!-- Top Subdealers -->
+<!-- ====================================================== -->
+
+<div class="card bg-base-200 shadow-xl mb-8">
+
+    <div class="card-body">
+
+        <div class="flex justify-between items-center mb-4">
+
+            <h2 class="card-title text-2xl">
+
+                Top Performing Subdealers
+
+            </h2>
+
+            <div class="badge badge-primary">
+
+                Top 10
+
+            </div>
+
+        </div>
+
+        <div class="overflow-x-auto">
+
+            <table class="table table-zebra">
+
+                <thead>
+
+                    <tr>
+
+                        <th>#</th>
+
+                        <th>Subdealer</th>
+
+                        <th>Code</th>
+
+                        <th>Invoices</th>
+
+                        <th>Cylinders</th>
+
+                        <th>Sales</th>
+
+                        <th>Due</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for dealer in top_subdealers %}
+
+                    <tr>
+
+                        <td>
+
+                            <div class="badge badge-primary">
+
+                                {{ forloop.counter }}
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            {{ dealer.subdealer__name }}
+
+                        </td>
+
+                        <td>
+
+                            {{ dealer.subdealer__subdealerCode }}
+
+                        </td>
+
+                        <td>
+
+                            {{ dealer.invoice_count }}
+
+                        </td>
+
+                        <td>
+
+                            {{ dealer.cylinders }}
+
+                        </td>
+
+                        <td>
+
+                            ₹ {{ dealer.sales }}
+
+                        </td>
+
+                        <td>
+
+                            ₹ {{ dealer.due_amount }}
+
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+
+                        <td colspan="7" class="text-center">
+
+                            No Data
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card bg-base-200 shadow-xl mb-8">
+
+<div class="card-body">
+
+<h2 class="card-title text-2xl mb-5">
+
+Top Selling Products
+
+</h2>
+
+<div class="overflow-x-auto">
+
+<table class="table table-zebra">
+
+<thead>
+
+<tr>
+
+<th>#</th>
+
+<th>Product</th>
+
+<th>Code</th>
+
+<th>Qty Sold</th>
+
+<th>Revenue</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for product in top_products %}
+
+<tr>
+
+<td>
+
+<div class="badge badge-secondary">
+
+{{ forloop.counter }}
+
+</div>
+
+</td>
+
+<td>
+
+{{ product.product__product_name }}
+
+</td>
+
+<td>
+
+{{ product.product__productCode }}
+
+</td>
+
+<td>
+
+{{ product.quantity_sold }}
+
+</td>
+
+<td>
+
+₹ {{ product.sales }}
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+
+<td colspan="5"
+
+class="text-center">
+
+No Products Found
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="card bg-base-200 shadow-xl mb-8">
+
+<div class="card-body">
+
+<h2 class="card-title text-2xl mb-5">
+
+Employee Performance
+
+</h2>
+
+<div class="overflow-x-auto">
+
+<table class="table table-zebra">
+
+<thead>
+
+<tr>
+
+<th>Employee</th>
+
+<th>Code</th>
+
+<th>Invoices</th>
+
+<th>Sales</th>
+
+<th>Subtotal</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for employee in employee_summary %}
+
+<tr>
+
+<td>
+
+{{ employee.employees__name }}
+
+</td>
+
+<td>
+
+{{ employee.employees__employeeCode }}
+
+</td>
+
+<td>
+
+{{ employee.invoice_count }}
+
+</td>
+
+<td>
+
+₹ {{ employee.sales }}
+
+</td>
+
+<td>
+
+₹ {{ employee.subtotal }}
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+
+<td colspan="5"
+
+class="text-center">
+
+No Employees Found
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+
+<div class="stats shadow bg-success text-success-content">
+
+<div class="stat">
+
+<div class="stat-title">
+
+Cash Sales
+
+</div>
+
+<div class="stat-value">
+
+₹ {{ payment_mode_summary.cash_sales }}
+
+</div>
+
+</div>
+
+</div>
+
+<div class="stats shadow bg-info text-info-content">
+
+<div class="stat">
+
+<div class="stat-title">
+
+AC Sales
+
+</div>
+
+<div class="stat-value">
+
+₹ {{ payment_mode_summary.ac_sales }}
+
+</div>
+
+</div>
+
+</div>
+
+<div class="stats shadow bg-warning text-warning-content">
+
+<div class="stat">
+
+<div class="stat-title">
+
+Mixed Payments
+
+</div>
+
+<div class="stat-value">
+
+₹ {{ payment_mode_summary.mixed_cash }}
+
+</div>
+
+</div>
+
+</div>
+
+<div class="stats shadow">
+
+<div class="stat">
+
+<div class="stat-title">
+
+Outstanding Due
+
+</div>
+
+<div class="stat-value text-error">
+
+₹ {{ payment_mode_summary.total_due }}
+
+</div>
+
+</div>
+
+</div>
+
+<div class="stats shadow">
+
+<div class="stat">
+
+<div class="stat-title">
+
+Verified AC
+
+</div>
+
+<div class="stat-value text-success">
+
+₹ {{ payment_mode_summary.verified_ac }}
+
+</div>
+
+</div>
+
+</div>
+
+<div class="stats shadow">
+
+<div class="stat">
+
+<div class="stat-title">
+
+Net Profit
+
+</div>
+
+<div class="stat-value text-primary">
+
+₹ {{ dashboard_highlights.total_profit }}
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ====================================================== -->
+<!-- Monthly Summary -->
+<!-- ====================================================== -->
+
+<div class="card bg-base-200 shadow-xl mb-8">
+
+    <div class="card-body">
+
+        <div class="flex flex-col lg:flex-row justify-between items-center mb-5">
+
+            <h2 class="card-title text-2xl">
+
+                Monthly Business Summary
+
+            </h2>
+
+            <div class="flex gap-3">
+
+                <button
+                    onclick="window.print()"
+                    class="btn btn-outline btn-primary">
+
+                    🖨 Print
+
+                </button>
+
+                <button
+                    id="downloadCSV"
+                    class="btn btn-success">
+
+                    Export CSV
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="overflow-x-auto">
+
+            <table
+                id="summaryTable"
+                class="table table-zebra table-pin-rows">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Month</th>
+
+                        <th>Invoices</th>
+
+                        <th>Cylinders</th>
+
+                        <th>Sales</th>
+
+                        <th>Expenses</th>
+
+                        <th>Revenue</th>
+
+                        <th>Due</th>
+
+                        <th>Pending</th>
+
+                        <th>DAC +</th>
+
+                        <th>DAC -</th>
+
+                        <th>Mismatch</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for row in monthly_rows %}
+
+                    <tr>
+
+                        <td>
+
+                            {{ row.label }}
+
+                        </td>
+
+                        <td>
+
+                            {{ row.invoice_count }}
+
+                        </td>
+
+                        <td>
+
+                            {{ row.cylinders }}
+
+                        </td>
+
+                        <td>
+
+                            ₹ {{ row.subtotal }}
+
+                        </td>
+
+                        <td>
+
+                            ₹ {{ row.expenses }}
+
+                        </td>
+
+                        <td>
+
+                            ₹ {{ row.revenue }}
+
+                        </td>
+
+                        <td>
+
+                            ₹ {{ row.due_amount }}
+
+                        </td>
+
+                        <td>
+
+                            {{ row.pending }}
+
+                        </td>
+
+                        <td>
+
+                            ₹ {{ row.dac_credit }}
+
+                        </td>
+
+                        <td>
+
+                            ₹ {{ row.dac_debit }}
+
+                        </td>
+
+                        <td>
+
+                            {{ row.mismatch }}
+
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+
+                        <td colspan="11"
+
+                            class="text-center py-10">
+
+                            No records found.
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="footer footer-center bg-base-200 rounded-xl shadow-xl p-8 mt-8">
+
+<div>
+
+<p class="font-semibold">
+
+Business Dashboard
+
+</p>
+
+<p>
+
+Maa Tara HP Gas Distribution System
+
+</p>
+
+<p class="text-sm opacity-70">
+
+Generated on {% now "d M Y H:i" %}
+
+</p>
+
+</div>
+
+</div>
+
+<script>
+
+document.getElementById("downloadCSV").onclick=function(){
+
+let csv=[];
+
+let rows=document.querySelectorAll("#summaryTable tr");
+
+rows.forEach(function(row){
+
+let cols=row.querySelectorAll("td,th");
+
+let data=[];
+
+cols.forEach(function(col){
+
+data.push('"' + col.innerText.trim() + '"');
+
+});
+
+csv.push(data.join(","));
+
+});
+
+let csvFile=new Blob(
+
+[csv.join("\n")],
+
+{
+
+type:"text/csv"
+
+}
+
+);
+
+let link=document.createElement("a");
+
+link.download="BusinessSummary.csv";
+
+link.href=window.URL.createObjectURL(csvFile);
+
+link.click();
+
+};
+
+</script>
+
+{% endblock  %}

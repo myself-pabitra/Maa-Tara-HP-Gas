@@ -18,4 +18,6 @@ urlpatterns = [
     path("payments/",include("Payments.urls")),
     # Accounts Application URLs
     path("accounts/", include("accounts.urls")),
+    # analytics Application URLs
+    path("analytics/", include("analytics.urls")),
 ]
