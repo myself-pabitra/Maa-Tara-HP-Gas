@@ -1,11 +1,922 @@
-{% extends 'layout.html' %}
+{% extends "layout.html" %}
 {% load static %}
 
-{% block title %}Dashboard{% endblock title %}
+{% block title %}Dashboard{% endblock %}
+
 {% block content %}
 
-<div class="text-3xl flex justify-center mt-2">
-    <h1>Welcome to Dashboard </h1>
+<div class="space-y-8">
+
+    <!-- ====================================================== -->
+    <!-- Header -->
+    <!-- ====================================================== -->
+
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
+
+        <div>
+
+            <h1 class="text-4xl font-bold">
+
+                Dashboard
+
+            </h1>
+
+            <p class="text-gray-500 mt-2">
+
+                Welcome back 👋
+
+                Today is
+
+                <span class="font-semibold">
+
+                    {{ today }}
+
+                </span>
+
+            </p>
+
+        </div>
+
+        <div class="mt-5 lg:mt-0">
+
+            <a href="{% url 'create_daily_sell_invoice' %}"
+
+               class="btn btn-primary">
+
+                + Create Invoice
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- KPI CARDS -->
+    <!-- ====================================================== -->
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+
+        <!-- Today's Sales -->
+
+        <div class="stats shadow bg-primary text-primary-content">
+
+            <div class="stat">
+
+                <div class="stat-title text-primary-content">
+
+                    Today's Sales
+
+                </div>
+
+                <div class="stat-value">
+
+                    ₹ {{ invoice_summary.total_sales }}
+
+                </div>
+
+                <div class="stat-desc text-primary-content">
+
+                    Invoice Amount
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Gross Profit -->
+
+        <div class="stats shadow bg-success text-success-content">
+
+            <div class="stat">
+
+                <div class="stat-title">
+
+                    Gross Profit
+
+                </div>
+
+                <div class="stat-value">
+
+                    ₹ {{ gross_profit }}
+
+                </div>
+
+                <div class="stat-desc">
+
+                    Before Expenses
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Cash -->
+
+        <div class="stats shadow bg-info text-info-content">
+
+            <div class="stat">
+
+                <div class="stat-title">
+
+                    Cash Collection
+
+                </div>
+
+                <div class="stat-value">
+
+                    ₹ {{ payment_summary.cash }}
+
+                </div>
+
+                <div class="stat-desc">
+
+                    Today's Collection
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Due -->
+
+        <div class="stats shadow bg-error text-error-content">
+
+            <div class="stat">
+
+                <div class="stat-title">
+
+                    Outstanding Due
+
+                </div>
+
+                <div class="stat-value">
+
+                    ₹ {{ payment_summary.due }}
+
+                </div>
+
+                <div class="stat-desc">
+
+                    Pending Amount
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- SECOND ROW -->
+    <!-- ====================================================== -->
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+
+        <!-- Bills -->
+
+        <div class="card bg-base-100 shadow">
+
+            <div class="card-body">
+
+                <h2 class="card-title">
+
+                    Today's Bills
+
+                </h2>
+
+                <div class="text-5xl font-bold text-primary">
+
+                    {{ invoice_summary.total_invoices }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Cylinders -->
+
+        <div class="card bg-base-100 shadow">
+
+            <div class="card-body">
+
+                <h2 class="card-title">
+
+                    Cylinders Sold
+
+                </h2>
+
+                <div class="text-5xl font-bold text-success">
+
+                    {{ cylinder_summary.cylinders }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Stock -->
+
+        <div class="card bg-base-100 shadow">
+
+            <div class="card-body">
+
+                <h2 class="card-title">
+
+                    Stock Value
+
+                </h2>
+
+                <div class="text-3xl font-bold text-info">
+
+                    ₹ {{ stock_value }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Pending -->
+
+        <div class="card bg-base-100 shadow">
+
+            <div class="card-body">
+
+                <h2 class="card-title">
+
+                    Pending AC
+
+                </h2>
+
+                <div class="text-5xl font-bold text-warning">
+
+                    {{ payment_summary.pending }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- QUICK ACTIONS -->
+    <!-- ====================================================== -->
+
+    <div class="card bg-base-100 shadow">
+
+        <div class="card-body">
+
+            <h2 class="card-title mb-5">
+
+                Quick Actions
+
+            </h2>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+                <a href="{% url 'create_daily_sell_invoice' %}"
+
+                   class="btn btn-primary h-24">
+
+                    Create Invoice
+
+                </a>
+
+                <a href="{% url 'Add_product' %}"
+
+                   class="btn btn-secondary h-24">
+
+                    Add Product
+
+                </a>
+
+                <a href="{% url 'CreateNewSubDealers' %}"
+
+                   class="btn btn-accent h-24">
+
+                    Add Subdealer
+
+                </a>
+
+                <a href="{% url 'dac_entry' %}"
+
+                   class="btn btn-info h-24">
+
+                    DAC Entry
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- BUSINESS SUMMARY -->
+    <!-- ====================================================== -->
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        <div class="card shadow">
+
+            <div class="card-body">
+
+                <h2 class="card-title">
+
+                    Products
+
+                </h2>
+
+                <div class="text-4xl font-bold">
+
+                    {{ active_products }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="card shadow">
+
+            <div class="card-body">
+
+                <h2 class="card-title">
+
+                    Subdealers
+
+                </h2>
+
+                <div class="text-4xl font-bold">
+
+                    {{ active_subdealers }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="card shadow">
+
+            <div class="card-body">
+
+                <h2 class="card-title">
+
+                    Employees
+
+                </h2>
+
+                <div class="text-4xl font-bold">
+
+                    {{ active_employees }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
+
+
+<!-- ====================================================== -->
+<!-- CHARTS -->
+<!-- ====================================================== -->
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+    <!-- Sales Trend -->
+
+    <div class="card bg-base-100 shadow">
+
+        <div class="card-body">
+
+            <h2 class="card-title">
+
+                Last 30 Days Sales
+
+            </h2>
+
+            <canvas id="salesChart" height="120"></canvas>
+
+        </div>
+
+    </div>
+
+    <!-- Profit Trend -->
+
+    <div class="card bg-base-100 shadow">
+
+        <div class="card-body">
+
+            <h2 class="card-title">
+
+                Last 30 Days Profit
+
+            </h2>
+
+            <canvas id="profitChart" height="120"></canvas>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ====================================================== -->
+<!-- INVENTORY -->
+<!-- ====================================================== -->
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+
+    <!-- Low Stock -->
+
+    <div class="card bg-base-100 shadow">
+
+        <div class="card-body">
+
+            <div class="flex justify-between items-center">
+
+                <h2 class="card-title">
+
+                    Low Stock Products
+
+                </h2>
+
+                <div class="badge badge-warning">
+
+                    {{ low_stock|length }}
+
+                </div>
+
+            </div>
+
+            <div class="overflow-x-auto">
+
+                <table class="table table-sm">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Code</th>
+
+                            <th>Product</th>
+
+                            <th>Qty</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for product in low_stock %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ product.productCode }}
+
+                            </td>
+
+                            <td>
+
+                                {{ product.product_name }}
+
+                            </td>
+
+                            <td>
+
+                                <span class="badge badge-warning">
+
+                                    {{ product.product_quantity }}
+
+                                </span>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="3">
+
+                                No Low Stock
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Out Of Stock -->
+
+    <div class="card bg-base-100 shadow">
+
+        <div class="card-body">
+
+            <div class="flex justify-between items-center">
+
+                <h2 class="card-title">
+
+                    Out Of Stock
+
+                </h2>
+
+                <div class="badge badge-error">
+
+                    {{ out_of_stock|length }}
+
+                </div>
+
+            </div>
+
+            <div class="overflow-x-auto">
+
+                <table class="table table-sm">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Code</th>
+
+                            <th>Product</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for product in out_of_stock %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ product.productCode }}
+
+                            </td>
+
+                            <td>
+
+                                {{ product.product_name }}
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="2">
+
+                                Everything is in stock 🎉
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ====================================================== -->
+<!-- ALERTS -->
+<!-- ====================================================== -->
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+
+    <!-- Pending AC -->
+
+    <div class="card bg-base-100 shadow">
+
+        <div class="card-body">
+
+            <div class="flex justify-between items-center">
+
+                <h2 class="card-title">
+
+                    Pending AC Verification
+
+                </h2>
+
+                <span class="badge badge-warning">
+
+                    {{ payment_summary.pending }}
+
+                </span>
+
+            </div>
+
+            <div class="overflow-x-auto">
+
+                <table class="table table-sm">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Invoice</th>
+
+                            <th>Subdealer</th>
+
+                            <th>Amount</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for item in pending_verifications %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ item.invoice.invoice_number }}
+
+                            </td>
+
+                            <td>
+
+                                {{ item.subdealer.name }}
+
+                            </td>
+
+                            <td>
+
+                                ₹ {{ item.ac_amount }}
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="3">
+
+                                No Pending Verification
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Negative DAC -->
+
+    <div class="card bg-base-100 shadow">
+
+        <div class="card-body">
+
+            <div class="flex justify-between items-center">
+
+                <h2 class="card-title">
+
+                    Negative DAC Balance
+
+                </h2>
+
+                <span class="badge badge-error">
+
+                    {{ negative_dac|length }}
+
+                </span>
+
+            </div>
+
+            <div class="overflow-x-auto">
+
+                <table class="table table-sm">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Subdealer</th>
+
+                            <th>Balance</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for entry in negative_dac %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ entry.subdealer.name }}
+
+                            </td>
+
+                            <td>
+
+                                <span class="text-error font-bold">
+
+                                    {{ entry.closing_balance }}
+
+                                </span>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="2">
+
+                                No Negative DAC
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+{% block js %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const labels = {{ chart_labels|safe }};
+
+//
+// Sales Chart
+//
+
+new Chart(
+
+document.getElementById("salesChart"),
+
+{
+
+type:"line",
+
+data:{
+
+labels:labels,
+
+datasets:[{
+
+label:"Sales",
+
+data:{{ chart_sales|safe }},
+
+borderWidth:3,
+
+fill:true,
+
+tension:.35,
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{display:false}
+
+}
+
+}
+
+}
+
+);
+
+
+//
+// Profit Chart
+//
+
+new Chart(
+
+document.getElementById("profitChart"),
+
+{
+
+type:"bar",
+
+data:{
+
+labels:labels,
+
+datasets:[{
+
+label:"Profit",
+
+data:{{ chart_profit|safe }}
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{display:false}
+
+}
+
+}
+
+}
+
+);
+
+</script>
+
+{% endblock js %}
 
 {% endblock content %}

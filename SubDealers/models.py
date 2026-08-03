@@ -14,7 +14,7 @@ class Subdealer(models.Model):
     phone_number = models.CharField(
         max_length=15, help_text="Phone number of the subdealer"
     )
-    address = models.TextField(help_text="Address of the subdealer")
+    address = models.TextField(blank=True, null=True, help_text="Address of the subdealer")
     dac_percentage = models.DecimalField(
         max_digits=5,
         decimal_places=2,
