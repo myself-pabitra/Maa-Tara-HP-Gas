@@ -29,33 +29,43 @@ from .models import (
 
 
 def CreateNewSubDealers(request):
-    subDealer_name = request.POST.get("name")
-    phone_number = request.POST.get("phone_number")
-    address = request.POST.get("address")
-    dac_percentage_raw = request.POST.get("dac_percentage", "100")
 
-    try:
-        dac_percentage = Decimal(dac_percentage_raw)
-    except InvalidOperation:
-        dac_percentage = Decimal("100")
+    if request.method == "POST":
+        subDealer_name = request.POST.get("name", "").strip()
+        phone_number = request.POST.get("phone_number", "").strip()
+        address = request.POST.get("address", "").strip()
 
-    if subDealer_name and phone_number and address:
-        subdealer = Subdealer(
-            name=subDealer_name,
-            phone_number=phone_number,
-            address=address,
-            dac_percentage=dac_percentage,
-        )
-        subdealer.save()
-        messages.success(request, f"Subdealer '{subDealer_name}' created successfully!")
-        return redirect("CreateNewSubDealers")
+        dac_percentage_raw = request.POST.get("dac_percentage", "100").strip()
+
+        try:
+            dac_percentage = Decimal(dac_percentage_raw)
+        except InvalidOperation:
+            dac_percentage = Decimal("100")
+
+        # Address is optional
+        if subDealer_name and phone_number:
+            Subdealer.objects.create(
+                name=subDealer_name,
+                phone_number=phone_number,
+                address=address,
+                dac_percentage=dac_percentage,
+            )
+
+            messages.success(
+                request, f"Subdealer '{subDealer_name}' created successfully!"
+            )
+
+            return redirect("CreateNewSubDealers")
+
+        messages.error(request, "Subdealer Name and Phone Number are required.")
 
     return render(
         request,
         "SubDealers/Createnew_subdealers.html",
-        context={"page_type": "create_subdealer"},
+        {
+            "page_type": "create_subdealer",
+        },
     )
-
 
 def view_subdealers(request):
     subdealers = Subdealer.objects.all().order_by("name")
