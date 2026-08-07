@@ -4,6 +4,8 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/png" href="{% static 'images/maa-tara-hp-gas-logo.png' %}" />
+        <link rel="apple-touch-icon" href="{% static 'images/maa-tara-hp-gas-logo.png' %}" />
         <title>
             {% block title %}
             {% endblock title %}
@@ -13,20 +15,24 @@
                 defer></script>
     </head>
     <body>
-        <main>
+        <main {% if page_type != 'print_invoice' %}class="pt-[60px]"{% endif %}>
             {% if page_type != 'print_invoice' %}
                 <section>
                     {% include "components/header.html" %}
                 </section>
             {% endif %}
-            <section class="flex h-[calc(100vh-64px)]">
+            <section class="relative flex min-h-[calc(100vh-60px)]">
                 {% if page_type != 'create_invoice' and page_type != 'print_invoice' %}
                     <aside id="sidebarContainer"
-                           class="w-72 flex-shrink-0 border-r border-gray-200 bg-base-100 overflow-y-auto">
+                           class="fixed top-[60px] bottom-0 left-0 z-50 min-h-0 w-72 -translate-x-full border-r border-gray-200 bg-base-100 shadow-xl transition-transform duration-300 ease-in-out lg:sticky lg:top-[60px] lg:bottom-auto lg:h-[calc(100vh-60px)] lg:flex-shrink-0 lg:translate-x-0 lg:shadow-none">
                         {% include "components/sidebar.html" %}
                     </aside>
+                    <button id="sidebarBackdrop"
+                            class="fixed inset-0 z-40 hidden cursor-default bg-black/40 lg:hidden"
+                            type="button"
+                            aria-label="Close navigation"></button>
                 {% endif %}
-                <main id="content" class="flex-1 overflow-y-auto p-6 bg-base-100">
+                <main id="content" class="min-w-0 flex-1 p-4 sm:p-6 bg-base-100">
                     {% block content %}{% endblock %}
                 </main>
             </section>

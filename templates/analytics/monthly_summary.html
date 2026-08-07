@@ -114,22 +114,18 @@
 
                         </option>
 
-                        {% for m in "123456789101112"|make_list %}
-
-                        {% endfor %}
-
-                        <option value="1">January</option>
-                        <option value="2">February</option>
-                        <option value="3">March</option>
-                        <option value="4">April</option>
-                        <option value="5">May</option>
-                        <option value="6">June</option>
-                        <option value="7">July</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">October</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
+                        <option value="1" {% if selected_month == "1" %}selected{% endif %}>January</option>
+                        <option value="2" {% if selected_month == "2" %}selected{% endif %}>February</option>
+                        <option value="3" {% if selected_month == "3" %}selected{% endif %}>March</option>
+                        <option value="4" {% if selected_month == "4" %}selected{% endif %}>April</option>
+                        <option value="5" {% if selected_month == "5" %}selected{% endif %}>May</option>
+                        <option value="6" {% if selected_month == "6" %}selected{% endif %}>June</option>
+                        <option value="7" {% if selected_month == "7" %}selected{% endif %}>July</option>
+                        <option value="8" {% if selected_month == "8" %}selected{% endif %}>August</option>
+                        <option value="9" {% if selected_month == "9" %}selected{% endif %}>September</option>
+                        <option value="10" {% if selected_month == "10" %}selected{% endif %}>October</option>
+                        <option value="11" {% if selected_month == "11" %}selected{% endif %}>November</option>
+                        <option value="12" {% if selected_month == "12" %}selected{% endif %}>December</option>
 
                     </select>
 
@@ -379,13 +375,13 @@
 
                         <h3 class="font-bold">
 
-                            Total Profit
+                            Net Profit
 
                         </h3>
 
                         <p>
 
-                            ₹ {{ dashboard_highlights.total_profit }}
+                            ₹ {{ dashboard_highlights.net_profit }}
 
                         </p>
 
@@ -881,7 +877,7 @@ Mixed Payments
 
 <div class="stat-value">
 
-₹ {{ payment_mode_summary.mixed_cash }}
+₹ {{ payment_mode_summary.mixed_total }}
 
 </div>
 
@@ -941,7 +937,7 @@ Net Profit
 
 <div class="stat-value text-primary">
 
-₹ {{ dashboard_highlights.total_profit }}
+₹ {{ dashboard_highlights.net_profit }}
 
 </div>
 

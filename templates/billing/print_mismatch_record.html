@@ -5,9 +5,16 @@
 
 {% block content %}
 <div class="w-full mx-auto p-10">
-  <div class="flex flex-col xl:flex-row justify-between items-start gap-4 mb-8">
-    <div class="space-y-2">
-      <div class="text-sm uppercase tracking-widest text-gray-500">Maa Tara HP Gas</div>
+  <div class="flex flex-col xl:flex-row xl:justify-between xl:items-start gap-4 mb-8">
+    <div class="flex items-center gap-3">
+      <img src="{% static 'images/maa-tara-hp-gas-logo.png' %}" alt="Maa Tara HP Gas logo" class="h-16 w-16 shrink-0 object-contain">
+      <div>
+        <p class="text-2xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-indigo-700 to-blue-700">MAA TARA</p>
+        <p class="text-xs font-bold tracking-[0.28em] text-amber-600">HP GAS</p>
+        <p class="mt-1 text-xs text-gray-500">LPG Distribution · Reliable Energy, Every Day</p>
+      </div>
+    </div>
+    <div class="xl:text-right">
       <h1 class="text-3xl font-extrabold text-primary">Mismatch Record {{ invoice.invoice_number }}</h1>
       <p class="text-sm text-gray-600">Date: {{ invoice.invoice_date }}</p>
     </div>

@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from decimal import Decimal
 
@@ -32,8 +31,15 @@ def monthly_summary(request):
     # Filters
     # ==========================================================
 
-    year_filter = request.GET.get("year")
-    month_filter = request.GET.get("month")
+    year_filter = request.GET.get("year", "").strip()
+    month_filter = request.GET.get("month", "").strip()
+
+    # Query-string values are user input.  Ignore invalid values instead of
+    # passing them to Django's date transforms and returning a server error.
+    if not year_filter.isdigit() or int(year_filter) < 1:
+        year_filter = ""
+    if not month_filter.isdigit() or not 1 <= int(month_filter) <= 12:
+        month_filter = ""
 
     invoices = DailyInvoice.objects.all()
 
@@ -270,6 +276,9 @@ def monthly_summary(request):
         )
         .order_by("year", "month")
     )
+    invoice_lookup = {
+        (row["year"], row["month"]): row for row in monthly_invoice_summary
+    }
 
     # ==========================================================
     # Monthly Cylinder Summary
@@ -396,10 +405,27 @@ def monthly_summary(request):
 
     chart_debit = []
 
-    for row in monthly_invoice_summary:
-        key = (
-            row["year"],
-            row["month"],
+    # An analytics month can contain DAC, cylinder, or due data even when an
+    # invoice was not recorded.  Use the union of all summaries so those
+    # months do not silently disappear from the table or charts.
+    month_keys = set(invoice_lookup)
+    month_keys.update(cylinder_lookup)
+    month_keys.update(due_lookup)
+    month_keys.update(dac_lookup)
+    month_keys.update(mismatch_lookup)
+
+    for key in sorted(month_keys):
+        year, month = key
+        row = invoice_lookup.get(
+            key,
+            {
+                "year": year,
+                "month": month,
+                "invoice_count": 0,
+                "subtotal": Decimal("0.00"),
+                "expenses": Decimal("0.00"),
+                "revenue": Decimal("0.00"),
+            },
         )
 
         due = due_lookup.get(
@@ -423,16 +449,16 @@ def monthly_summary(request):
         )
 
         month_name = datetime(
-            row["year"],
-            row["month"],
+            year,
+            month,
             1,
         ).strftime("%b %Y")
 
         monthly_rows.append(
             {
                 "label": month_name,
-                "year": row["year"],
-                "month": row["month"],
+                "year": year,
+                "month": month,
                 "invoice_count": row["invoice_count"],
                 "cylinders": cylinders,
                 "subtotal": row["subtotal"],
@@ -676,7 +702,8 @@ def monthly_summary(request):
 
     # ===========================================================
 
-    total_profit = profit_summary["total_profit"] or Decimal("0.00")
+    gross_profit = profit_summary["total_profit"] or Decimal("0.00")
+    net_profit = gross_profit - invoice_summary["total_expenses"]
 
     verification_pending = payment_summary["pending_count"]
 
@@ -691,7 +718,7 @@ def monthly_summary(request):
     dashboard_highlights = {
         "average_invoice_value": average_invoice_value,
         "average_cylinder_invoice": average_cylinder_invoice,
-        "total_profit": total_profit,
+        "net_profit": net_profit,
         "verification_pending": verification_pending,
         "partial_payment": partial_payment,
         "completed_payment": completed_payment,
@@ -700,18 +727,6 @@ def monthly_summary(request):
     # ==========================================================
     # Context
     # ==========================================================
-
-    context.update(
-        {
-            "chart_labels": json.dumps(chart_labels),
-            "chart_sales": json.dumps(chart_sales),
-            "chart_revenue": json.dumps(chart_revenue),
-            "chart_expenses": json.dumps(chart_expenses),
-            "chart_cylinders": json.dumps(chart_cylinders),
-            "chart_credit": json.dumps(chart_credit),
-            "chart_debit": json.dumps(chart_debit),
-        }
-    )
 
     context = {
         "invoice_summary": invoice_summary,
@@ -738,6 +753,10 @@ def monthly_summary(request):
         "payment_mode_summary": payment_mode_summary,
         "dashboard_highlights": dashboard_highlights,
     }
+
+    payment_mode_summary["mixed_total"] = (
+        payment_mode_summary["mixed_cash"] + payment_mode_summary["mixed_ac"]
+    )
 
     return render(
         request,

@@ -1,6 +1,5 @@
-<nav id="sidebar"
-     class="relative bg-white text-gray-800 h-[calc(100vh-60px)] border-r border-gray-200">
-  <ul class="menu p-4 space-y-2 w-full pb-24">
+<nav id="sidebar" class="flex h-full flex-col bg-white text-gray-800">
+  <ul class="menu min-h-0 w-full flex-1 space-y-2 overflow-y-auto overscroll-contain p-4">
     <li>
       <a href="{% url 'dashboard' %}">
         {% include "icons/home.svg" %}
@@ -124,7 +123,7 @@
       </a>
     </li>
   </ul>
-  <div class="absolute bottom-0 left-0 w-full border-t border-gray-200 bg-white">
+  <div class="w-full flex-none border-t border-gray-200 bg-white">
     {% if request.user.is_authenticated %}
       <div class="px-4 pt-3 pb-2">
         <p class="text-xs text-gray-500">Logged in as</p>
@@ -145,18 +144,12 @@
   </div>
 </nav>
 <script>
-function handleDetailsToggle(event){
+function handleDetailsToggle(event) {
     event.preventDefault();
     const current = event.target.closest("details");
-    document.querySelectorAll("#sidebar details").forEach(function(item){
-        if(item !== current){
-            item.removeAttribute("open");
-        }
+    document.querySelectorAll("#sidebar details").forEach(function (item) {
+        if (item !== current) item.removeAttribute("open");
     });
-    if(current.hasAttribute("open")){
-        current.removeAttribute("open");
-    }else{
-        current.setAttribute("open","");
-    }
+    current.toggleAttribute("open");
 }
 </script>

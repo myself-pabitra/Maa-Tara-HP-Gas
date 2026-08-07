@@ -5,6 +5,7 @@ from io import BytesIO
 from itertools import product
 
 from django.contrib import messages
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, F, Q, Sum
 from django.db.models.deletion import ProtectedError
@@ -574,10 +575,26 @@ def download_invoice_pdf(request, invoice_id):
     x = 50
     y = page_height - 50
 
-    pdf.setFont("Helvetica-Bold", 18)
-    pdf.drawString(x, y, "Invoice")
+    logo_path = settings.BASE_DIR / "static" / "images" / "maa-tara-hp-gas-logo.png"
+    if logo_path.exists():
+        pdf.drawImage(
+            str(logo_path),
+            x,
+            y - 42,
+            width=42,
+            height=42,
+            mask="auto",
+            preserveAspectRatio=True,
+        )
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(x + 50, y - 4, "MAA TARA HP GAS")
+    pdf.setFont("Helvetica", 9)
+    pdf.drawString(x + 50, y - 18, "LPG Distribution | Reliable Energy, Every Day")
+    pdf.line(x, y - 48, page_width - x, y - 48)
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawString(x, y - 70, "TAX INVOICE")
     pdf.setFont("Helvetica", 10)
-    y -= 30
+    y -= 90
     pdf.drawString(x, y, f"Invoice No: {invoice.invoice_number}")
     pdf.drawString(x + 300, y, f"Date: {invoice.invoice_date.strftime('%Y-%m-%d')}")
     y -= 18
@@ -655,13 +672,12 @@ def download_invoice_pdf(request, invoice_id):
 
 def print_invoice(request, invoice_id):
     invoice = get_object_or_404(DailyInvoice, pk=invoice_id)
-    total_qty = (
-        invoice.line_items.aggregate(total_qty=Sum("quantity"))["total_qty"] or 0
-    )
+    line_items = invoice.line_items.select_related("subdealer", "product")
+    total_qty = line_items.aggregate(total_qty=Sum("quantity"))["total_qty"] or 0
 
     summary_items = []
     product_totals = {}
-    for item in invoice.line_items.all():
+    for item in line_items:
         if item.due_cyl and item.due_cyl > 0:
             summary_items.append(
                 {
@@ -704,12 +720,19 @@ def print_invoice(request, invoice_id):
             "label": f"{item.subdealer.name} AC",
             "amount": item.ac_amount,
         }
-        for item in invoice.line_items.all()
+        for item in line_items
         if item.ac_amount and item.ac_amount > 0
     ]
 
-    total_ac_amount = sum(item.ac_amount for item in invoice.line_items.all())
-    total_cash_amount = invoice.grand_total - total_ac_amount
+    total_ac_amount = sum(
+        (item.ac_amount or Decimal("0.00")) for item in line_items
+    )
+    total_cash_collected = sum(
+        (item.cash_amount or Decimal("0.00")) for item in line_items
+    )
+    # Expenses are paid from the cash collected for the day.  Showing this
+    # separately prevents AC amounts from being subtracted from cash twice.
+    total_cash_amount = total_cash_collected - invoice.other_expense
 
     return render(
         request,
@@ -721,6 +744,8 @@ def print_invoice(request, invoice_id):
             "product_totals": product_totals_list,
             "expense_summaries": expense_summaries,
             "ac_summaries": ac_summaries,
+            "total_ac_amount": total_ac_amount,
+            "total_cash_collected": total_cash_collected,
             "total_cash_amount": total_cash_amount,
             "page_type": "print_invoice",
         },

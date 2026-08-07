@@ -5,13 +5,19 @@
 
 {% block content %}
 <div class="w-full mx-auto p-10">
-  <div class="flex flex-col xl:flex-row justify-between items-start gap-4 mb-8">
-    <div class="space-y-2">
-      <div class="text-sm uppercase tracking-widest text-gray-500">Maa Tara HP Gas</div>
+  <div class="invoice-heading flex flex-col xl:flex-row xl:justify-between xl:items-start gap-4 mb-8">
+    <div class="invoice-brand flex items-center gap-3">
+      <img src="{% static 'images/maa-tara-hp-gas-logo.png' %}" alt="Maa Tara HP Gas logo" class="h-16 w-16 shrink-0 object-contain">
+      <div>
+        <p class="text-2xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-indigo-700 to-blue-700">MAA TARA</p>
+        <p class="text-xs font-bold tracking-[0.28em] text-amber-600">HP GAS</p>
+        <p class="mt-1 text-xs text-gray-500">LPG Distribution · Reliable Energy, Every Day</p>
+      </div>
+    </div>
+    <div class="xl:text-right">
       <h1 class="text-3xl font-extrabold text-primary">Invoice {{ invoice.invoice_number }}</h1>
       <p class="text-sm text-gray-600">Date: {{ invoice.invoice_date }}</p>
-
-      <!-- <p class="text-sm text-gray-600">Payment Mode: {{ invoice.payment_mode }}</p> -->
+      <p class="text-sm text-gray-600">Payment mode: {{ invoice.payment_mode|default:"—" }}</p>
     </div>
     <div class="space-x-2 no-print">
       <button type="button" onclick="window.print()" class="btn btn-primary">Print Invoice</button>
@@ -19,7 +25,7 @@
     </div>
   </div>
 
-  <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-200">
+  <div class="invoice-sheet bg-white p-8 rounded-3xl shadow-xl border border-gray-200">
     {% if invoice.notes %}
     <div class="mb-6">
       <h2 class="text-lg font-semibold mb-2">Notes</h2>
@@ -31,26 +37,29 @@
     <div class="mb-6">
       <h2 class="text-lg font-semibold mb-2">Invoice Summary</h2>
       <div class="space-y-2 text-sm">
-        <!-- <div class="flex justify-between"><span>Invoice No.</span><span>{{ invoice.invoice_number }}</span></div> -->
         <div class="flex justify-between"><span>Date</span><span>{{ invoice.invoice_date }}</span></div>
-        <div class="flex justify-between font-bold text-lg"><span>Subtotal</span><span>₹{{ invoice.subtotal }}</span>
-        </div>
+        <div class="flex justify-between"><span>Subtotal</span><span>₹{{ invoice.subtotal }}</span></div>
         {% if expense_summaries %}
         {% for expense in expense_summaries %}
         <div class="flex justify-between text-sm"><span>{{ expense.label }}</span><span>₹{{ expense.amount }}</span>
         </div>
         {% endfor %}
+        {% endif %}
         {% if ac_summaries %}
         <div class="pt-2 border-t border-base-300">
           {% for ac in ac_summaries %}
           <div class="flex justify-between text-sm"><span>{{ ac.label }}</span><span>₹{{ ac.amount }}</span></div>
           {% endfor %}
+          <div class="flex justify-between pt-2 font-semibold"><span>Total AC</span><span>₹{{ total_ac_amount }}</span></div>
         </div>
         {% endif %}
         <div class="pt-2 border-t border-base-300 font-bold text-lg">
-          <div class="flex justify-between"><span>Total Cash</span><span>₹{{ total_cash_amount }}</span></div>
+          <div class="flex justify-between"><span>Cash collected</span><span>₹{{ total_cash_collected }}</span></div>
+          {% if expense_summaries %}
+          <div class="flex justify-between text-base"><span>Cash after expenses</span><span>₹{{ total_cash_amount }}</span></div>
+          {% endif %}
+          <div class="flex justify-between text-base"><span>Invoice total</span><span>₹{{ invoice.grand_total }}</span></div>
         </div>
-        {% endif %}
         {% for summary in summary_items %}
         <div class="flex justify-between font-bold text-lg"><span>{{ summary.text }}</span><span></span></div>
         {% endfor %}
@@ -67,7 +76,7 @@
     </div>
 
     <div class="overflow-x-auto mb-6">
-      <table class="table w-full">
+      <table class="invoice-lines table w-full">
         <thead>
           <tr>
             <th>Subdealer</th>
@@ -128,6 +137,10 @@
 
 <style>
   @media print {
+    @page {
+      size: auto;
+      margin: 12mm;
+    }
 
     .no-print,
     #sidebarContainer,
@@ -138,11 +151,22 @@
       display: none !important;
     }
 
+    html,
     body {
       margin: 0 !important;
+      height: auto !important;
+      overflow: visible !important;
     }
 
-    .w-full.mx-auto.p-10 {
+    /* The app shell scrolls at viewport height on screen.  Reset it so
+       every invoice row is available to the printer. */
+    body > main,
+    body > main > section,
+    #content {
+      display: block !important;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
       padding: 0 !important;
     }
 
@@ -154,6 +178,37 @@
 
     .table {
       width: 100% !important;
+      border-collapse: collapse !important;
+      font-size: 10pt !important;
+    }
+
+    .invoice-sheet {
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+    .invoice-brand img {
+      height: 52px !important;
+      width: 52px !important;
+    }
+
+    .invoice-lines th,
+    .invoice-lines td {
+      padding: 6px !important;
+      border-bottom: 1px solid #d1d5db !important;
+    }
+
+    .invoice-lines thead {
+      display: table-header-group;
+    }
+
+    .invoice-lines tr,
+    .invoice-heading,
+    .invoice-sheet > .mb-6 {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .page-break {

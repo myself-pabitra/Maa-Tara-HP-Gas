@@ -1,37 +1,61 @@
-<header class="bg-white shadow-md flex justify-between items-center px-6 h-[60px] sticky top-0 z-50">
-    <span class="flex items-center gap-4">
-        <span id="hamburger" onclick="toggleSidebar()" class="cursor-pointer text-2xl w-5">✕</span>
-                <h1 class="text-3xl font-extrabold bg-gradient-to-r from-indigo-600 via-purple-500 to-pink-500 
-                   text-transparent bg-clip-text tracking-tight">
-            Maa Tara HP Gas
-        </h1>
-    </span>
-    <!-- Navigation (hidden on small screens) -->
-    <nav class="hidden md:flex gap-6 text-gray-700 font-medium">
-        <a href="/" class="hover:text-indigo-600 transition">Home</a>
-        <a href="/about" class="hover:text-indigo-600 transition">About</a>
-        <a href="/contact" class="hover:text-indigo-600 transition">Contact</a>
-    </nav>
+{% load static %}
+<header class="fixed inset-x-0 top-0 z-[60] flex h-[60px] items-center justify-between bg-white px-4 shadow-md sm:px-6">
+    <div class="flex min-w-0 items-center gap-3 sm:gap-4">
+        <button id="sidebarToggle"
+                type="button"
+                class="btn btn-ghost btn-square btn-sm lg:hidden"
+                aria-controls="sidebarContainer"
+                aria-expanded="false"
+                aria-label="Open navigation">
+            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+        <a href="{% url 'dashboard' %}" class="flex min-w-0 items-center gap-2 sm:gap-3" aria-label="Maa Tara HP Gas dashboard">
+            <img src="{% static 'images/maa-tara-hp-gas-logo.png' %}"
+                 alt="Maa Tara HP Gas logo"
+                 class="h-10 w-10 shrink-0 object-contain sm:h-11 sm:w-11">
+            <div class="min-w-0 leading-none">
+                <h1 class="truncate text-lg font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-indigo-700 to-blue-700 sm:text-2xl">
+                    MAA TARA
+                </h1>
+                <p class="mt-1 truncate text-[10px] font-bold tracking-[0.28em] text-amber-600 sm:text-xs">
+                    HP GAS
+                </p>
+            </div>
+        </a>
+    </div>
 </header>
 
 <script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const sidebarContainer = document.getElementById('sidebarContainer');
-        const hamburger = document.getElementById('hamburger');
+document.addEventListener("DOMContentLoaded", function () {
+    const sidebar = document.getElementById("sidebarContainer");
+    const toggle = document.getElementById("sidebarToggle");
+    const backdrop = document.getElementById("sidebarBackdrop");
+    const desktop = window.matchMedia("(min-width: 1024px)");
 
-        const isCollapsed = sidebarContainer.classList.contains('w-0');
+    if (!sidebar || !toggle || !backdrop) return;
 
-        // Toggle width
-        sidebarContainer.classList.toggle('w-1/6');
-        sidebarContainer.classList.toggle('w-0');
-
-        // Hide or show sidebar content
-        sidebar.classList.toggle('opacity-0');
-        sidebar.classList.toggle('pointer-events-none');
-
-        // Hamburger icon toggle
-        hamburger.innerHTML = isCollapsed ? '✕' : '☰';
+    function setSidebar(open) {
+        const isDesktop = desktop.matches;
+        sidebar.classList.toggle("-translate-x-full", !open && !isDesktop);
+        backdrop.classList.toggle("hidden", !open || isDesktop);
+        document.body.classList.toggle("overflow-hidden", open && !isDesktop);
+        toggle.setAttribute("aria-expanded", String(open && !isDesktop));
+        toggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
     }
 
+    toggle.addEventListener("click", function () {
+        setSidebar(sidebar.classList.contains("-translate-x-full"));
+    });
+    backdrop.addEventListener("click", function () { setSidebar(false); });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") setSidebar(false);
+    });
+    sidebar.addEventListener("click", function (event) {
+        if (!desktop.matches && event.target.closest("a")) setSidebar(false);
+    });
+    desktop.addEventListener("change", function () { setSidebar(false); });
+    setSidebar(false);
+});
 </script>

@@ -1,3 +1,4 @@
+import json
 from datetime import timedelta
 from decimal import Decimal
 
@@ -24,9 +25,6 @@ from SubDealers.models import Subdealer
 def dashboard(request):
 
     today = timezone.localdate()
-
-    current_month = today.month
-    current_year = today.year
 
     invoices = DailyInvoice.objects.filter(invoice_date=today)
 
@@ -112,6 +110,60 @@ def dashboard(request):
     net_profit = profit["gross_profit"] - invoice_summary["total_expenses"]
 
     #
+    # Last 30 days chart data
+    #
+    # Build every date in the range first, so the charts remain readable on
+    # days without invoices instead of omitting those dates entirely.
+    trend_start = today - timedelta(days=29)
+    trend_dates = [trend_start + timedelta(days=offset) for offset in range(30)]
+
+    sales_by_date = {
+        row["invoice_date"]: row["total"]
+        for row in (
+            DailyInvoice.objects.filter(
+                invoice_date__gte=trend_start,
+                invoice_date__lte=today,
+            )
+            .values("invoice_date")
+            .annotate(
+                total=Coalesce(
+                    Sum("subtotal"),
+                    Decimal("0.00"),
+                    output_field=DecimalField(),
+                )
+            )
+        )
+    }
+    profit_by_date = {
+        row["invoice__invoice_date"]: row["total"]
+        for row in (
+            DailyInvoiceLineItem.objects.filter(
+                invoice__invoice_date__gte=trend_start,
+                invoice__invoice_date__lte=today,
+            )
+            .values("invoice__invoice_date")
+            .annotate(
+                total=Coalesce(
+                    Sum(
+                        ExpressionWrapper(
+                            (F("discounted_price") - F("product__buy_price"))
+                            * F("quantity"),
+                            output_field=DecimalField(),
+                        )
+                    ),
+                    Decimal("0.00"),
+                    output_field=DecimalField(),
+                )
+            )
+        )
+    }
+    chart_labels = [day.strftime("%d %b") for day in trend_dates]
+    chart_sales = [float(sales_by_date.get(day, Decimal("0.00"))) for day in trend_dates]
+    chart_profit = [
+        float(profit_by_date.get(day, Decimal("0.00"))) for day in trend_dates
+    ]
+
+    #
     # Stock Value
     #
 
@@ -195,6 +247,9 @@ def dashboard(request):
         "active_subdealers": active_subdealers,
         "active_employees": active_employees,
         "pending_verifications": pending_verifications,
+        "chart_labels": json.dumps(chart_labels),
+        "chart_sales": json.dumps(chart_sales),
+        "chart_profit": json.dumps(chart_profit),
         "page_type": "dashboard",
     }
 
