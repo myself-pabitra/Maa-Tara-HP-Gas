@@ -235,7 +235,7 @@ def create_invoice(request):
     }
     predefined_expenses_json = json.dumps(predefined_expenses_dict)
 
-    # Discounts map: {subdealer_code: {product_id: discount}}
+    # Discounts map: {subdealer_code: {product_code: discount}}
     discounts_map = {}
     for d in SubDealerSKUDiscount.objects.select_related("subdealer", "product").all():
         sub_code = d.subdealer.subdealerCode
@@ -273,6 +273,8 @@ def create_invoice(request):
                 payment_modes = request.POST.getlist("payment_mode[]")
                 cash_amounts = request.POST.getlist("cash_amount[]")
                 ac_amounts = request.POST.getlist("ac_amount[]")
+                remarks_list = request.POST.getlist("remarks[]")
+                buying_prices = request.POST.getlist("buying_price[]")
 
                 # Basic length validation
                 n = len(product_codes)
@@ -288,6 +290,8 @@ def create_invoice(request):
                     == len(payment_modes)
                     == len(cash_amounts)
                     == len(ac_amounts)
+                    == len(remarks_list)
+                    == len(buying_prices)
                 ):
                     raise ValueError("Line items arrays are inconsistent in length.")
 
@@ -298,14 +302,21 @@ def create_invoice(request):
                 for i in range(n):
                     product_code = product_codes[i]
                     sub_code = subdealers_codes[i]
-                    try:
-                        product = ProductInventory.objects.select_for_update().get(
-                            productCode=product_code
-                        )
-                    except ProductInventory.DoesNotExist:
-                        raise ValueError(
-                            f"Product '{product_code}' not found (row {i + 1})."
-                        )
+                    is_other = product_code == "__other__"
+                    product = None
+                    remarks = remarks_list[i].strip()
+                    if is_other:
+                        if not remarks:
+                            raise ValueError(f"Remarks are required for Other on row {i + 1}.")
+                    else:
+                        try:
+                            product = ProductInventory.objects.select_for_update().get(
+                                productCode=product_code
+                            )
+                        except ProductInventory.DoesNotExist:
+                            raise ValueError(
+                                f"Product '{product_code}' not found (row {i + 1})."
+                            )
                     try:
                         subdealer = Subdealer.objects.get(subdealerCode=sub_code)
                     except Subdealer.DoesNotExist:
@@ -332,6 +343,20 @@ def create_invoice(request):
                         line_total = Decimal(line_totals[i] or "0")
                     except InvalidOperation:
                         raise ValueError(f"Invalid price/line total on row {i + 1}.")
+                    if line_total < 0:
+                        raise ValueError(f"Line total must be positive on row {i + 1}.")
+
+                    if is_other:
+                        try:
+                            buying_price = Decimal(buying_prices[i] or "0")
+                        except InvalidOperation:
+                            raise ValueError(f"Invalid buying price on row {i + 1}.")
+                        if buying_price < 0:
+                            raise ValueError(f"Buying price cannot be negative on row {i + 1}.")
+                        discounted_price = line_total
+                    else:
+                        buying_price = product.buy_price * qty
+                        remarks = ""
 
                     try:
                         due_cyl = int(float(due_cyls[i] or 0))
@@ -388,37 +413,29 @@ def create_invoice(request):
                     # Inventory Validation
                     # ----------------------------------------------------------
 
-                    if product.product_quantity < qty:
-                        raise ValueError(
-                            f"Insufficient stock for {product.product_name} "
-                            f"(Available: {product.product_quantity}, "
-                            f"Requested: {qty})"
-                        )
-
-                    # ----------------------------------------------------------
-                    # Reduce Stock
-                    # ----------------------------------------------------------
-
-                    product.product_quantity -= qty
-
-                    product.in_stock = product.product_quantity > 0
-
-                    product.save(
-                        update_fields=[
-                            "product_quantity",
-                            "in_stock",
-                        ]
-                    )
+                    if product:
+                        if product.product_quantity < qty:
+                            raise ValueError(
+                                f"Insufficient stock for {product.product_name} "
+                                f"(Available: {product.product_quantity}, "
+                                f"Requested: {qty})"
+                            )
+                        product.product_quantity -= qty
+                        product.in_stock = product.product_quantity > 0
+                        product.save(update_fields=["product_quantity", "in_stock"])
 
                     # create line item with per-line payment_status
                     DailyInvoiceLineItem.objects.create(
                         invoice=invoice,
                         subdealer=subdealer,
                         product=product,
+                        is_other=is_other,
+                        remarks=remarks,
                         quantity=qty,
                         submitted_blank=submitted_blank,
                         discounted_price=discounted_price,
                         line_total=line_total,
+                        buying_price=buying_price,
                         due_cyl=due_cyl,
                         payment_mode=pmode,
                         cash_amount=cash_amt,
@@ -432,7 +449,7 @@ def create_invoice(request):
                     # Deduct DAC only for DAC applicable products
                     # ----------------------------------------------------------
 
-                    if product.dac_applicable:
+                    if product and product.dac_applicable:
                         latest_entry = (
                             DACEntry.objects.filter(subdealer=subdealer)
                             .order_by("-entry_date", "-created_at")
@@ -458,14 +475,15 @@ def create_invoice(request):
                         )
 
                     # update or create cylinder info
-                    cyl_info, created = Cylender_information.objects.get_or_create(
-                        Subdealer=subdealer,
-                        product=product,
-                        defaults={"due_cylender_qty": due_cyl},
-                    )
-                    if not created:
-                        cyl_info.due_cylender_qty += due_cyl
-                        cyl_info.save()
+                    if product:
+                        cyl_info, created = Cylender_information.objects.get_or_create(
+                            Subdealer=subdealer,
+                            product=product,
+                            defaults={"due_cylender_qty": due_cyl},
+                        )
+                        if not created:
+                            cyl_info.due_cylender_qty += due_cyl
+                            cyl_info.save()
 
                 # Expenses parsing
                 for key in request.POST:
@@ -561,106 +579,253 @@ def download_invoice_pdf(request, invoice_id):
     buffer = BytesIO()
 
     try:
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.units import inch
-        from reportlab.pdfgen import canvas
-    except ImportError:
-        messages.error(
-            request, "PDF generation is not available. Please install reportlab."
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import mm
+        from reportlab.platypus import (
+            SimpleDocTemplate, Table, TableStyle, Paragraph,
+            Spacer, HRFlowable, Image as RLImage,
         )
+    except ImportError:
+        messages.error(request, "PDF generation is not available. Please install reportlab.")
         return redirect("view_daily_sell_invoices")
 
-    page_width, page_height = letter
-    pdf = canvas.Canvas(buffer, pagesize=letter)
-    x = 50
-    y = page_height - 50
+    # ------------------------------------------------------------------ styles
+    styles = getSampleStyleSheet()
+    brand_style = ParagraphStyle(
+        "brand", fontSize=16, fontName="Helvetica-Bold", textColor=colors.HexColor("#1e3a5f"),
+    )
+    sub_style = ParagraphStyle(
+        "sub", fontSize=8, fontName="Helvetica", textColor=colors.HexColor("#6b7280"),
+    )
+    label_style = ParagraphStyle(
+        "label", fontSize=8, fontName="Helvetica-Bold", textColor=colors.HexColor("#374151"),
+    )
+    value_style = ParagraphStyle(
+        "value", fontSize=8, fontName="Helvetica", textColor=colors.HexColor("#111827"),
+    )
+    section_hdr = ParagraphStyle(
+        "sectionhdr", fontSize=9, fontName="Helvetica-Bold",
+        textColor=colors.HexColor("#1e3a5f"), spaceAfter=2,
+    )
+    cell_style = ParagraphStyle("cell", fontSize=8, fontName="Helvetica")
+    cell_right = ParagraphStyle("cellr", fontSize=8, fontName="Helvetica", alignment=2)
 
+    BRAND_BLUE = colors.HexColor("#1e3a5f")
+    LIGHT_BLUE = colors.HexColor("#e8f0f8")
+    ROW_ALT = colors.HexColor("#f7f9fc")
+    ACCENT = colors.HexColor("#f59e0b")
+
+    # ------------------------------------------------------------------ doc
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=15 * mm,
+        leftMargin=15 * mm,
+        topMargin=12 * mm,
+        bottomMargin=20 * mm,
+        title=f"Invoice {invoice.invoice_number}",
+    )
+    page_w = A4[0] - 30 * mm  # usable width
+
+    story = []
+
+    # ------------------------------------------------------------------ header
     logo_path = settings.BASE_DIR / "static" / "images" / "maa-tara-hp-gas-logo.png"
     if logo_path.exists():
-        pdf.drawImage(
-            str(logo_path),
-            x,
-            y - 42,
-            width=42,
-            height=42,
-            mask="auto",
-            preserveAspectRatio=True,
-        )
-    pdf.setFont("Helvetica-Bold", 16)
-    pdf.drawString(x + 50, y - 4, "MAA TARA HP GAS")
-    pdf.setFont("Helvetica", 9)
-    pdf.drawString(x + 50, y - 18, "LPG Distribution | Reliable Energy, Every Day")
-    pdf.line(x, y - 48, page_width - x, y - 48)
-    pdf.setFont("Helvetica-Bold", 14)
-    pdf.drawString(x, y - 70, "TAX INVOICE")
-    pdf.setFont("Helvetica", 10)
-    y -= 90
-    pdf.drawString(x, y, f"Invoice No: {invoice.invoice_number}")
-    pdf.drawString(x + 300, y, f"Date: {invoice.invoice_date.strftime('%Y-%m-%d')}")
-    y -= 18
-    pdf.drawString(x, y, f"Payment Mode: {invoice.payment_mode}")
-    y -= 18
-    pdf.drawString(x, y, f"Subtotal: {invoice.subtotal}")
-    pdf.drawString(x + 300, y, f"Expenses: {invoice.other_expense}")
-    y -= 18
-    pdf.setFont("Helvetica-Bold", 11)
-    pdf.drawString(x, y, f"Grand Total: {invoice.grand_total}")
-    pdf.drawString(
-        x + 300,
-        y,
-        f"Total Quantity: {invoice.line_items.aggregate(total_qty=Sum('quantity'))['total_qty'] or 0}",
+        logo = RLImage(str(logo_path), width=14 * mm, height=14 * mm)
+    else:
+        logo = Paragraph("", styles["Normal"])
+
+    employees_str = ", ".join(e.name for e in invoice.employees.all()) or "—"
+    total_qty = invoice.line_items.aggregate(t=Sum("quantity"))["t"] or 0
+
+    header_left = [
+        [logo, Paragraph("<b>MAA TARA HP GAS</b>", brand_style)],
+        ["", Paragraph("LPG Distribution · Reliable Energy, Every Day", sub_style)],
+    ]
+    header_left_table = Table(header_left, colWidths=[16 * mm, None])
+    header_left_table.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 1),
+    ]))
+
+    inv_details = [
+        [Paragraph("TAX INVOICE", ParagraphStyle(
+            "inv", fontSize=18, fontName="Helvetica-Bold",
+            textColor=BRAND_BLUE, alignment=2,
+        ))],
+        [Paragraph(f"<b>Invoice No:</b> {invoice.invoice_number}", ParagraphStyle(
+            "invno", fontSize=9, fontName="Helvetica", alignment=2,
+        ))],
+        [Paragraph(f"<b>Date:</b> {invoice.invoice_date.strftime('%d %b %Y')}", ParagraphStyle(
+            "invdate", fontSize=9, fontName="Helvetica", alignment=2,
+        ))],
+        [Paragraph(f"<b>Payment Mode:</b> {invoice.payment_mode or '—'}", ParagraphStyle(
+            "invmode", fontSize=9, fontName="Helvetica", alignment=2,
+        ))],
+    ]
+    inv_details_table = Table(inv_details, colWidths=[page_w * 0.4])
+    inv_details_table.setStyle(TableStyle([
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 1),
+    ]))
+
+    top_table = Table(
+        [[header_left_table, inv_details_table]],
+        colWidths=[page_w * 0.6, page_w * 0.4],
     )
+    top_table.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("BACKGROUND", (0, 0), (-1, -1), LIGHT_BLUE),
+        ("BOX", (0, 0), (-1, -1), 0.5, BRAND_BLUE),
+        ("ROUNDEDCORNERS", [4]),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (0, -1), 8),
+        ("RIGHTPADDING", (1, 0), (1, -1), 8),
+    ]))
+    story.append(top_table)
+    story.append(Spacer(1, 4 * mm))
 
-    y -= 30
-    pdf.setFont("Helvetica-Bold", 10)
-    pdf.drawString(x, y, "Subdealer")
-    pdf.drawString(x + 120, y, "Product")
-    pdf.drawString(x + 260, y, "Qty")
-    pdf.drawString(x + 310, y, "Line Total")
-    pdf.drawString(x + 370, y, "AC Amount")
-    pdf.drawString(x + 420, y, "Cash Amount")
-    y -= 14
-    pdf.line(x, y, page_width - x, y)
-    y -= 14
-    pdf.setFont("Helvetica", 10)
+    # Employees line
+    story.append(Paragraph(f"<b>Employees:</b> {employees_str}", value_style))
+    story.append(Spacer(1, 3 * mm))
 
-    for item in invoice.line_items.all():
-        if y < 100:
-            pdf.showPage()
-            y = page_height - 50
-            pdf.setFont("Helvetica-Bold", 10)
-            pdf.drawString(x, y, "Subdealer")
-            pdf.drawString(x + 120, y, "Product")
-            pdf.drawString(x + 260, y, "Qty")
-            pdf.drawString(x + 310, y, "Line Total")
-            pdf.drawString(x + 370, y, "AC Amount")
-            pdf.drawString(x + 420, y, "Cash Amount")
-            y -= 20
-            pdf.setFont("Helvetica", 10)
+    # ------------------------------------------------------------------ line items table
+    story.append(Paragraph("Invoice Line Items", section_hdr))
 
-        pdf.drawString(x, y, item.subdealer.name if item.subdealer else "")
-        pdf.drawString(x + 120, y, item.product.product_name if item.product else "")
-        pdf.drawString(x + 260, y, str(item.quantity))
-        pdf.drawString(x + 310, y, f"{item.line_total}")
-        pdf.drawString(x + 370, y, f"{item.ac_amount}")
-        pdf.drawString(x + 420, y, f"{item.cash_amount}")
-        y -= 16
+    col_widths = [
+        page_w * 0.14,   # Subdealer
+        page_w * 0.18,   # Product
+        page_w * 0.07,   # Qty
+        page_w * 0.09,   # Mode
+        page_w * 0.13,   # Line Total
+        page_w * 0.13,   # Cash
+        page_w * 0.13,   # AC
+        page_w * 0.13,   # Status
+    ]
 
+    def hdr(txt):
+        return Paragraph(f"<b>{txt}</b>", ParagraphStyle(
+            "th", fontSize=8, fontName="Helvetica-Bold",
+            textColor=colors.white, alignment=1,
+        ))
+
+    def rcell(txt):
+        return Paragraph(str(txt), cell_right)
+
+    def lcell(txt):
+        return Paragraph(str(txt), cell_style)
+
+    items_data = [[
+        hdr("Subdealer"), hdr("Product"), hdr("Qty"), hdr("Mode"),
+        hdr("Line Total"), hdr("Cash"), hdr("AC"), hdr("Status"),
+    ]]
+
+    for item in invoice.line_items.select_related("subdealer", "product").all():
+        items_data.append([
+            lcell(item.subdealer.name if item.subdealer else ""),
+            lcell(item.display_name),
+            Paragraph(str(item.quantity), ParagraphStyle("ctr", fontSize=8, alignment=1)),
+            Paragraph(item.payment_mode, ParagraphStyle("ctr", fontSize=8, alignment=1)),
+            rcell(f"Rs.{item.line_total}"),
+            rcell(f"Rs.{item.cash_amount}"),
+            rcell(f"Rs.{item.ac_amount}"),
+            Paragraph(item.payment_status, ParagraphStyle("ctr", fontSize=7, alignment=1)),
+        ])
+
+    items_table = Table(items_data, colWidths=col_widths, repeatRows=1)
+    row_count = len(items_data)
+    items_style = [
+        ("BACKGROUND", (0, 0), (-1, 0), BRAND_BLUE),
+        ("GRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#d1d5db")),
+        ("BOX", (0, 0), (-1, -1), 0.5, BRAND_BLUE),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+    ]
+    for i in range(1, row_count):
+        if i % 2 == 0:
+            items_style.append(("BACKGROUND", (0, i), (-1, i), ROW_ALT))
+    items_table.setStyle(TableStyle(items_style))
+    story.append(items_table)
+    story.append(Spacer(1, 5 * mm))
+
+    # ------------------------------------------------------------------ expenses
     if invoice.expenses.exists():
-        y -= 10
-        pdf.setFont("Helvetica-Bold", 11)
-        pdf.drawString(x, y, "Expenses")
-        y -= 18
-        pdf.setFont("Helvetica", 10)
+        story.append(Paragraph("Expenses", section_hdr))
+        exp_data = [[
+            Paragraph("<b>Expense</b>", ParagraphStyle("eth", fontSize=8, fontName="Helvetica-Bold", textColor=colors.white)),
+            Paragraph("<b>Amount</b>", ParagraphStyle("eam", fontSize=8, fontName="Helvetica-Bold", textColor=colors.white, alignment=2)),
+        ]]
         for exp in invoice.expenses.all():
-            if y < 100:
-                pdf.showPage()
-                y = page_height - 50
-                pdf.setFont("Helvetica", 10)
-            pdf.drawString(x, y, f"{exp.expense_name}: {exp.expense_amount}")
-            y -= 14
+            exp_data.append([lcell(exp.expense_name), rcell(f"Rs.{exp.expense_amount}")])
+        exp_table = Table(exp_data, colWidths=[page_w * 0.75, page_w * 0.25])
+        exp_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), BRAND_BLUE),
+            ("GRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#d1d5db")),
+            ("BOX", (0, 0), (-1, -1), 0.5, BRAND_BLUE),
+            ("TOPPADDING", (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ("LEFTPADDING", (0, 0), (-1, -1), 4),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ]))
+        story.append(exp_table)
+        story.append(Spacer(1, 5 * mm))
 
-    pdf.save()
+    # ------------------------------------------------------------------ totals
+    story.append(HRFlowable(width="100%", thickness=0.5, color=BRAND_BLUE))
+    story.append(Spacer(1, 2 * mm))
+
+    total_cash = sum(i.cash_amount for i in invoice.line_items.all())
+    total_ac = sum(i.ac_amount for i in invoice.line_items.all())
+
+    totals_data = [
+        [Paragraph("Total Quantity", label_style), Paragraph(str(total_qty), ParagraphStyle("tv", fontSize=8, fontName="Helvetica", alignment=2))],
+        [Paragraph("Subtotal", label_style), Paragraph(f"Rs.{invoice.subtotal}", ParagraphStyle("tv", fontSize=8, fontName="Helvetica", alignment=2))],
+        [Paragraph("Total Cash Collected", label_style), Paragraph(f"Rs.{total_cash}", ParagraphStyle("tv", fontSize=8, fontName="Helvetica", alignment=2))],
+        [Paragraph("Total AC Amount", label_style), Paragraph(f"Rs.{total_ac}", ParagraphStyle("tv", fontSize=8, fontName="Helvetica", alignment=2))],
+        [Paragraph("Other Expenses", label_style), Paragraph(f"Rs.{invoice.other_expense}", ParagraphStyle("tv", fontSize=8, fontName="Helvetica", alignment=2))],
+        [Paragraph("<b>Grand Total</b>", ParagraphStyle("gt", fontSize=10, fontName="Helvetica-Bold", textColor=BRAND_BLUE)),
+         Paragraph(f"<b>Rs.{invoice.grand_total}</b>", ParagraphStyle("gtv", fontSize=10, fontName="Helvetica-Bold", textColor=BRAND_BLUE, alignment=2))],
+    ]
+    totals_table = Table(totals_data, colWidths=[page_w * 0.7, page_w * 0.3])
+    totals_table.setStyle(TableStyle([
+        ("LINEABOVE", (0, -1), (-1, -1), 1, BRAND_BLUE),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("BACKGROUND", (0, -1), (-1, -1), LIGHT_BLUE),
+    ]))
+
+    # right-align the totals block
+    outer = Table([[Spacer(page_w * 0.45, 1), totals_table]], colWidths=[page_w * 0.45, page_w * 0.55])
+    outer.setStyle(TableStyle([("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+    story.append(outer)
+
+    # ------------------------------------------------------------------ footer callback
+    def draw_footer(canvas_obj, doc_obj):
+        canvas_obj.saveState()
+        canvas_obj.setFont("Helvetica", 7)
+        canvas_obj.setFillColor(colors.HexColor("#9ca3af"))
+        canvas_obj.drawString(15 * mm, 10 * mm, "Maa Tara HP Gas — LPG Distribution")
+        canvas_obj.drawRightString(
+            A4[0] - 15 * mm, 10 * mm,
+            f"Page {doc_obj.page} · {invoice.invoice_number}",
+        )
+        canvas_obj.restoreState()
+
+    doc.build(story, onFirstPage=draw_footer, onLaterPages=draw_footer)
     buffer.seek(0)
 
     response = HttpResponse(buffer, content_type="application/pdf")
@@ -668,6 +833,7 @@ def download_invoice_pdf(request, invoice_id):
         f'attachment; filename="invoice_{invoice.invoice_number}.pdf"'
     )
     return response
+
 
 
 def print_invoice(request, invoice_id):
@@ -681,18 +847,18 @@ def print_invoice(request, invoice_id):
         if item.due_cyl and item.due_cyl > 0:
             summary_items.append(
                 {
-                    "text": f"{item.subdealer.name} : {item.product.product_name} {item.due_cyl} pis Due"
+                    "text": f"{item.subdealer.name} : {item.display_name} {item.due_cyl} pis Due"
                 }
             )
         elif item.submitted_blank > item.quantity:
             diff = item.submitted_blank - item.quantity
             summary_items.append(
                 {
-                    "text": f"{item.subdealer.name} : {item.product.product_name} {diff} pis joma"
+                    "text": f"{item.subdealer.name} : {item.display_name} {diff} pis joma"
                 }
             )
 
-        product_name = item.product.product_name if item.product else "Unknown"
+        product_name = item.display_name
         if product_name not in product_totals:
             product_totals[product_name] = {"quantity": 0, "submitted": 0}
         product_totals[product_name]["quantity"] += item.quantity
@@ -792,7 +958,7 @@ def Cylender_Mismatch(request):
                 "invoice_number": item.invoice.invoice_number,
                 "invoice_date": item.invoice.invoice_date,
                 "subdealer": item.subdealer,
-                "product": item.product.product_name,
+                "product": item.display_name,
                 "quantity": item.quantity,
                 "submitted_blank": item.submitted_blank,
                 "difference": difference,
@@ -857,7 +1023,7 @@ def edit_invoice(request, invoice_id):
     discounts_map = {}
     for d in SubDealerSKUDiscount.objects.select_related("subdealer", "product").all():
         sub_code = d.subdealer.subdealerCode
-        discounts_map.setdefault(sub_code, {})[str(d.product.id)] = float(
+        discounts_map.setdefault(sub_code, {})[d.product.productCode] = float(
             d.product_discount or 0
         )
     discounts_map_json = json.dumps(discounts_map)
@@ -866,11 +1032,14 @@ def edit_invoice(request, invoice_id):
     line_items_data = [
         {
             "subdealer_code": item.subdealer.subdealerCode,
-            "product_id": str(item.product.id),
+            "product_code": item.product.productCode if item.product else "",
+            "is_other": item.is_other,
+            "remarks": item.remarks,
             "quantity": item.quantity,
             "submitted_blank": item.submitted_blank,
             "discounted_price": str(item.discounted_price),
             "line_total": str(item.line_total),
+            "buying_price": str(item.buying_price),
             "due_cyl": str(item.due_cyl),
             "payment_mode": item.payment_mode,
             "cash_amount": str(item.cash_amount),
@@ -917,7 +1086,7 @@ def edit_invoice(request, invoice_id):
                 invoice.line_items.all().delete()
                 invoice.expenses.all().delete()
 
-                products_ids = request.POST.getlist("product_id[]")
+                product_codes = request.POST.getlist("product_code[]")
                 subdealers_codes = request.POST.getlist("subdealer_code[]")
                 qtys = request.POST.getlist("quantity[]")
                 submitted_list = request.POST.getlist("submitted_blank[]")
@@ -927,8 +1096,10 @@ def edit_invoice(request, invoice_id):
                 payment_modes = request.POST.getlist("payment_mode[]")
                 cash_amounts = request.POST.getlist("cash_amount[]")
                 ac_amounts = request.POST.getlist("ac_amount[]")
+                remarks_list = request.POST.getlist("remarks[]")
+                buying_prices = request.POST.getlist("buying_price[]")
 
-                n = len(products_ids)
+                n = len(product_codes)
                 if not (
                     n
                     and len(subdealers_codes)
@@ -941,6 +1112,8 @@ def edit_invoice(request, invoice_id):
                     == len(payment_modes)
                     == len(cash_amounts)
                     == len(ac_amounts)
+                    == len(remarks_list)
+                    == len(buying_prices)
                 ):
                     raise ValueError("Line items arrays are inconsistent in length.")
 
@@ -949,14 +1122,21 @@ def edit_invoice(request, invoice_id):
                 modes_seen = set()
 
                 for i in range(n):
-                    prod_id = products_ids[i]
+                    product_code = product_codes[i]
                     sub_code = subdealers_codes[i]
-                    try:
-                        product = ProductInventory.objects.get(id=prod_id)
-                    except ProductInventory.DoesNotExist:
-                        raise ValueError(
-                            f"Product id {prod_id} not found (row {i + 1})."
-                        )
+                    is_other = product_code == "__other__"
+                    product = None
+                    remarks = remarks_list[i].strip()
+                    if is_other:
+                        if not remarks:
+                            raise ValueError(f"Remarks are required for Other on row {i + 1}.")
+                    else:
+                        try:
+                            product = ProductInventory.objects.get(productCode=product_code)
+                        except ProductInventory.DoesNotExist:
+                            raise ValueError(
+                                f"Product '{product_code}' not found (row {i + 1})."
+                            )
                     try:
                         subdealer = Subdealer.objects.get(subdealerCode=sub_code)
                     except Subdealer.DoesNotExist:
@@ -983,6 +1163,20 @@ def edit_invoice(request, invoice_id):
                         line_total = Decimal(line_totals[i] or "0")
                     except InvalidOperation:
                         raise ValueError(f"Invalid price/line total on row {i + 1}.")
+                    if line_total < 0:
+                        raise ValueError(f"Line total cannot be negative on row {i + 1}.")
+
+                    if is_other:
+                        try:
+                            buying_price = Decimal(buying_prices[i] or "0")
+                        except InvalidOperation:
+                            raise ValueError(f"Invalid buying price on row {i + 1}.")
+                        if buying_price < 0:
+                            raise ValueError(f"Buying price cannot be negative on row {i + 1}.")
+                        discounted_price = line_total
+                    else:
+                        buying_price = product.buy_price * qty
+                        remarks = ""
 
                     try:
                         due_cyl = int(float(due_cyls[i] or 0))
@@ -1014,10 +1208,13 @@ def edit_invoice(request, invoice_id):
                         invoice=invoice,
                         subdealer=subdealer,
                         product=product,
+                        is_other=is_other,
+                        remarks=remarks,
                         quantity=qty,
                         submitted_blank=submitted_blank,
                         discounted_price=discounted_price,
                         line_total=line_total,
+                        buying_price=buying_price,
                         due_cyl=due_cyl,
                         payment_mode=pmode,
                         cash_amount=cash_amt,
@@ -1025,14 +1222,15 @@ def edit_invoice(request, invoice_id):
                         payment_status=payment_status,
                     )
 
-                    cyl_info, created = Cylender_information.objects.get_or_create(
-                        Subdealer=subdealer,
-                        product=product,
-                        defaults={"due_cylender_qty": due_cyl},
-                    )
-                    if not created:
-                        cyl_info.due_cylender_qty = due_cyl
-                        cyl_info.save()
+                    if product:
+                        cyl_info, created = Cylender_information.objects.get_or_create(
+                            Subdealer=subdealer,
+                            product=product,
+                            defaults={"due_cylender_qty": due_cyl},
+                        )
+                        if not created:
+                            cyl_info.due_cylender_qty = due_cyl
+                            cyl_info.save()
 
                 for key in request.POST:
                     if key.startswith("expense_type_"):

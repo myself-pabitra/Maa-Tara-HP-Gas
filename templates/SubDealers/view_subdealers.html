@@ -15,8 +15,30 @@
     </div>
   </div>
 
+  <!-- Search Bar -->
+  <div class="mb-4">
+    <div class="flex items-center gap-3">
+      <div class="relative flex-1 max-w-md">
+        <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-base-content/50">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+          </svg>
+        </span>
+        <input
+          id="subdealerSearch"
+          type="text"
+          placeholder="Search by name, phone or address..."
+          class="input input-bordered w-full pl-9"
+          autocomplete="off"
+        >
+      </div>
+      <span id="searchCount" class="badge badge-neutral text-sm px-3 py-3 hidden"></span>
+      <button id="clearSearch" type="button" class="btn btn-sm btn-ghost hidden">✕ Clear</button>
+    </div>
+  </div>
+
   <div class="overflow-x-auto bg-base-200 rounded-2xl shadow-sm">
-    <table class="table w-full">
+    <table class="table w-full" id="subdealersTable">
       <thead>
         <tr>
           <th>Name</th>
@@ -27,9 +49,12 @@
           <th class="text-center">Actions</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="subdealersBody">
         {% for subdealer in subdealers %}
-        <tr>
+        <tr class="subdealer-row"
+            data-name="{{ subdealer.name|lower }}"
+            data-phone="{{ subdealer.phone_number|lower }}"
+            data-address="{{ subdealer.address|lower|default:'' }}">
           <td>{{ subdealer.name }}</td>
           <!-- <td>{{ subdealer.subdealerCode }}</td> -->
           <td>{{ subdealer.phone_number }}</td>
@@ -50,6 +75,51 @@
         {% endfor %}
       </tbody>
     </table>
+    <!-- No results row (hidden by default) -->
+    <div id="noResultsMsg" class="text-center py-8 text-base-content/60 hidden">
+      No subdealers match your search.
+    </div>
   </div>
 </div>
+
+<script>
+  const searchInput = document.getElementById('subdealerSearch');
+  const clearBtn = document.getElementById('clearSearch');
+  const countBadge = document.getElementById('searchCount');
+  const noResults = document.getElementById('noResultsMsg');
+  const rows = document.querySelectorAll('.subdealer-row');
+  const totalRows = rows.length;
+
+  searchInput.addEventListener('input', filterTable);
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    filterTable();
+    searchInput.focus();
+  });
+
+  function filterTable() {
+    const query = searchInput.value.trim().toLowerCase();
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const name = row.dataset.name || '';
+      const phone = row.dataset.phone || '';
+      const address = row.dataset.address || '';
+      const matches = !query || name.includes(query) || phone.includes(query) || address.includes(query);
+      row.style.display = matches ? '' : 'none';
+      if (matches) visibleCount++;
+    });
+
+    if (query) {
+      countBadge.textContent = `${visibleCount} of ${totalRows} shown`;
+      countBadge.classList.remove('hidden');
+      clearBtn.classList.remove('hidden');
+    } else {
+      countBadge.classList.add('hidden');
+      clearBtn.classList.add('hidden');
+    }
+
+    noResults.classList.toggle('hidden', visibleCount > 0 || !query);
+  }
+</script>
 {% endblock content %}

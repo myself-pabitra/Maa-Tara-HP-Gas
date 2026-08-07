@@ -98,7 +98,7 @@ def dashboard(request):
         gross_profit=Coalesce(
             Sum(
                 ExpressionWrapper(
-                    (F("discounted_price") - F("product__buy_price")) * F("quantity"),
+                    F("line_total") - F("buying_price"),
                     output_field=DecimalField(),
                 )
             ),
@@ -146,8 +146,7 @@ def dashboard(request):
                 total=Coalesce(
                     Sum(
                         ExpressionWrapper(
-                            (F("discounted_price") - F("product__buy_price"))
-                            * F("quantity"),
+                            F("line_total") - F("buying_price"),
                             output_field=DecimalField(),
                         )
                     ),

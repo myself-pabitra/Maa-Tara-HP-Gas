@@ -21,7 +21,7 @@
 
             <p class="text-base-content/70 mt-2">
 
-                Verify AC & Mixed payments received from Subdealers.
+                Verify AC &amp; Mixed payments received from Subdealers.
 
             </p>
 
@@ -33,7 +33,7 @@
 
                 <div class="stat-title">
 
-                    Pending Payments
+                    Pending / Partial
 
                 </div>
 
@@ -87,7 +87,13 @@
 
                     <th class="text-right">
 
-                        Cash
+                        Received
+
+                    </th>
+
+                    <th class="text-right text-error">
+
+                        Due
 
                     </th>
 
@@ -137,7 +143,7 @@
 
                     <td>
 
-                        {{ item.product.product_name }}
+                        {{ item.display_name }}
 
                     </td>
 
@@ -175,19 +181,33 @@
 
                     </td>
 
+                    <td class="text-right text-success font-semibold">
+
+                        ₹{{ item.verified_ac_amount }}
+
+                    </td>
+
                     <td class="text-right">
 
-                        ₹{{ item.cash_amount }}
+                        <span class="font-bold text-error">₹{{ item.due_amount }}</span>
 
                     </td>
 
                     <td>
 
-                        <span class="badge badge-error">
+                        {% if item.payment_status == "PARTIAL" %}
+                        <span class="badge badge-warning">
 
-                            {{ item.payment_status }}
+                            PARTIAL
 
                         </span>
+                        {% else %}
+                        <span class="badge badge-error">
+
+                            PENDING
+
+                        </span>
+                        {% endif %}
 
                     </td>
 
@@ -205,6 +225,8 @@
 
                             data-subdealer="{{ item.subdealer.name }}"
 
+                            data-due="{{ item.due_amount }}"
+
                             data-ac="{{ item.ac_amount }}"
 
                         >
@@ -221,7 +243,7 @@
 
                 <tr>
 
-                    <td colspan="10" class="text-center py-12 text-base-content/60">
+                    <td colspan="11" class="text-center py-12 text-base-content/60">
 
                         No Pending Payments Found.
 
@@ -279,29 +301,24 @@
 
             </div>
 
-            <div>
-
-                <label class="font-semibold">
-
-                    Expected AC Amount
-
-                </label>
-
-                <p class="text-primary font-bold">
-
-                    ₹<span id="modalExpected"></span>
-
-                </p>
-
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="font-semibold text-sm">Original AC Amount</label>
+                    <p class="text-base-content/70 font-medium">₹<span id="modalAc"></span></p>
+                </div>
+                <div>
+                    <label class="font-semibold text-sm">Remaining Due</label>
+                    <p class="text-error font-bold text-lg">₹<span id="modalDue"></span></p>
+                </div>
             </div>
 
             <div>
 
                 <label class="label">
 
-                    <span class="label-text">
+                    <span class="label-text font-semibold">
 
-                        Received AC Amount
+                        Received Amount (max: ₹<span id="modalMaxLabel"></span>)
 
                     </span>
 
@@ -315,7 +332,7 @@
 
                     step="0.01"
 
-                    min="0"
+                    min="0.01"
 
                     class="input input-bordered w-full"
 
@@ -325,7 +342,7 @@
 
             <p class="text-error text-sm hidden" id="amountError">
 
-                Received amount cannot exceed expected AC amount.
+                Received amount cannot exceed remaining due amount.
 
             </p>
 
@@ -368,6 +385,9 @@
         name="received_amount"
         id="receivedAmountHidden">
 
+    <!-- next=verify keeps redirect on the verify page -->
+    <input type="hidden" name="next" value="verify">
+
 </form>
 
 <script>
@@ -375,7 +395,7 @@
 const modal=document.getElementById("verifyModal");
 
 let verifyUrl="";
-let expectedAmount=0;
+let expectedDue=0;
 
 document.querySelectorAll(".verify-btn").forEach(btn=>{
 
@@ -383,15 +403,22 @@ document.querySelectorAll(".verify-btn").forEach(btn=>{
 
         verifyUrl=this.dataset.url;
 
-        expectedAmount=parseFloat(this.dataset.ac);
+        expectedDue=parseFloat(this.dataset.due);
 
         document.getElementById("modalInvoice").innerHTML=this.dataset.invoice;
 
         document.getElementById("modalDealer").innerHTML=this.dataset.subdealer;
 
-        document.getElementById("modalExpected").innerHTML=this.dataset.ac;
+        document.getElementById("modalAc").innerHTML=this.dataset.ac;
 
-        document.getElementById("receivedAmount").value=this.dataset.ac;
+        document.getElementById("modalDue").innerHTML=parseFloat(this.dataset.due).toFixed(2);
+
+        document.getElementById("modalMaxLabel").innerHTML=parseFloat(this.dataset.due).toFixed(2);
+
+        // Default to full due amount
+        document.getElementById("receivedAmount").value=parseFloat(this.dataset.due).toFixed(2);
+
+        document.getElementById("receivedAmount").max=parseFloat(this.dataset.due).toFixed(2);
 
         document.getElementById("amountError").classList.add("hidden");
 
@@ -408,15 +435,15 @@ document.getElementById("confirmVerify").onclick = function(){
     const received =
         parseFloat(document.getElementById("receivedAmount").value);
 
-    if(isNaN(received)){
+    if(isNaN(received) || received <= 0){
 
-        alert("Enter received amount.");
+        alert("Enter a valid received amount.");
 
         return;
 
     }
 
-    if(received > expectedAmount){
+    if(received > expectedDue){
 
         document.getElementById("amountError").classList.remove("hidden");
 
@@ -426,13 +453,13 @@ document.getElementById("confirmVerify").onclick = function(){
 
     const form=document.getElementById("verifyForm");
 
-      if(!form){
+    if(!form){
 
-          alert("verifyForm not found.");
+        alert("verifyForm not found.");
 
-          return;
+        return;
 
-      }
+    }
 
     form.action = verifyUrl;
 

@@ -691,7 +691,7 @@ def monthly_summary(request):
     profit_summary = line_items.aggregate(
         total_profit=Sum(
             ExpressionWrapper(
-                (F("discounted_price") - F("product__buy_price")) * F("quantity"),
+                F("line_total") - F("buying_price"),
                 output_field=DecimalField(
                     max_digits=18,
                     decimal_places=2,

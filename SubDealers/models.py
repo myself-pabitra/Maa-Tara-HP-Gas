@@ -139,11 +139,24 @@ class DailyInvoiceLineItem(models.Model):
         DailyInvoice, on_delete=models.CASCADE, related_name="line_items"
     )
     subdealer = models.ForeignKey("SubDealers.Subdealer", on_delete=models.PROTECT)
-    product = models.ForeignKey("inventory.ProductInventory", on_delete=models.PROTECT)
+    product = models.ForeignKey(
+        "inventory.ProductInventory",
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+    )
+    is_other = models.BooleanField(default=False)
+    remarks = models.CharField(max_length=255, blank=True)
     quantity = models.PositiveIntegerField()
     submitted_blank = models.PositiveIntegerField(default=0)
     discounted_price = models.DecimalField(max_digits=12, decimal_places=2)
     line_total = models.DecimalField(max_digits=14, decimal_places=2)
+    buying_price = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text="Total buying cost for this invoice line",
+    )
     due_cyl = models.PositiveIntegerField(default=0)
 
     # Payment fields per-line
@@ -181,7 +194,13 @@ class DailyInvoiceLineItem(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.invoice.invoice_number} - {self.subdealer} - {self.product}"
+        return f"{self.invoice.invoice_number} - {self.subdealer} - {self.display_name}"
+
+    @property
+    def display_name(self):
+        if self.is_other:
+            return self.remarks or "Other"
+        return self.product.product_name if self.product else "Unknown product"
 
 
 class DailyInvoiceExpense(models.Model):

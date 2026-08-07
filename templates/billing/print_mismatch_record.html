@@ -1,89 +1,135 @@
 {% extends "layout.html" %}
 {% load static %}
 
-{% block title %}Mismatch Record {{ invoice.invoice_number }}{% endblock title %}
+{% block title %}Cylinder Mismatch Record — {{ invoice.invoice_number }}{% endblock title %}
 
 {% block content %}
-<div class="w-full mx-auto p-10">
-  <div class="flex flex-col xl:flex-row xl:justify-between xl:items-start gap-4 mb-8">
-    <div class="flex items-center gap-3">
-      <img src="{% static 'images/maa-tara-hp-gas-logo.png' %}" alt="Maa Tara HP Gas logo" class="h-16 w-16 shrink-0 object-contain">
-      <div>
-        <p class="text-2xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-indigo-700 to-blue-700">MAA TARA</p>
-        <p class="text-xs font-bold tracking-[0.28em] text-amber-600">HP GAS</p>
-        <p class="mt-1 text-xs text-gray-500">LPG Distribution · Reliable Energy, Every Day</p>
-      </div>
-    </div>
-    <div class="xl:text-right">
-      <h1 class="text-3xl font-extrabold text-primary">Mismatch Record {{ invoice.invoice_number }}</h1>
-      <p class="text-sm text-gray-600">Date: {{ invoice.invoice_date }}</p>
-    </div>
-    <div class="space-x-2 no-print">
-      <button type="button" onclick="window.print()" class="btn btn-primary">Print Record</button>
-      <a href="{% url 'print_daily_sell_invoice' invoice.id %}" class="btn btn-outline">Back to invoice</a>
-    </div>
+<div class="w-full mx-auto p-10 print:p-0">
+
+  <!-- Action bar (hidden on print) -->
+  <div class="no-print flex flex-wrap items-center gap-3 mb-6">
+    <button type="button" onclick="window.print()" class="btn btn-primary gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+      Print Record
+    </button>
+    <a href="{% url 'print_daily_sell_invoice' invoice.id %}" class="btn btn-ghost">← Back to Invoice</a>
   </div>
 
-  <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-200">
-    <div class="mb-6">
-      <p class="text-sm text-gray-600">The following line items have submitted quantities different from the billed quantities.</p>
+  <div class="invoice-sheet bg-white p-8 rounded-3xl shadow-xl border border-gray-200 max-w-3xl mx-auto">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6 mb-8 pb-6 border-b-2 border-blue-900">
+      <div class="flex items-center gap-4">
+        <img src="{% static 'images/maa-tara-hp-gas-logo.png' %}" alt="Maa Tara HP Gas" class="h-16 w-16 shrink-0 object-contain">
+        <div>
+          <p class="text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-indigo-700 to-blue-800">MAA TARA</p>
+          <p class="text-xs font-bold tracking-[0.3em] text-amber-600">HP GAS</p>
+          <p class="text-xs text-gray-500 mt-1">LPG Distribution · Reliable Energy, Every Day</p>
+        </div>
+      </div>
+      <div class="text-right">
+        <p class="text-2xl font-extrabold text-blue-900 mb-1">CYLINDER MISMATCH</p>
+        <table class="ml-auto text-sm text-gray-700">
+          <tr><td class="font-semibold pr-3 text-right">Invoice No:</td><td class="font-mono">{{ invoice.invoice_number }}</td></tr>
+          <tr><td class="font-semibold pr-3 text-right">Date:</td><td>{{ invoice.invoice_date }}</td></tr>
+        </table>
+      </div>
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="table w-full">
+    <p class="text-sm text-gray-500 mb-5">
+      The following line items have submitted quantities that differ from the billed quantities.
+    </p>
+
+    <!-- Mismatch table -->
+    <div class="overflow-x-auto mb-6">
+      <table class="mismatch-table w-full text-sm border-collapse">
         <thead>
-          <tr>
-            <th>Subdealer</th>
-            <th>Product</th>
-            <th>Billed Qty</th>
-            <th>Submitted</th>
-            <th>Difference</th>
+          <tr class="bg-blue-900 text-white">
+            <th class="px-3 py-2 text-left font-semibold">Subdealer</th>
+            <th class="px-3 py-2 text-left font-semibold">Product</th>
+            <th class="px-3 py-2 text-center font-semibold">Billed Qty</th>
+            <th class="px-3 py-2 text-center font-semibold">Submitted</th>
+            <th class="px-3 py-2 text-center font-semibold">Difference</th>
+            <th class="px-3 py-2 text-center font-semibold">Type</th>
           </tr>
         </thead>
         <tbody>
-          {% for item in mismatch_items %}
-            <tr>
-              <td>{{ item.item.subdealer.name }}</td>
-              <td>{{ item.item.product.product_name }}</td>
-              <td>{{ item.item.quantity }}</td>
-              <td>{{ item.item.submitted_blank }}</td>
-              <td>{{ item.shortage }}</td>
-            </tr>
+          {% for row in mismatch_items %}
+          <tr class="{% cycle 'bg-white' 'bg-blue-50' %} border-b border-gray-200">
+            <td class="px-3 py-2">{{ row.item.subdealer.name }}</td>
+            <td class="px-3 py-2">{{ row.item.display_name }}</td>
+            <td class="px-3 py-2 text-center font-semibold">{{ row.item.quantity }}</td>
+            <td class="px-3 py-2 text-center">{{ row.item.submitted_blank }}</td>
+            <td class="px-3 py-2 text-center font-bold
+              {% if row.shortage > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+              {% if row.shortage > 0 %}−{{ row.shortage }}{% else %}+{{ row.shortage|cut:"-" }}{% endif %}
+            </td>
+            <td class="px-3 py-2 text-center">
+              {% if row.shortage > 0 %}
+              <span class="inline-block px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700">Shortage</span>
+              {% else %}
+              <span class="inline-block px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-700">Excess</span>
+              {% endif %}
+            </td>
+          </tr>
           {% empty %}
-            <tr>
-              <td colspan="5" class="text-center py-6">No mismatch items found.</td>
-            </tr>
+          <tr><td colspan="6" class="text-center py-6 text-gray-400">No mismatch items for this invoice.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
+    <!-- Summary -->
+    {% if mismatch_items %}
+    <div class="flex justify-end">
+      <div class="bg-blue-900 text-white rounded-xl px-6 py-3 text-sm font-semibold">
+        Total Mismatch Records: {{ mismatch_items|length }}
+      </div>
+    </div>
+    {% endif %}
+
   </div>
 </div>
 
 <style>
   @media print {
-    .no-print,
-    #sidebarContainer,
-    header,
-    .alert,
-    .btn,
-    a.btn {
-      display: none !important;
-    }
-    body {
+    @page { size: A4; margin: 12mm; }
+
+    .no-print, #sidebarContainer, header, .alert, nav { display: none !important; }
+
+    html, body {
       margin: 0 !important;
+      height: auto !important;
+      overflow: visible !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
-    .w-full.mx-auto.p-10 {
+
+    body > main, body > main > section, #content {
+      display: block !important;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
       padding: 0 !important;
     }
-    .bg-white,
-    .bg-base-200,
-    .bg-base-100 {
-      background: white !important;
+
+    .invoice-sheet {
+      padding: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      max-width: 100% !important;
     }
-    .table {
-      width: 100% !important;
-    }
+
+    .bg-blue-50 { background-color: #eff6ff !important; }
+    .bg-blue-900 { background-color: #1e3a5f !important; }
+    .text-white { color: white !important; }
+
+    .mismatch-table th, .mismatch-table td { padding: 5px 8px !important; font-size: 9pt !important; }
+    table { border-collapse: collapse !important; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+    .mismatch-table thead { display: table-header-group; }
   }
 </style>
+
 {% endblock content %}

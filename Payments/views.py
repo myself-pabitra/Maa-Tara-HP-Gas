@@ -9,9 +9,10 @@ from SubDealers.models import DailyInvoice, DailyInvoiceLineItem, Subdealer
 
 
 def CheckPendingVerification(request):
+    # Include PARTIAL items too — they should remain in verification until fully paid
     pending_payments = (
         DailyInvoiceLineItem.objects.filter(
-            payment_status="PENDING",
+            payment_status__in=["PENDING", "PARTIAL"],
             payment_mode__in=["AC", "Mixed"],
         )
         .select_related("invoice", "subdealer", "product")
@@ -28,11 +29,12 @@ def CheckPendingVerification(request):
     )
 
 
-
-
-
 def verify_payment(request, invoice_number):
-
+    """
+    Verify a payment for an invoice. Accepts a POST with:
+      - received_amount: amount being paid now
+      - next: optional, 'due' to redirect back to due payments after verifying
+    """
     if request.method != "POST":
         return redirect("CheckPendingVerification")
 
@@ -41,13 +43,18 @@ def verify_payment(request, invoice_number):
         invoice_number=invoice_number,
     )
 
+    # Determine where to redirect after verifying
+    next_page = request.POST.get("next", "verify")
+
     try:
         received = Decimal(request.POST.get("received_amount", "0"))
     except Exception:
         messages.error(request, "Invalid amount.")
+        if next_page == "due":
+            return redirect("payment_due_list")
         return redirect("CheckPendingVerification")
 
-    # Find AC/Mixed line items still awaiting payment
+    # Find AC/Mixed line items still awaiting payment (PENDING or PARTIAL)
     line_items = invoice.line_items.filter(
         payment_status__in=["PENDING", "PARTIAL"],
         payment_mode__in=["AC", "Mixed"],
@@ -55,11 +62,19 @@ def verify_payment(request, invoice_number):
 
     expected = sum(item.due_amount for item in line_items)
 
+    if received <= Decimal("0"):
+        messages.error(request, "Received amount must be greater than zero.")
+        if next_page == "due":
+            return redirect("payment_due_list")
+        return redirect("CheckPendingVerification")
+
     if received > expected:
         messages.error(
             request,
-            f"Received amount cannot exceed ₹{expected}.",
+            f"Received amount ₹{received} cannot exceed outstanding due ₹{expected}.",
         )
+        if next_page == "due":
+            return redirect("payment_due_list")
         return redirect("CheckPendingVerification")
 
     remaining = received
@@ -84,9 +99,11 @@ def verify_payment(request, invoice_number):
 
     messages.success(
         request,
-        f"Invoice {invoice.invoice_number} verified successfully.",
+        f"Invoice {invoice.invoice_number}: ₹{received} verified successfully.",
     )
 
+    if next_page == "due":
+        return redirect("payment_due_list")
     return redirect("CheckPendingVerification")
 
 
@@ -113,7 +130,7 @@ def due_payments(request):
     )
 
     if subdealer_filter:
-        #filter by subdealer code instead of ID
+        # filter by subdealer code instead of ID
         due_items = due_items.filter(subdealer__subdealerCode=subdealer_filter)
 
     if invoice_filter:

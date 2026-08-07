@@ -23,7 +23,7 @@ Due Payments
 
             <p class="text-base-content/70 mt-2">
 
-                Pending & Partial payments awaiting collection.
+                Pending &amp; Partial payments awaiting collection.
 
             </p>
 
@@ -247,6 +247,12 @@ Due Payments
 
                     </th>
 
+                    <th class="text-center">
+
+                        Action
+
+                    </th>
+
                 </tr>
 
             </thead>
@@ -281,7 +287,7 @@ Due Payments
 
                     <td>
 
-                        {{ item.product.product_name }}
+                        {{ item.display_name }}
 
                     </td>
 
@@ -319,7 +325,7 @@ Due Payments
 
                     </td>
 
-                    <td class="text-right">
+                    <td class="text-right text-success font-semibold">
 
                         ₹{{ item.verified_ac_amount }}
 
@@ -363,13 +369,28 @@ Due Payments
 
                     </td>
 
+                    <td class="text-center">
+
+                        <button
+                            class="btn btn-success btn-sm due-verify-btn"
+                            data-url="{% url 'verify_payment' item.invoice.invoice_number %}"
+                            data-invoice="{{ item.invoice.invoice_number }}"
+                            data-subdealer="{{ item.subdealer.name }}"
+                            data-due="{{ item.due_amount }}"
+                            data-ac="{{ item.ac_amount }}"
+                        >
+                            Verify
+                        </button>
+
+                    </td>
+
                 </tr>
 
                 {% empty %}
 
                 <tr>
 
-                    <td colspan="11" class="text-center py-10 text-base-content/60">
+                    <td colspan="12" class="text-center py-10 text-base-content/60">
 
                         No Due Payments Found.
 
@@ -386,5 +407,135 @@ Due Payments
     </div>
 
 </div>
+
+<!-- Verify Modal (Due Payments) -->
+
+<dialog id="dueVerifyModal" class="modal">
+
+    <div class="modal-box">
+
+        <h3 class="font-bold text-xl">Verify Due Payment</h3>
+
+        <div class="divider"></div>
+
+        <div class="space-y-4">
+
+            <div>
+                <label class="font-semibold">Invoice</label>
+                <p id="dueModalInvoice" class="font-mono text-primary"></p>
+            </div>
+
+            <div>
+                <label class="font-semibold">Subdealer</label>
+                <p id="dueModalDealer"></p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="font-semibold text-sm">Original AC Amount</label>
+                    <p class="text-base-content/70 font-medium">₹<span id="dueModalAc"></span></p>
+                </div>
+                <div>
+                    <label class="font-semibold text-sm">Remaining Due</label>
+                    <p class="text-error font-bold text-lg">₹<span id="dueModalDue"></span></p>
+                </div>
+            </div>
+
+            <div class="bg-warning/10 border border-warning rounded-xl p-3 text-sm text-warning-content">
+                💡 Enter the amount received now. If partial, this item will stay in Due Payments until fully cleared.
+            </div>
+
+            <div>
+                <label class="label">
+                    <span class="label-text font-semibold">
+                        Received Amount (max: ₹<span id="dueModalMaxLabel"></span>)
+                    </span>
+                </label>
+
+                <input
+                    id="dueReceivedAmount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    class="input input-bordered w-full"
+                >
+            </div>
+
+            <p class="text-error text-sm hidden" id="dueAmountError">
+
+                Received amount cannot exceed remaining due amount.
+
+            </p>
+
+        </div>
+
+        <div class="modal-action">
+
+            <button class="btn" onclick="dueVerifyModal.close()">Cancel</button>
+
+            <button class="btn btn-success" id="dueConfirmVerify">Verify Payment</button>
+
+        </div>
+
+    </div>
+
+</dialog>
+
+<!-- Hidden form that posts verify_payment with next=due to redirect back here -->
+<form id="dueVerifyForm" method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="received_amount" id="dueReceivedAmountHidden">
+    <!-- Redirect back to due payments after verifying -->
+    <input type="hidden" name="next" value="due">
+</form>
+
+<script>
+
+const dueModal = document.getElementById("dueVerifyModal");
+let dueVerifyUrl = "";
+let dueExpected = 0;
+
+document.querySelectorAll(".due-verify-btn").forEach(btn => {
+    btn.onclick = function () {
+        dueVerifyUrl = this.dataset.url;
+        dueExpected = parseFloat(this.dataset.due);
+
+        document.getElementById("dueModalInvoice").textContent = this.dataset.invoice;
+        document.getElementById("dueModalDealer").textContent = this.dataset.subdealer;
+        document.getElementById("dueModalAc").textContent = parseFloat(this.dataset.ac).toFixed(2);
+        document.getElementById("dueModalDue").textContent = parseFloat(this.dataset.due).toFixed(2);
+        document.getElementById("dueModalMaxLabel").textContent = parseFloat(this.dataset.due).toFixed(2);
+
+        // Default to the full remaining due
+        const inp = document.getElementById("dueReceivedAmount");
+        inp.value = parseFloat(this.dataset.due).toFixed(2);
+        inp.max = parseFloat(this.dataset.due).toFixed(2);
+
+        document.getElementById("dueAmountError").classList.add("hidden");
+
+        if (!dueModal.open) dueModal.showModal();
+    };
+});
+
+document.getElementById("dueConfirmVerify").onclick = function () {
+    const received = parseFloat(document.getElementById("dueReceivedAmount").value);
+
+    if (isNaN(received) || received <= 0) {
+        alert("Enter a valid received amount.");
+        return;
+    }
+
+    if (received > dueExpected) {
+        document.getElementById("dueAmountError").classList.remove("hidden");
+        return;
+    }
+
+    const form = document.getElementById("dueVerifyForm");
+    form.action = dueVerifyUrl;
+    document.getElementById("dueReceivedAmountHidden").value = received;
+    form.submit();
+};
+
+</script>
 
 {% endblock %}

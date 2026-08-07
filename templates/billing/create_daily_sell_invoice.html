@@ -102,7 +102,7 @@
     <!-- Subdealer -->
     <div class="w-40 flex-shrink-0">
       <label class="label"><span class="label-text text-xs">Subdealer</span></label>
-      <select name="subdealer_code[]" class="select select-bordered subdealer-select w-full">
+      <select name="subdealer_code[]" class="select select-bordered subdealer-select w-full" required>
         <option value="">Select Subdealer</option>
         {% for sd in subdealers %}
           <option value="{{ sd.subdealerCode }}">{{ sd.name }} ({{ sd.subdealerCode }})</option>
@@ -113,12 +113,23 @@
     <!-- Product -->
     <div class="w-40 flex-shrink-0">
       <label class="label"><span class="label-text text-xs">Product</span></label>
-      <select name="product_code[]" class="select select-bordered product-select w-full">
+      <select name="product_code[]" class="select select-bordered product-select w-full" required>
         <option value="">Select Product</option>
+        <option value="__other__">Other (manual amount)</option>
         {% for p in products %}
           <option value="{{ p.productCode }}" data-price="{{ p.product_price }}">{{ p.product_name }} — ₹{{ p.product_price }}</option>
         {% endfor %}
       </select>
+    </div>
+
+    <div class="other-product-fields hidden w-56 flex-shrink-0">
+      <label class="label"><span class="label-text text-xs">Remarks</span></label>
+      <input type="text" name="remarks[]" class="input input-bordered other-remarks w-full" placeholder="Describe the item">
+    </div>
+
+    <div class="other-product-fields hidden w-40 flex-shrink-0">
+      <label class="label"><span class="label-text text-xs">My Buying Price</span></label>
+      <input type="number" step="0.01" min="0" name="buying_price[]" class="input input-bordered buying-price-input w-full" value="0" placeholder="Total cost">
     </div>
 
     <!-- Qty -->
@@ -142,7 +153,7 @@
     <!-- Line total -->
     <div class="w-44 flex-shrink-0">
       <label class="label"><span class="label-text text-xs">Line Total</span></label>
-      <input type="text" name="line_total[]" class="input input-bordered line-total-input w-full" readonly>
+      <input type="number" step="0.01" min="0" name="line_total[]" class="input input-bordered line-total-input w-full" readonly>
     </div>
 
     <!-- Due cyl -->
@@ -262,8 +273,12 @@ function addRow(data = null) {
   });
   subdealerSel.addEventListener('change', () => recalcRow(row));
   productSel.addEventListener('change', () => {
+    toggleOtherProductFields(row, true);
     updateSelectedProductDisplay(row);
     recalcRow(row);
+  });
+  row.querySelector('.line-total-input').addEventListener('input', () => {
+    if (productSel.value === '__other__') recalcRow(row);
   });
 
   paymentModeSel.addEventListener('change', () => {
@@ -294,7 +309,14 @@ function addRow(data = null) {
 
   if (data) {
     if (data.subdealer_code) subdealerSel.value = data.subdealer_code;
-    if (data.product_id) productSel.value = data.product_id;
+    if (data.is_other) {
+      productSel.value = '__other__';
+      row.querySelector('.other-remarks').value = data.remarks || '';
+      row.querySelector('.buying-price-input').value = data.buying_price || '0.00';
+      row.querySelector('.line-total-input').value = data.line_total || '';
+    } else if (data.product_code) {
+      productSel.value = data.product_code;
+    }
     if (data.quantity !== undefined) qtyInput.value = data.quantity;
     submitInput.value = data.submitted_blank !== undefined ? data.submitted_blank : qtyInput.value;
     paymentModeSel.value = data.payment_mode || 'Cash';
@@ -307,9 +329,22 @@ function addRow(data = null) {
     acInput.value = '0.00';
   }
 
+  toggleOtherProductFields(row, false);
   applyPaymentMode(paymentModeSel.value, row);
   recalcRow(row);
   updateTotals();
+}
+
+function toggleOtherProductFields(row, clearManualAmount) {
+  const isOther = row.querySelector('.product-select').value === '__other__';
+  const lineTotal = row.querySelector('.line-total-input');
+  row.querySelectorAll('.other-product-fields').forEach(field => field.classList.toggle('hidden', !isOther));
+  lineTotal.readOnly = !isOther;
+  if (isOther && clearManualAmount) {
+    lineTotal.value = '';
+    row.querySelector('.cash-input').value = '0.00';
+    row.querySelector('.ac-input').value = '0.00';
+  }
 }
 
 function refreshRowIndices() {
@@ -380,6 +415,19 @@ function recalcRow(row) {
   const price = parseFloat(productSel.selectedOptions[0]?.dataset.price || 0);
   const qty = parseFloat(row.querySelector('.qty-input').value || 0);
   const submitted = parseFloat(row.querySelector('.submit-input').value || 0);
+  const isOther = product === '__other__';
+
+  if (isOther) {
+    const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
+    row.querySelector('.discounted-input').value = lineTotal.toFixed(2);
+    row.querySelector('.due-input').value = Math.max(qty - submitted, 0);
+    const pmode = row.querySelector('.payment-mode-select').value;
+    applyPaymentMode(pmode, row);
+    if (pmode === 'Mixed') syncMixedAmounts(row);
+    updateSelectedProductDisplay();
+    updateTotals();
+    return;
+  }
 
   let discount = 0;
   if (subdealer && product && discountsMap[subdealer] && discountsMap[subdealer][product]) {
@@ -456,15 +504,15 @@ function applyPaymentMode(mode, row) {
   const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
 
   if (mode === 'Cash') {
-    cashInput.style.display = ''; 
-    const cashVal = parseFloat(cashInput.value || '0') || 0;
-    cashInput.value = cashVal > 0 ? cashInput.value : lineTotal.toFixed(2);
+    cashInput.style.display = '';
+    // Always sync cash to line total so it auto-populates correctly
+    cashInput.value = lineTotal.toFixed(2);
     cashInput.readOnly = false;
     acInput.style.display = 'none'; acInput.value = '0.00';
   } else if (mode === 'AC') {
-    acInput.style.display = ''; 
-    const acVal = parseFloat(acInput.value || '0') || 0;
-    acInput.value = acVal > 0 ? acInput.value : lineTotal.toFixed(2);
+    acInput.style.display = '';
+    // Always sync ac to line total so it auto-populates correctly
+    acInput.value = lineTotal.toFixed(2);
     acInput.readOnly = false;
     cashInput.style.display = 'none'; cashInput.value = '0.00';
   } else { // Mixed
