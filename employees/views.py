@@ -1,10 +1,13 @@
-from django.shortcuts import render, redirect
+from decimal import Decimal, InvalidOperation
+
 from django.contrib import messages
-from .models import Employee
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
+from django.db import IntegrityError
 from django.db.models import Q
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
+
+from SubDealers.models import PredefinedExpense
+
+from .models import Employee
 
 
 def add_new_employees(request):
@@ -105,4 +108,78 @@ def edit_employee(request, employee_code):
             "employee": employee,
             "page_type": "view_employees",
         },
+    )
+
+
+def add_Employee_Predefined_Expences(request):
+    if request.method == "POST":
+        expense_name = request.POST.get("expence_name", "").strip()
+        expense_amount = request.POST.get("expence_amount", "").strip()
+
+        if not expense_name or not expense_amount:
+            messages.error(request, "Expense Name and Amount are required.")
+            return redirect("add_Employee_Predefined_Expences")
+
+        try:
+            expense_amount = Decimal(expense_amount)
+        except InvalidOperation:
+            messages.error(request, "Please enter a valid expense amount.")
+            return redirect("add_Employee_Predefined_Expences")
+
+        if expense_amount <= 0:
+            messages.error(request, "Expense amount must be greater than zero.")
+            return redirect("add_Employee_Predefined_Expences")
+
+        if PredefinedExpense.objects.filter(name__iexact=expense_name).exists():
+            messages.warning(request, f"'{expense_name}' already exists.")
+            return redirect("add_Employee_Predefined_Expences")
+
+        try:
+            PredefinedExpense.objects.create(
+                name=expense_name,
+                default_amount=expense_amount,
+            )
+
+            messages.success(
+                request, f"Predefined Expense '{expense_name}' created successfully!"
+            )
+
+            return redirect("view_Predefined_Expences")
+
+        except IntegrityError:
+            messages.error(request, "Unable to create predefined expense.")
+
+            return redirect("add_Employee_Predefined_Expences")
+
+    return render(
+        request,
+        "employees/Employee_Predefined_Expences.html",
+        {
+            "page_type": "add_Predefined_Expenses",
+        },
+    )
+
+
+def view_Predefined_Expences(request):
+
+    search = request.GET.get("search", "").strip()
+
+    predefined_expenses = PredefinedExpense.objects.all().order_by("name")
+
+    if search:
+        predefined_expenses = predefined_expenses.filter(
+            Q(name__icontains=search) | Q(default_amount__icontains=search)
+        )
+
+    context = {
+        "predefined_expenses": predefined_expenses,
+        "total_predefined_expenses": predefined_expenses.count(),
+        "search": search,
+        "page_type": "view_Predefined_Expences",
+    }
+
+    return render(
+        request,
+        "employees/view_Predefined_Expences.html",
+        context,
     )

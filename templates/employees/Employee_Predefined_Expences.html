@@ -1,0 +1,177 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Add Predefined Expense
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto">
+
+    <!-- Page Header -->
+    <div class="mb-8">
+
+        <h1 class="text-3xl font-bold">
+            Add Predefined Expense
+        </h1>
+
+        <p class="text-gray-500 mt-2">
+            Create reusable expense types that can be selected while creating invoices.
+        </p>
+
+    </div>
+
+    <!-- Card -->
+    <div class="card bg-base-100 shadow-xl border border-base-300">
+
+        <div class="card-body">
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Expense Name -->
+                    <div>
+
+                        <label class="label">
+
+                            <span class="label-text font-semibold">
+                                Expense Name
+                            </span>
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="expence_name"
+                            class="input input-bordered w-full"
+                            placeholder="Example: Loading Charge"
+                            required
+                        >
+
+                    </div>
+
+                    <!-- Amount -->
+                    <div>
+
+                        <label class="label">
+
+                            <span class="label-text font-semibold">
+                                Default Amount (₹)
+                            </span>
+
+                        </label>
+
+                        <input
+                            type="number"
+                            name="expence_amount"
+                            class="input input-bordered w-full"
+                            placeholder="0.00"
+                            min="0"
+                            step="0.01"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+                <!-- Information -->
+                <div class="alert alert-info mt-8">
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         class="stroke-current shrink-0 h-6 w-6"
+                         fill="none"
+                         viewBox="0 0 24 24">
+
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M12 8h.01M12 20a8 8 0 100-16 8 8 0 000 16z" />
+
+                    </svg>
+
+                    <span>
+
+                        These predefined expenses will appear automatically while creating invoices.
+
+                    </span>
+
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex justify-end gap-4 mt-8">
+
+                    <button
+                        type="reset"
+                        class="btn btn-outline">
+
+                        Reset
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
+
+                        Save Expense
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- Tips Card -->
+    <div class="card bg-base-100 shadow mt-8 border border-base-300">
+
+        <div class="card-body">
+
+            <h2 class="card-title">
+
+                Suggested Expense Types
+
+            </h2>
+
+            <div class="flex flex-wrap gap-3 mt-4">
+
+                <div class="badge badge-outline badge-lg">
+                    Loading Charge
+                </div>
+
+                <div class="badge badge-outline badge-lg">
+                    Unloading Charge
+                </div>
+
+                <div class="badge badge-outline badge-lg">
+                    Labour Charge
+                </div>
+
+                <div class="badge badge-outline badge-lg">
+                    Transportation
+                </div>
+
+                <div class="badge badge-outline badge-lg">
+                    Delivery Charge
+                </div>
+
+                <div class="badge badge-outline badge-lg">
+                    Miscellaneous
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

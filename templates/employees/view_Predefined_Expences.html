@@ -1,0 +1,298 @@
+{% extends "layout.html" %}
+
+{% block title %}
+View Predefined Expenses
+{% endblock %}
+
+{% block content %}
+
+<div class="space-y-6">
+
+    <!-- ====================================================== -->
+    <!-- Page Header -->
+    <!-- ====================================================== -->
+
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
+
+        <div>
+
+            <h1 class="text-3xl font-bold">
+                Predefined Expenses
+            </h1>
+
+            <p class="text-gray-500 mt-2">
+                Manage all predefined expense types used during invoice creation.
+            </p>
+
+        </div>
+
+        <div class="mt-4 lg:mt-0">
+
+            <a href="{% url 'add_Employee_Predefined_Expences' %}"
+               class="btn btn-primary">
+
+                + Add Expense
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- Statistics -->
+    <!-- ====================================================== -->
+
+    <div class="stats shadow w-full">
+
+        <div class="stat">
+
+            <div class="stat-title">
+                Total Expenses
+            </div>
+
+            <div class="stat-value text-primary">
+                {{ total_predefined_expenses }}
+            </div>
+
+            <div class="stat-desc">
+                Configured Expense Types
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- Search -->
+    <!-- ====================================================== -->
+
+    <div class="card bg-base-100 shadow">
+
+        <div class="card-body">
+
+            <form method="GET">
+
+                <div class="join w-full">
+
+                    <input
+                        type="text"
+                        name="search"
+                        value="{{ search }}"
+                        class="input input-bordered join-item w-full"
+                        placeholder="Search by expense name or amount..."
+                    >
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary join-item">
+
+                        Search
+
+                    </button>
+
+                    {% if search %}
+
+                    <a href="{% url 'view_Predefined_Expences' %}"
+                       class="btn btn-outline join-item">
+
+                        Clear
+
+                    </a>
+
+                    {% endif %}
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- Expense Table -->
+    <!-- ====================================================== -->
+
+    <div class="card bg-base-100 shadow">
+
+        <div class="card-body">
+
+            <div class="overflow-x-auto">
+
+                <table class="table table-zebra">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>#</th>
+
+                            <th>Expense Name</th>
+
+                            <th>Default Amount</th>
+
+                            <th class="text-center">
+                                Status
+                            </th>
+
+                            <th class="text-center">
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for expense in predefined_expenses %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ forloop.counter }}
+
+                            </td>
+
+                            <td>
+
+                                <span class="font-semibold">
+
+                                    {{ expense.name }}
+
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                ₹ {{ expense.default_amount }}
+
+                            </td>
+
+                            <td class="text-center">
+
+                                <div class="badge badge-success">
+
+                                    Active
+
+                                </div>
+
+                            </td>
+
+                            <td>
+
+                                <div class="flex justify-center gap-2">
+
+                                    <!-- Future Edit -->
+
+                                    <button
+                                        class="btn btn-sm btn-info btn-disabled">
+
+                                        Edit
+
+                                    </button>
+
+                                    <!-- Future Delete -->
+
+                                    <button
+                                        class="btn btn-sm btn-error btn-disabled">
+
+                                        Delete
+
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="5">
+
+                                <div class="text-center py-12">
+
+                                    <div class="text-6xl">
+
+                                        📂
+
+                                    </div>
+
+                                    <h2 class="text-2xl font-bold mt-4">
+
+                                        No Expenses Found
+
+                                    </h2>
+
+                                    <p class="text-gray-500 mt-2">
+
+                                        Click the button below to create your first predefined expense.
+
+                                    </p>
+
+                                    <a href="{% url 'add_Employee_Predefined_Expences' %}"
+                                       class="btn btn-primary mt-6">
+
+                                        + Add Expense
+
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- Tips -->
+    <!-- ====================================================== -->
+
+    <div class="alert alert-info shadow">
+
+        <svg xmlns="http://www.w3.org/2000/svg"
+             class="stroke-current shrink-0 h-6 w-6"
+             fill="none"
+             viewBox="0 0 24 24">
+
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M12 8h.01M12 20a8 8 0 100-16 8 8 0 000 16z"/>
+
+        </svg>
+
+        <span>
+
+            These expenses are available while creating invoices.
+            Future updates will allow editing, deleting and activating/deactivating expenses.
+
+        </span>
+
+    </div>
+
+</div>
+
+{% endblock %}

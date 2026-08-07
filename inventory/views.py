@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
@@ -64,27 +64,30 @@ def manage_products(request):
 
 
 def update_product(request, product_id):
-
     if request.method != "POST":
         return redirect("manage_products")
 
     product = get_object_or_404(ProductInventory, id=product_id)
 
     try:
-        product.product_quantity = int(request.POST.get("product_quantity", 0))
+        quantity = int(request.POST.get("product_quantity", 0))
+        buy_price = Decimal(request.POST.get("buy_price", 0))
+        sell_price = Decimal(request.POST.get("product_price", 0))
 
-        product.buy_price = Decimal(request.POST.get("buy_price", 0))
+        if quantity < 0 or buy_price < 0 or sell_price < 0:
+            raise ValueError("Quantity and prices cannot be negative.")
 
-        product.product_price = Decimal(request.POST.get("product_price", 0))
-
-        # IMPORTANT
+        product.product_quantity = quantity
+        product.buy_price = buy_price
+        product.product_price = sell_price
         product.in_stock = request.POST.get("in_stock") == "1"
         product.dac_applicable = request.POST.get("dac_applicable") == "1"
 
         product.save()
-
         messages.success(request, f"{product.product_name} updated successfully.")
 
+    except (ValueError, InvalidOperation) as e:
+        messages.error(request, f"Invalid input: {e}")
     except Exception as e:
         messages.error(request, str(e))
 

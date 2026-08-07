@@ -193,6 +193,8 @@
 
                         type="number"
 
+                        min="0"
+
                         value="{{ product.product_quantity }}">
 
                 </td>
@@ -324,7 +326,6 @@
 
 </dialog>
 
-
 <script>
 
 const modal = document.getElementById("confirmModal");
@@ -333,78 +334,63 @@ const cancelBtn = document.getElementById("cancelBtn");
 const message = document.getElementById("confirmMessage");
 
 let confirmAction = null;
+let cancelAction = null;
+
+function closeModalCancel() {
+    if (cancelAction) {
+        cancelAction();
+    }
+    confirmAction = null;
+    cancelAction = null;
+    modal.close();
+}
 
 cancelBtn.onclick = () => {
-
-    modal.close();
-
+    closeModalCancel();
 };
 
 modal.addEventListener("click", function(e){
-
     const box = modal.querySelector(".modal-box");
-
     if(!box.contains(e.target)){
-
-        modal.close();
-
+        closeModalCancel();
     }
-
 });
 
 confirmBtn.onclick = function(){
-
     if(confirmAction){
-
         confirmAction();
-
-        confirmAction = null;
-
     }
-
+    confirmAction = null;
+    cancelAction = null;
     modal.close();
-
 };
 
-function askConfirmation(text, callback){
-
+function askConfirmation(text, onConfirm, onCancel){
     message.innerText = text;
-
-    confirmAction = callback;
-
+    confirmAction = onConfirm;
+    cancelAction = onCancel || null;
     if (typeof modal.showModal === "function") {
         modal.showModal();
     } else {
         const confirmed = window.confirm(text);
         if (confirmed) {
-            callback();
-        } else {
-            confirmAction = null;
+            onConfirm();
+        } else if (onCancel) {
+            onCancel();
         }
+        confirmAction = null;
+        cancelAction = null;
     }
-
-}
-
-const actionForm = document.getElementById("actionForm");
-const hiddenStock = document.getElementById("hiddenStock");
-const hiddenDAC = document.getElementById("hiddenDAC");
-
-function setFormCheckboxFields(stockChecked, dacChecked){
-    hiddenStock.disabled = !stockChecked;
-    hiddenStock.value = stockChecked ? "on" : "";
-    hiddenDAC.disabled = !dacChecked;
-    hiddenDAC.value = dacChecked ? "on" : "";
-}
-
-function getUpdateUrlFromRow(row) {
-    if (row.dataset.updateUrl) {
-        return row.dataset.updateUrl;
-    }
-    const updateBtn = row.querySelector(".update-btn");
-    return updateBtn ? updateBtn.dataset.url : "";
 }
 
 function submitProductUpdate(row, stockValue, dacValue) {
+
+    if (typeof stockValue === "undefined") {
+        stockValue = row.querySelector(".stock-toggle").checked;
+    }
+    if (typeof dacValue === "undefined") {
+        dacValue = row.querySelector(".dac-toggle").checked;
+    }
 
     const updateUrl = row.dataset.updateUrl;
 
@@ -415,27 +401,24 @@ function submitProductUpdate(row, stockValue, dacValue) {
     const csrf = document.querySelector(
         "#actionForm input[name='csrfmiddlewaretoken']"
     ).cloneNode();
-
     tempForm.appendChild(csrf);
 
     function add(name, value){
         const input = document.createElement("input");
-        input.type="hidden";
-        input.name=name;
-        input.value=value;
+        input.type = "hidden";
+        input.name = name;
+        input.value = value;
         tempForm.appendChild(input);
     }
 
     add("product_quantity", row.querySelector(".qty-input").value);
     add("buy_price", row.querySelector(".buy-input").value);
     add("product_price", row.querySelector(".mrp-input").value);
-
     add("in_stock", stockValue ? "1" : "0");
     add("dac_applicable", dacValue ? "1" : "0");
 
     document.body.appendChild(tempForm);
     tempForm.submit();
-
 }
 
 //////////////////////////////////////////////////////////
@@ -444,18 +427,13 @@ function submitProductUpdate(row, stockValue, dacValue) {
 
 document.getElementById("productSearch")
 .addEventListener("keyup", function(){
-
     const value = this.value.toLowerCase();
-
     document.querySelectorAll(".product-row").forEach(row=>{
-
         row.style.display =
             row.innerText.toLowerCase().includes(value)
             ? ""
             : "none";
-
     });
-
 });
 
 //////////////////////////////////////////////////////////
@@ -463,25 +441,15 @@ document.getElementById("productSearch")
 //////////////////////////////////////////////////////////
 
 document.querySelectorAll(".update-btn").forEach(btn=>{
-
     btn.addEventListener("click", function(){
-
         const row = this.closest("tr");
-
         askConfirmation(
-
             "Update this product?",
-
             function(){
-
                 submitProductUpdate(row);
-
             }
-
         );
-
     });
-
 });
 
 //////////////////////////////////////////////////////////
@@ -489,116 +457,72 @@ document.querySelectorAll(".update-btn").forEach(btn=>{
 //////////////////////////////////////////////////////////
 
 document.querySelectorAll(".delete-btn").forEach(btn=>{
-
     btn.addEventListener("click", function(){
-
         askConfirmation(
-
             "Delete this product permanently?",
-
             function(){
-
                 const form = document.getElementById("actionForm");
-
                 form.action = btn.dataset.url;
-
                 form.submit();
-
             }
-
         );
-
     });
-
 });
 
 //////////////////////////////////////////////////////////
 // DAC TOGGLE CONFIRMATION
 //////////////////////////////////////////////////////////
 document.querySelectorAll(".dac-toggle").forEach(toggle=>{
-
-    toggle.addEventListener("click",function(e){
-
-        e.preventDefault();
-
-        const row=this.closest("tr");
-
-        const newDAC=!this.checked;
-
+    toggle.addEventListener("change", function(){
+        const row = this.closest("tr");
+        const newDAC = this.checked; // browser already flipped it — this IS the new state
         askConfirmation(
-
-            newDAC
-                ? "Enable DAC?"
-                : "Disable DAC?",
-
-            ()=>{
-
-                this.checked=newDAC;
-
+            newDAC ? "Enable DAC?" : "Disable DAC?",
+            () => {
                 submitProductUpdate(
                     row,
                     row.querySelector(".stock-toggle").checked,
                     newDAC
                 );
-
+            },
+            () => {
+                this.checked = !newDAC; // user cancelled — revert visually
             }
-
         );
-
     });
-
 });
 
 //////////////////////////////////////////////////////////
 // STOCK TOGGLE CONFIRMATION
 //////////////////////////////////////////////////////////
 document.querySelectorAll(".stock-toggle").forEach(toggle=>{
-
-    toggle.addEventListener("click",function(e){
-
-        e.preventDefault();
-
-        const row=this.closest("tr");
-
-        const newStock=!this.checked;
-
+    toggle.addEventListener("change", function(){
+        const row = this.closest("tr");
+        const newStock = this.checked;
         askConfirmation(
-
-            newStock
-                ? "Mark as In Stock?"
-                : "Mark as Out Of Stock?",
-
-            ()=>{
-
-                this.checked=newStock;
-
+            newStock ? "Mark as In Stock?" : "Mark as Out Of Stock?",
+            () => {
                 submitProductUpdate(
                     row,
                     newStock,
                     row.querySelector(".dac-toggle").checked
                 );
-
+            },
+            () => {
+                this.checked = !newStock;
             }
-
         );
-
     });
-
 });
 
-
 //////////////////////////////////////////////////////////
-// ESC CLOSES MODAL
+// ESC CANCELS MODAL
 //////////////////////////////////////////////////////////
 
 document.addEventListener("keydown", function(e){
-
     if(e.key === "Escape"){
-
-        modal.close();
-
+        closeModalCancel();
     }
-
 });
 
 //////////////////////////////////////////////////////////
@@ -606,17 +530,11 @@ document.addEventListener("keydown", function(e){
 //////////////////////////////////////////////////////////
 
 document.querySelectorAll("input").forEach(inp=>{
-
     inp.addEventListener("keydown",function(e){
-
         if(e.key==="Enter"){
-
             e.preventDefault();
-
         }
-
     });
-
 });
 
 //////////////////////////////////////////////////////////
@@ -624,17 +542,11 @@ document.querySelectorAll("input").forEach(inp=>{
 //////////////////////////////////////////////////////////
 
 document.querySelectorAll(".product-row").forEach(row=>{
-
     row.querySelectorAll("input").forEach(inp=>{
-
         inp.addEventListener("change",()=>{
-
             row.classList.add("bg-warning/10");
-
         });
-
     });
-
 });
 
 //////////////////////////////////////////////////////////
@@ -642,13 +554,9 @@ document.querySelectorAll(".product-row").forEach(row=>{
 //////////////////////////////////////////////////////////
 
 window.addEventListener("pageshow",function(){
-
     document.querySelectorAll(".product-row").forEach(r=>{
-
         r.classList.remove("bg-warning/10");
-
     });
-
 });
 
 </script>
