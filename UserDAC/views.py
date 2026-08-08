@@ -18,7 +18,7 @@ from .models import DACEntry, Subdealer
 
 
 def dac_entry(request):
-    subdealers = Subdealer.objects.all()
+    subdealers = Subdealer.objects.all().order_by("name")
 
     if request.method == "POST":
         subdealer_code = request.POST.get("subdealer_code")
@@ -33,8 +33,10 @@ def dac_entry(request):
 
         try:
             quantity = Decimal(quantity_raw)
-        except InvalidOperation:
-            messages.error(request, "Invalid quantity.")
+            if quantity <= 0:
+                raise ValueError("Quantity must be greater than zero.")
+        except (InvalidOperation, ValueError) as e:
+            messages.error(request, f"Invalid quantity: {e}")
             return redirect("dac_entry")
 
         try:
@@ -56,9 +58,37 @@ def dac_entry(request):
         # Recalculate ledger
         recalculate_balances(subdealer)
 
-        messages.success(request, "DAC Entry Added Successfully.")
+        messages.success(
+            request,
+            f"DAC {transaction_type} of {quantity} for '{subdealer.name}' added successfully."
+        )
 
         return redirect("dac_entry")
+
+    # Fetch latest balance for each subdealer
+    subdealer_balances = {}
+    for entry in DACEntry.objects.order_by("entry_date", "created_at", "id"):
+        subdealer_balances[entry.subdealer_id] = entry.closing_balance
+
+    subdealers_with_balance = []
+    for s in subdealers:
+        bal = subdealer_balances.get(s.id, Decimal("0.00"))
+        subdealers_with_balance.append({
+            "id": s.id,
+            "name": s.name,
+            "code": s.subdealerCode,
+            "phone": s.phone_number,
+            "dac_percentage": str(s.dac_percentage),
+            "current_balance": str(bal),
+        })
+
+    recent_entries = (
+        DACEntry.objects.select_related("subdealer")
+        .order_by("-id")[:8]
+    )
+
+    total_cr = DACEntry.objects.filter(transaction_type="CR").aggregate(t=Sum("transaction_quantity"))["t"] or Decimal("0.00")
+    total_dr = DACEntry.objects.filter(transaction_type="DR").aggregate(t=Sum("transaction_quantity"))["t"] or Decimal("0.00")
 
     return render(
         request,
@@ -66,7 +96,11 @@ def dac_entry(request):
         {
             "today": timezone.now().date(),
             "subdealers": subdealers,
-            "page_type": "entry_dac"
+            "subdealers_with_balance": subdealers_with_balance,
+            "recent_entries": recent_entries,
+            "total_cr": total_cr,
+            "total_dr": total_dr,
+            "page_type": "entry_dac",
         },
     )
 
