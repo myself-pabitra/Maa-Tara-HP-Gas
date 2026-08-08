@@ -558,7 +558,7 @@ def create_invoice(request):
                 "subdealers": subdealers,
                 "products": products,
                 "employees": employees,
-                "today": timezone.now(),
+                "today": timezone.localdate(),
                 "predefined_expenses_json": predefined_expenses_json,
                 "discounts_map_json": discounts_map_json,
                 "selected_employee_ids": [],
@@ -571,7 +571,7 @@ def create_invoice(request):
         "subdealers": subdealers,
         "products": products,
         "employees": employees,
-        "today": timezone.now(),
+        "today": timezone.localdate(),
         "predefined_expenses_json": predefined_expenses_json,
         "discounts_map_json": discounts_map_json,
         "selected_employee_ids": [],
@@ -1640,7 +1640,7 @@ def edit_invoice(request, invoice_id):
         "products": products,
         "employees": employees,
         "invoice": invoice,
-        "today": timezone.now(),
+        "today": timezone.localdate(),
         "selected_employee_ids": selected_employee_ids,
         "invoice_json": json.dumps(
             {

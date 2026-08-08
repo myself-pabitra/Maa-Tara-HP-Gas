@@ -94,7 +94,7 @@ def dac_entry(request):
         request,
         "Dac/dac_entry.html",
         {
-            "today": timezone.now().date(),
+            "today": timezone.localdate(),
             "subdealers": subdealers,
             "subdealers_with_balance": subdealers_with_balance,
             "recent_entries": recent_entries,
@@ -289,7 +289,7 @@ def Pending_DAC_Orders(request):
     if selected_month:
         year, month = map(int, selected_month.split("-"))
     else:
-        today = timezone.now().date()
+        today = timezone.localdate()
         year = today.year
         month = today.month
         selected_month = today.strftime("%Y-%m")

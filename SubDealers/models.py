@@ -99,11 +99,18 @@ class DailyInvoice(models.Model):
     def save(self, *args, **kwargs):
         # Only assign invoice_number once
         if not self.invoice_number:
-            today = timezone.now().strftime("%Y%m%d")
+            if self.invoice_date:
+                if isinstance(self.invoice_date, str):
+                    date_prefix = self.invoice_date.replace("-", "")
+                else:
+                    date_prefix = self.invoice_date.strftime("%Y%m%d")
+            else:
+                date_prefix = timezone.localdate().strftime("%Y%m%d")
+
             with transaction.atomic():
                 last_invoice = (
                     DailyInvoice.objects.filter(
-                        invoice_number__startswith=f"INV-{today}"
+                        invoice_number__startswith=f"INV-{date_prefix}"
                     )
                     .order_by("-invoice_number")
                     .first()
@@ -116,7 +123,7 @@ class DailyInvoice(models.Model):
                     next_seq = last_seq + 1
                 else:
                     next_seq = 1
-                self.invoice_number = f"INV-{today}-{next_seq:05d}"
+                self.invoice_number = f"INV-{date_prefix}-{next_seq:05d}"
         super().save(*args, **kwargs)
 
     def __str__(self):
