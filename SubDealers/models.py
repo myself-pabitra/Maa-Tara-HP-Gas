@@ -197,6 +197,12 @@ class DailyInvoiceLineItem(models.Model):
         max_length=10, choices=PAYMENT_STATUS_CHOICES, default="PENDING"
     )
 
+    verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when payment was verified",
+    )
+
     created_at = models.DateTimeField(default=timezone.now, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -24,7 +24,12 @@ admin.site.register(Cylender_information)
 admin.site.register(PredefinedExpense)
 admin.site.register(DailyInvoice)
 admin.site.register(DailyInvoiceExpense)
-admin.site.register(DailyInvoiceLineItem)
+
+
+@admin.register(DailyInvoiceLineItem)
+class DailyInvoiceLineItemAdmin(admin.ModelAdmin):
+    list_display = ['invoice', 'subdealer','product','payment_mode','payment_status']
+    
 
 
 

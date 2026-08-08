@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.core.paginator import Paginator
+from django.utils import timezone
 
 from SubDealers.models import DailyInvoice, DailyInvoiceLineItem, Subdealer
 
@@ -96,13 +97,14 @@ def verify_payment(request, item_id):
 
     item.verified_ac_amount += received
     item.due_amount = max(Decimal("0.00"), item.due_amount - received)
+    item.verified_at = timezone.now()
 
     if item.due_amount == Decimal("0.00"):
         item.payment_status = "PAID"
     else:
         item.payment_status = "PARTIAL"
 
-    item.save(update_fields=["verified_ac_amount", "due_amount", "payment_status"])
+    item.save(update_fields=["verified_ac_amount", "due_amount", "payment_status", "verified_at"])
 
     messages.success(
         request,

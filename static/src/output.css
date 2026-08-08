@@ -3235,6 +3235,9 @@
   .bg-blue-900 {
     background-color: var(--color-blue-900);
   }
+  .bg-emerald-50 {
+    background-color: var(--color-emerald-50);
+  }
   .bg-emerald-100 {
     background-color: var(--color-emerald-100);
   }
