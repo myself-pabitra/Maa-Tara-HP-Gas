@@ -11,7 +11,7 @@
 
         <div>
 
-            <h1 class="text-4xl font-bold text-primary">
+            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
                 Product Inventory
             </h1>
 
@@ -23,81 +23,53 @@
 
         <a href="{% url 'Add_product' %}" class="btn btn-primary">
 
-            <i class="fa fa-plus mr-2"></i>
-
-            Add Product
-
+            <i class="fa fa-plus mr-2"></i> Add Product
         </a>
 
     </div>
 
-    <div class="card bg-base-200 shadow-xl mb-8">
+    <div class="card bg-base-100 shadow-2xl border border-base-200 overflow-hidden">
 
-        <div class="card-body">
+        <!-- Unified Toolbar Header -->
+        <div class="p-6 border-b border-base-200 bg-base-100/50 flex flex-col md:flex-row justify-between items-center gap-4">
+            
+            <!-- Modern Search Input -->
+            <div class="relative w-full max-w-md">
+                <span class="absolute inset-y-0 left-4 flex items-center text-base-content/40">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input
+                    id="productSearch"
+                    type="text"
+                    class="input input-bordered w-full pl-11 rounded-full bg-base-200/50 focus:bg-base-100 transition-colors shadow-inner"
+                    placeholder="Search by product name or code...">
+            </div>
 
-            <div class="flex justify-between items-end gap-5">
-
-                <div class="form-control w-full">
-
-                    <label class="label">
-
-                        <span class="label-text font-semibold">
-
-                            Search Product
-
-                        </span>
-
-                    </label>
-
-                    <input
-                        id="productSearch"
-                        type="text"
-                        class="input input-bordered"
-                        placeholder="Search Product Name or Code">
-
-                </div>
-
-                <div class="stats shadow">
-
-                    <div class="stat">
-
-                        <div class="stat-title">
-
-                            Total Products
-
-                        </div>
-
-                        <div class="stat-value text-primary">
-
-                            {{ products|length }}
-
-                        </div>
-
-                    </div>
-
-                </div>
-
+            <!-- Stats Pill -->
+            <div class="flex items-center gap-3 bg-primary/10 px-5 py-2.5 rounded-full border border-primary/20 shadow-sm">
+                <span class="text-sm font-semibold text-primary">Total Products</span>
+                <span class="badge badge-primary font-bold shadow-sm">{{ products|length }}</span>
             </div>
 
         </div>
 
-    </div>
+        <div class="overflow-x-auto">
 
-    <div class="overflow-x-auto rounded-xl shadow-xl border">
+            <table class="table table-zebra w-full">
 
-        <table class="table table-zebra">
-
-            <thead class="bg-primary text-primary-content">
+                <thead class="text-base-content/70 bg-base-200/40 uppercase text-xs tracking-wider">
 
                 <tr>
 
                     <th>#</th>
 
-                    <th>Code</th>
+                    <th hidden>Code</th>
 
                     <th>Name</th>
 
                     <th>DAC</th>
+
+                    <th>Sub. Req.</th>
 
                     <th>Stock</th>
 
@@ -129,7 +101,7 @@
 
                 </td>
 
-                <td>
+                <td hidden>
 
                     <span class="badge badge-primary badge-outline font-mono">
 
@@ -158,6 +130,24 @@
                         class="toggle toggle-success dac-toggle"
 
                         {% if product.dac_applicable %}
+
+                        checked
+
+                        {% endif %}
+
+                    >
+
+                </td>
+
+                <td>
+
+                    <input
+
+                        type="checkbox"
+
+                        class="toggle toggle-warning subreq-toggle"
+
+                        {% if product.submission_required %}
 
                         checked
 
@@ -228,35 +218,16 @@
                 </td>
 
                 <td>
-
-                    <div class="flex gap-2">
-
-                        <button
-
-                            class="btn btn-primary btn-sm update-btn"
-
+                    <div class="flex gap-2 justify-center">
+                        <button class="btn btn-primary btn-sm update-btn hover:scale-105 transition-transform"
                             data-url="{% url 'update_product' product.id %}">
-
-                            <i class="fa fa-pen"></i>
-
-                            Update
-
+                            <i class="fa-solid fa-pen"></i> Update
                         </button>
-
-                        <button
-
-                            class="btn btn-error btn-sm delete-btn"
-
+                        <button class="btn btn-error btn-sm delete-btn hover:scale-105 transition-transform"
                             data-url="{% url 'delete_product' product.id %}">
-
-                            <i class="fa fa-trash"></i>
-
-                            Delete
-
+                            <i class="fa-solid fa-trash"></i> Delete
                         </button>
-
                     </div>
-
                 </td>
 
             </tr>
@@ -280,6 +251,7 @@
     <input type="hidden" name="product_price" id="hiddenMrp">
     <input type="hidden" name="in_stock" id="hiddenStock">
     <input type="hidden" name="dac_applicable" id="hiddenDAC">
+    <input type="hidden" name="submission_required" id="hiddenSubReq">
 
 </form>
 
@@ -391,6 +363,9 @@ function submitProductUpdate(row, stockValue, dacValue) {
     if (typeof dacValue === "undefined") {
         dacValue = row.querySelector(".dac-toggle").checked;
     }
+    if (typeof subReqValue === "undefined") {
+        subReqValue = row.querySelector(".subreq-toggle").checked;
+    }
 
     const updateUrl = row.dataset.updateUrl;
 
@@ -416,6 +391,7 @@ function submitProductUpdate(row, stockValue, dacValue) {
     add("product_price", row.querySelector(".mrp-input").value);
     add("in_stock", stockValue ? "1" : "0");
     add("dac_applicable", dacValue ? "1" : "0");
+    add("submission_required", subReqValue ? "1" : "0");
 
     document.body.appendChild(tempForm);
     tempForm.submit();
@@ -482,11 +458,36 @@ document.querySelectorAll(".dac-toggle").forEach(toggle=>{
                 submitProductUpdate(
                     row,
                     row.querySelector(".stock-toggle").checked,
-                    newDAC
+                    newDAC,
+                    row.querySelector(".subreq-toggle").checked
                 );
             },
             () => {
                 this.checked = !newDAC; // user cancelled — revert visually
+            }
+        );
+    });
+});
+
+//////////////////////////////////////////////////////////
+// SUB. REQ. TOGGLE CONFIRMATION
+//////////////////////////////////////////////////////////
+document.querySelectorAll(".subreq-toggle").forEach(toggle=>{
+    toggle.addEventListener("change", function(){
+        const row = this.closest("tr");
+        const newSubReq = this.checked;
+        askConfirmation(
+            newSubReq ? "Require Empty Cylinder Submission?" : "Do Not Require Empty Cylinder Submission?",
+            () => {
+                submitProductUpdate(
+                    row,
+                    row.querySelector(".stock-toggle").checked,
+                    row.querySelector(".dac-toggle").checked,
+                    newSubReq
+                );
+            },
+            () => {
+                this.checked = !newSubReq;
             }
         );
     });
@@ -505,7 +506,8 @@ document.querySelectorAll(".stock-toggle").forEach(toggle=>{
                 submitProductUpdate(
                     row,
                     newStock,
-                    row.querySelector(".dac-toggle").checked
+                    row.querySelector(".dac-toggle").checked,
+                    row.querySelector(".subreq-toggle").checked
                 );
             },
             () => {

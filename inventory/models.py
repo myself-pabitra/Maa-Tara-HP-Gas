@@ -24,6 +24,10 @@ class ProductInventory(models.Model):
         default=False, help_text="Deduct DAC while selling this product."
     )
 
+    submission_required = models.BooleanField(
+        default=False, help_text="Requires empty cylinders to be submitted."
+    )
+
     class Meta:
         db_table = "product_inventory"
         ordering = ["product_name"]

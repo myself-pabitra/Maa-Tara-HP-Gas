@@ -1,0 +1,25 @@
+{% if page_obj.has_other_pages %}
+<div class="flex justify-center mt-8">
+    <div class="join">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if request.GET.urlencode %}&{{ request.GET.urlencode|cut:'page='|cut:request.GET.page }}{% endif %}" class="join-item btn btn-sm">«</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode|cut:'page='|cut:request.GET.page }}{% endif %}" class="join-item btn btn-sm">‹</a>
+        {% else %}
+            <button class="join-item btn btn-sm btn-disabled">«</button>
+            <button class="join-item btn btn-sm btn-disabled">‹</button>
+        {% endif %}
+
+        <button class="join-item btn btn-sm bg-base-100 no-animation">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </button>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode|cut:'page='|cut:request.GET.page }}{% endif %}" class="join-item btn btn-sm">›</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.urlencode %}&{{ request.GET.urlencode|cut:'page='|cut:request.GET.page }}{% endif %}" class="join-item btn btn-sm">»</a>
+        {% else %}
+            <button class="join-item btn btn-sm btn-disabled">›</button>
+            <button class="join-item btn btn-sm btn-disabled">»</button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

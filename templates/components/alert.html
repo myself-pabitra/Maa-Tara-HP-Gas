@@ -1,32 +1,78 @@
 <!-- components/alert.html -->
 
-<div id="alert-container" class="fixed top-6 right-6 z-500 space-y-3"></div>
+<div id="alert-container" class="fixed top-6 right-6 z-[9999] space-y-4 max-w-sm w-full pointer-events-none"></div>
 
 <script>
 function showAlert(message, type = "success", duration = 4000) {
-  const colors = {
-    success: "alert-success",
-    error: "alert-error",
-    warning: "alert-warning",
-    info: "alert-info",
+  const icons = {
+    success: '<i class="fa-solid fa-circle-check text-success"></i>',
+    error: '<i class="fa-solid fa-circle-exclamation text-error"></i>',
+    warning: '<i class="fa-solid fa-triangle-exclamation text-warning"></i>',
+    info: '<i class="fa-solid fa-circle-info text-info"></i>',
+  };
+
+  const borderColors = {
+    success: "border-success/30",
+    error: "border-error/30",
+    warning: "border-warning/30",
+    info: "border-info/30",
+  };
+
+  const bgColors = {
+    success: "bg-success/5",
+    error: "bg-error/5",
+    warning: "bg-warning/5",
+    info: "bg-info/5",
+  };
+  
+  const progressColors = {
+    success: "bg-success",
+    error: "bg-error",
+    warning: "bg-warning",
+    info: "bg-info",
   };
 
   const alert = document.createElement("div");
-  alert.className = `alert ${colors[type]} shadow-lg transition-all duration-300 animate-fade-in`;
+  alert.className = `alert-item relative pointer-events-auto overflow-hidden bg-base-100/90 backdrop-blur-md border ${borderColors[type] || borderColors.info} ${bgColors[type] || bgColors.info} shadow-2xl rounded-xl p-4 transition-all duration-500 ease-out translate-x-full opacity-0`;
+  
   alert.innerHTML = `
-    <div class="flex items-center justify-between w-full">
-      <span class="text-sm font-medium">${message}</span>
-      <button class="btn btn-ghost btn-xs" onclick="this.closest('.alert').remove()">✕</button>
+    <div class="flex items-start gap-3">
+      <div class="text-xl mt-0.5">${icons[type] || icons.info}</div>
+      <div class="flex-1">
+        <h4 class="text-sm font-semibold text-base-content/90 capitalize mb-1">${type}</h4>
+        <p class="text-sm text-base-content/70 leading-snug">${message}</p>
+      </div>
+      <button class="btn btn-circle btn-ghost btn-xs text-base-content/50 hover:text-base-content/90 hover:bg-base-200/50" onclick="closeAlert(this.closest('.alert-item'))">✕</button>
+    </div>
+    <div class="absolute bottom-0 left-0 h-1 w-full bg-base-300/30">
+      <div class="h-full ${progressColors[type] || progressColors.info} progress-bar"></div>
     </div>
   `;
 
   const container = document.getElementById("alert-container");
   container.appendChild(alert);
 
-  setTimeout(() => {
-    alert.classList.add("opacity-0", "translate-y-2");
-    setTimeout(() => alert.remove(), 300);
+  // Trigger entrance animation
+  requestAnimationFrame(() => {
+    alert.classList.remove('translate-x-full', 'opacity-0');
+  });
+
+  // Setup progress bar animation
+  const progressBar = alert.querySelector('.progress-bar');
+  progressBar.style.transition = `width ${duration}ms linear`;
+  requestAnimationFrame(() => {
+    progressBar.style.width = '0%';
+  });
+
+  alert.timer = setTimeout(() => {
+    closeAlert(alert);
   }, duration);
+}
+
+function closeAlert(alert) {
+  if (alert.timer) clearTimeout(alert.timer);
+  alert.classList.add("translate-x-[120%]", "opacity-0", "scale-95");
+  setTimeout(() => alert.remove(), 500);
 }
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -39,11 +85,7 @@ document.addEventListener("DOMContentLoaded", function() {
 </script>
 
 <style>
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+.progress-bar {
+  width: 100%;
 }
 </style>

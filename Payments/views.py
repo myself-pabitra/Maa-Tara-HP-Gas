@@ -4,13 +4,14 @@ from decimal import Decimal
 from django.contrib import messages
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
+from django.core.paginator import Paginator
 
 from SubDealers.models import DailyInvoice, DailyInvoiceLineItem, Subdealer
 
 
 def CheckPendingVerification(request):
     # Include PARTIAL items too — they should remain in verification until fully paid
-    pending_payments = (
+    pending_payments_qs = (
         DailyInvoiceLineItem.objects.filter(
             payment_status__in=["PENDING", "PARTIAL"],
             payment_mode__in=["AC", "Mixed"],
@@ -19,29 +20,32 @@ def CheckPendingVerification(request):
         .order_by("created_at", "subdealer__name")
     )
 
+    paginator = Paginator(pending_payments_qs, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(
         request,
         "payments/payment_verification.html",
         {
-            "pending_payments": pending_payments,
+            "pending_payments": page_obj,
+            "page_obj": page_obj,
             "page_type": "payment_verification",
         },
     )
 
 
-def verify_payment(request, invoice_number):
+def verify_payment(request, item_id):
     """
-    Verify a payment for an invoice. Accepts a POST with:
+    Verify a payment for a specific invoice line item. Accepts a POST with:
       - received_amount: amount being paid now
       - next: optional, 'due' to redirect back to due payments after verifying
     """
     if request.method != "POST":
         return redirect("CheckPendingVerification")
 
-    invoice = get_object_or_404(
-        DailyInvoice,
-        invoice_number=invoice_number,
-    )
+    item = get_object_or_404(DailyInvoiceLineItem, pk=item_id)
+    invoice = item.invoice
 
     # Determine where to redirect after verifying
     next_page = request.POST.get("next", "verify")
@@ -54,13 +58,7 @@ def verify_payment(request, invoice_number):
             return redirect("payment_due_list")
         return redirect("CheckPendingVerification")
 
-    # Find AC/Mixed line items still awaiting payment (PENDING or PARTIAL)
-    line_items = invoice.line_items.filter(
-        payment_status__in=["PENDING", "PARTIAL"],
-        payment_mode__in=["AC", "Mixed"],
-    )
-
-    expected = sum(item.due_amount for item in line_items)
+    expected = item.due_amount
 
     if received <= Decimal("0"):
         messages.error(request, "Received amount must be greater than zero.")
@@ -77,29 +75,19 @@ def verify_payment(request, invoice_number):
             return redirect("payment_due_list")
         return redirect("CheckPendingVerification")
 
-    remaining = received
+    item.verified_ac_amount += received
+    item.due_amount -= received
 
-    for item in line_items.order_by("id"):
-        if remaining <= 0:
-            break
+    if item.due_amount == 0:
+        item.payment_status = "PAID"
+    else:
+        item.payment_status = "PARTIAL"
 
-        pay = min(item.due_amount, remaining)
-
-        item.verified_ac_amount += pay
-        item.due_amount -= pay
-
-        if item.due_amount == 0:
-            item.payment_status = "PAID"
-        else:
-            item.payment_status = "PARTIAL"
-
-        item.save()
-
-        remaining -= pay
+    item.save()
 
     messages.success(
         request,
-        f"Invoice {invoice.invoice_number}: ₹{received} verified successfully.",
+        f"Payment for {item.display_name} (Invoice {invoice.invoice_number}): ₹{received} verified successfully.",
     )
 
     if next_page == "due":
@@ -142,8 +130,13 @@ def due_payments(request):
 
     total_pending_subdealers = due_items.values("subdealer").distinct().count()
 
+    paginator = Paginator(due_items, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        "due_items": due_items,
+        "due_items": page_obj,
+        "page_obj": page_obj,
         "total_due": total_due,
         "total_pending_invoices": total_pending_invoices,
         "total_pending_subdealers": total_pending_subdealers,

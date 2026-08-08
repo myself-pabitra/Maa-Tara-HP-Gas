@@ -4,6 +4,7 @@ from decimal import Decimal, InvalidOperation
 from django.contrib import messages
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
+from django.core.paginator import Paginator
 from django.utils import timezone
 
 from SubDealers.models import DailyInvoiceLineItem, Subdealer
@@ -99,6 +100,10 @@ def view_dac(request):
     # Latest entries first
     entries = entries.order_by("-entry_date", "-created_at", "-id")
 
+    paginator = Paginator(entries, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     # -----------------------------
     # Summary
     # -----------------------------
@@ -114,7 +119,8 @@ def view_dac(request):
     current_balance = total_credit - total_debit
 
     context = {
-        "entries": entries,
+        "entries": page_obj,
+        "page_obj": page_obj,
         "subdealers": Subdealer.objects.all().order_by("name"),
         "selected_subdealer": subdealer_filter,
         "from_date": from_date,
@@ -328,11 +334,16 @@ def Pending_DAC_Orders(request):
         reverse=True,
     )
 
+    paginator = Paginator(rows, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(
         request,
         "Dac/pending_dac_orders.html",
         {
-            "rows": rows,
+            "rows": page_obj,
+            "page_obj": page_obj,
             "subdealers": Subdealer.objects.all().order_by("name"),
             "selected_subdealer": subdealer_filter,
             "selected_month": selected_month,

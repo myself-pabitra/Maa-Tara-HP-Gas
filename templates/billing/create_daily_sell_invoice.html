@@ -117,7 +117,7 @@
         <option value="">Select Product</option>
         <option value="__other__">Other (manual amount)</option>
         {% for p in products %}
-          <option value="{{ p.productCode }}" data-price="{{ p.product_price }}">{{ p.product_name }} — ₹{{ p.product_price }}</option>
+          <option value="{{ p.productCode }}" data-price="{{ p.product_price }}" data-sub-req="{{ p.submission_required|yesno:'true,false' }}">{{ p.product_name }} — ₹{{ p.product_price }}</option>
         {% endfor %}
       </select>
     </div>
@@ -274,8 +274,8 @@ function addRow(data = null) {
   subdealerSel.addEventListener('change', () => recalcRow(row));
   productSel.addEventListener('change', () => {
     toggleOtherProductFields(row, true);
-    updateSelectedProductDisplay(row);
     recalcRow(row);
+    updateSelectedProductDisplay();
   });
   row.querySelector('.line-total-input').addEventListener('input', () => {
     if (productSel.value === '__other__') recalcRow(row);
@@ -420,7 +420,13 @@ function recalcRow(row) {
   if (isOther) {
     const lineTotal = parseFloat(row.querySelector('.line-total-input').value || 0);
     row.querySelector('.discounted-input').value = lineTotal.toFixed(2);
-    row.querySelector('.due-input').value = Math.max(qty - submitted, 0);
+    
+    // Other items never require cylinder submission
+    row.querySelector('.submit-input').value = 0;
+    row.querySelector('.submit-input').readOnly = true;
+    row.querySelector('.submit-input').closest('div').style.opacity = '0.5';
+    row.querySelector('.due-input').value = 0;
+
     const pmode = row.querySelector('.payment-mode-select').value;
     applyPaymentMode(pmode, row);
     if (pmode === 'Mixed') syncMixedAmounts(row);
@@ -434,9 +440,23 @@ function recalcRow(row) {
     discount = parseFloat(discountsMap[subdealer][product] || 0);
   }
 
+  const isSubReq = productSel.selectedOptions[0]?.dataset.subReq === 'true';
+  const submitInput = row.querySelector('.submit-input');
+  
+  if (!isSubReq) {
+    submitInput.value = 0;
+    submitInput.readOnly = true;
+    submitInput.closest('div').style.opacity = '0.5';
+  } else {
+    submitInput.readOnly = false;
+    submitInput.closest('div').style.opacity = '1';
+  }
+  
+  const finalSubmitted = parseFloat(submitInput.value || 0);
+
   const discountedPrice = Math.max(price - discount, 0);
   const lineTotal = discountedPrice * qty;
-  const due = Math.max(qty - submitted, 0);
+  const due = isSubReq ? Math.max(qty - finalSubmitted, 0) : 0;
 
   row.querySelector('.discounted-input').value = discountedPrice.toFixed(2);
   row.querySelector('.line-total-input').value = lineTotal.toFixed(2);

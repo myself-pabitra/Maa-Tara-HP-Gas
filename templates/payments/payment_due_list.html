@@ -243,7 +243,7 @@ Due Payments
 
                     <th>
 
-                        Age
+                        Created At
 
                     </th>
 
@@ -265,7 +265,7 @@ Due Payments
 
                     <td>
 
-                        {{ item.invoice.invoice_date }}
+                        {{ item.invoice.invoice_date|date:"j M Y" }}
 
                     </td>
 
@@ -363,9 +363,9 @@ Due Payments
 
                     </td>
 
-                    <td>
+                    <td class="text-xs">
 
-                        {{ item.created_at|timesince }} ago
+                        {{ item.created_at|date:"j M Y, h:i A" }}
 
                     </td>
 
@@ -373,7 +373,7 @@ Due Payments
 
                         <button
                             class="btn btn-success btn-sm due-verify-btn"
-                            data-url="{% url 'verify_payment' item.invoice.invoice_number %}"
+                            data-url="{% url 'verify_payment' item.id %}"
                             data-invoice="{{ item.invoice.invoice_number }}"
                             data-subdealer="{{ item.subdealer.name }}"
                             data-due="{{ item.due_amount }}"
@@ -405,6 +405,8 @@ Due Payments
         </table>
 
     </div>
+
+    {% include 'components/pagination.html' %}
 
 </div>
 

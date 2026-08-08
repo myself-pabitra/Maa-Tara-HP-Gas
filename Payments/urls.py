@@ -9,7 +9,7 @@ urlpatterns = [
         name="CheckPendingVerification",
     ),
     path(
-        "verify-payment/<str:invoice_number>/",
+        "verify-payment/<int:item_id>/",
         views.verify_payment,
         name="verify_payment",
     ),

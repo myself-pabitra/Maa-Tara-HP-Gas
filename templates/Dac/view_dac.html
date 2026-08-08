@@ -138,7 +138,7 @@
 
                     <td>{{ forloop.counter }}</td>
 
-                    <td>{{ entry.entry_date|date:"d M Y" }}</td>
+                    <td>{{ entry.entry_date|date:"j M Y" }}</td>
 
                     <td>
                         <div class="font-semibold">{{ entry.subdealer.name }}</div>
@@ -196,6 +196,8 @@
         </table>
 
     </div>
+
+    {% include 'components/pagination.html' %}
 
 </div>
 

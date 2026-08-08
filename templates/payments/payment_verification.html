@@ -121,7 +121,7 @@
 
                     <td>
 
-                        {{ item.invoice.invoice_date }}
+                        {{ item.invoice.invoice_date|date:"j M Y" }}
 
                     </td>
 
@@ -219,7 +219,7 @@
 
                             data-id="{{ item.id }}"
 
-                            data-url="{% url 'verify_payment' item.invoice.invoice_number %}"
+                            data-url="{% url 'verify_payment' item.id %}"
 
                             data-invoice="{{ item.invoice.invoice_number }}"
 
@@ -258,6 +258,8 @@
         </table>
 
     </div>
+
+    {% include 'components/pagination.html' %}
 
 </div>
 

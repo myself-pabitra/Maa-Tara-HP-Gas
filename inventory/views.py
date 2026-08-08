@@ -23,6 +23,7 @@ def add_product(request):
                 product_price=Decimal(request.POST.get("product_price", "0")),
                 in_stock="in_stock" in request.POST,
                 dac_applicable="dac_applicable" in request.POST,
+                submission_required="submission_required" in request.POST,
             )
 
             messages.success(
@@ -82,6 +83,7 @@ def update_product(request, product_id):
         product.product_price = sell_price
         product.in_stock = request.POST.get("in_stock") == "1"
         product.dac_applicable = request.POST.get("dac_applicable") == "1"
+        product.submission_required = request.POST.get("submission_required") == "1"
 
         product.save()
         messages.success(request, f"{product.product_name} updated successfully.")

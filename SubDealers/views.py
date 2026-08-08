@@ -13,6 +13,7 @@ from django.db.models.functions import ExtractMonth, ExtractYear
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.core.paginator import Paginator
 
 from employees.models import Employee
 from inventory.models import ProductInventory
@@ -69,12 +70,16 @@ def CreateNewSubDealers(request):
     )
 
 def view_subdealers(request):
-    subdealers = Subdealer.objects.all().order_by("name")
+    subdealers_qs = Subdealer.objects.all().order_by("name")
+    paginator = Paginator(subdealers_qs, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     return render(
         request,
         "SubDealers/view_subdealers.html",
         {
-            "subdealers": subdealers,
+            "subdealers": page_obj,
+            "page_obj": page_obj,
             "page_type": "view_subdealers",
         },
     )
@@ -563,12 +568,16 @@ def create_invoice(request):
 
 
 def view_invoices(request):
-    invoices = DailyInvoice.objects.all().order_by("-invoice_date", "-invoice_number")
+    invoices_qs = DailyInvoice.objects.all().order_by("-invoice_date", "-invoice_number")
+    paginator = Paginator(invoices_qs, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     return render(
         request,
         "billing/view_daily_sell_invoices.html",
         {
-            "invoices": invoices,
+            "invoices": page_obj,
+            "page_obj": page_obj,
             "page_type": "view_invoices",
         },
     )
@@ -668,7 +677,8 @@ def download_invoice_pdf(request, invoice_id):
             "invmode", fontSize=9, fontName="Helvetica", alignment=2,
         ))],
     ]
-    inv_details_table = Table(inv_details, colWidths=[page_w * 0.4])
+    # Set width slightly smaller to account for outer padding
+    inv_details_table = Table(inv_details, colWidths=[page_w * 0.4 - 10])
     inv_details_table.setStyle(TableStyle([
         ("LEFTPADDING", (0, 0), (-1, -1), 0),
         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
@@ -677,7 +687,7 @@ def download_invoice_pdf(request, invoice_id):
 
     top_table = Table(
         [[header_left_table, inv_details_table]],
-        colWidths=[page_w * 0.6, page_w * 0.4],
+        colWidths=[page_w * 0.6 - 10, page_w * 0.4 - 10],
     )
     top_table.setStyle(TableStyle([
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -798,13 +808,13 @@ def download_invoice_pdf(request, invoice_id):
         [Paragraph("<b>Grand Total</b>", ParagraphStyle("gt", fontSize=10, fontName="Helvetica-Bold", textColor=BRAND_BLUE)),
          Paragraph(f"<b>Rs.{invoice.grand_total}</b>", ParagraphStyle("gtv", fontSize=10, fontName="Helvetica-Bold", textColor=BRAND_BLUE, alignment=2))],
     ]
-    totals_table = Table(totals_data, colWidths=[page_w * 0.7, page_w * 0.3])
+    totals_table = Table(totals_data, colWidths=[page_w * 0.3, page_w * 0.25])
     totals_table.setStyle(TableStyle([
         ("LINEABOVE", (0, -1), (-1, -1), 1, BRAND_BLUE),
         ("TOPPADDING", (0, 0), (-1, -1), 3),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-        ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
         ("BACKGROUND", (0, -1), (-1, -1), LIGHT_BLUE),
     ]))
 
@@ -930,7 +940,8 @@ def Cylender_Mismatch(request):
             "product",
         )
         .filter(
-            Q(submitted_blank__lt=F("quantity")) | Q(submitted_blank__gt=F("quantity"))
+            Q(submitted_blank__lt=F("quantity")) | Q(submitted_blank__gt=F("quantity")),
+            product__submission_required=True,
         )
         .order_by(
             "-invoice__invoice_date",
@@ -944,11 +955,15 @@ def Cylender_Mismatch(request):
     if invoice:
         queryset = queryset.filter(invoice__invoice_number__icontains=invoice)
 
+    paginator = Paginator(queryset, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     mismatch_items = []
 
     total_difference = 0
 
-    for item in queryset:
+    for item in page_obj:
         difference = item.quantity - item.submitted_blank
 
         total_difference += abs(difference)
@@ -969,12 +984,13 @@ def Cylender_Mismatch(request):
 
     context = {
         "mismatch_items": mismatch_items,
-        "total_records": len(mismatch_items),
+        "total_records": queryset.count(),
         "total_difference": total_difference,
         "subdealers": Subdealer.objects.all().order_by("name"),
         "selected_subdealer": subdealer,
         "invoice_search": invoice,
         "total_subdealers": total_subdealers,
+        "page_obj": page_obj,
         "page_type": "cylinder_mismatch",
     }
 
@@ -993,7 +1009,7 @@ def print_mismatch_record(request, invoice_id):
             "shortage": item.quantity - item.submitted_blank,
         }
         for item in invoice.line_items.all()
-        if item.submitted_blank != item.quantity
+        if item.submitted_blank != item.quantity and item.product and item.product.submission_required
     ]
     return render(
         request,
@@ -1202,6 +1218,13 @@ def edit_invoice(request, invoice_id):
                     else:  # Mixed
                         payment_status = "PENDING"
 
+                    if pmode == "Cash":
+                        due_amount = Decimal("0.00")
+                    elif pmode == "AC":
+                        due_amount = ac_amt
+                    else:  # Mixed
+                        due_amount = ac_amt
+
                     subtotal += line_total
 
                     DailyInvoiceLineItem.objects.create(
@@ -1219,6 +1242,8 @@ def edit_invoice(request, invoice_id):
                         payment_mode=pmode,
                         cash_amount=cash_amt,
                         ac_amount=ac_amt,
+                        verified_ac_amount=Decimal("0.00"),
+                        due_amount=due_amount,
                         payment_status=payment_status,
                     )
 

@@ -154,7 +154,7 @@
 
                 <tr>
 
-                    <td>{{ item.invoice_date }}</td>
+                    <td>{{ item.invoice_date|date:"j M Y" }}</td>
 
                     <td class="font-bold invoice-number">
                         {{ item.invoice_number }}
@@ -214,6 +214,8 @@
         </table>
 
     </div>
+
+    {% include 'components/pagination.html' %}
 
 </div>
 
