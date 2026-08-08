@@ -106,33 +106,12 @@
 </div>
 
 <script>
-  // Debounced search: automatically submit search after user pauses typing (500ms)
+  // Form submits on Enter key or clicking Search button (zero server hits on keystrokes)
   const searchInput = document.getElementById('subdealerSearch');
-  const searchForm = document.getElementById('searchForm');
-  let debounceTimeout = null;
-
-  if (searchInput && searchForm) {
-    searchInput.addEventListener('input', function(e) {
-      clearTimeout(debounceTimeout);
-      const val = this.value.trim();
-      // If user clears the input completely, immediately navigate back to show all
-      if (val === '' && '{{ search }}' !== '') {
-        window.location.href = "{% url 'view_subdealers' %}";
-        return;
-      }
-      debounceTimeout = setTimeout(() => {
-        if (val !== '{{ search }}') {
-          searchForm.submit();
-        }
-      }, 500);
-    });
-
-    // Move cursor to end of input if search term is prefilled
-    if (searchInput.value) {
-      searchInput.focus();
-      const len = searchInput.value.length;
-      searchInput.setSelectionRange(len, len);
-    }
+  if (searchInput && searchInput.value) {
+    searchInput.focus();
+    const len = searchInput.value.length;
+    searchInput.setSelectionRange(len, len);
   }
 </script>
 {% endblock content %}
