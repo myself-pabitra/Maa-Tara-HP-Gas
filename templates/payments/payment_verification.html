@@ -1,476 +1,426 @@
 {% extends "layout.html" %}
 {% load static %}
 
-{% block title %}Payments Verification{% endblock %}
+{% block title %}Payments Verification - Maa Tara HP Gas{% endblock %}
 
 {% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-<div class="max-w-7xl mx-auto p-8">
-
-    <!-- Header -->
-
-    <div class="flex justify-between items-center mb-8">
-
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
-
-            <h1 class="text-3xl font-bold text-primary">
-
-                Payments Verification
-
-            </h1>
-
-            <p class="text-base-content/70 mt-2">
-
-                Verify AC &amp; Mixed payments received from Subdealers.
-
-            </p>
-
-        </div>
-
-        <div class="stats shadow">
-
-            <div class="stat">
-
-                <div class="stat-title">
-
-                    Pending / Partial
-
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-md">
+                    <i class="fa-solid fa-clipboard-check text-2xl"></i>
                 </div>
-
-                <div class="stat-value text-error">
-
-                    {{ pending_payments|length }}
-
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                        Payments Verification
+                    </h1>
+                    <p class="text-sm text-slate-600 font-medium mt-0.5">
+                        Verify and record AC & Mixed payments received from Subdealers.
+                    </p>
                 </div>
-
             </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'payment_due_list' %}" class="btn btn-outline btn-sm font-bold gap-2">
+                <i class="fa-solid fa-clock-rotate-left"></i> Outstanding Dues
+            </a>
+            <a href="{% url 'view_daily_sell_invoices' %}" class="btn btn-ghost btn-sm font-bold">
+                View All Bills
+            </a>
+        </div>
+    </div>
 
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        
+        <!-- Pending Items Count -->
+        <div class="card bg-white border border-slate-200 shadow-sm">
+            <div class="card-body p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase text-slate-600">Pending Line Items</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-bold border border-rose-200">
+                        {{ total_pending_count }} items
+                    </span>
+                </div>
+                <div class="mt-2 text-2xl font-bold text-slate-900">{{ total_pending_count }} Items</div>
+                <div class="text-xs text-slate-600 font-medium mt-1">Awaiting AC verification</div>
+            </div>
+        </div>
+
+        <!-- Total AC Amount Billed -->
+        <div class="card bg-white border border-slate-200 shadow-sm">
+            <div class="card-body p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase text-slate-600">Total Billed AC</span>
+                    <i class="fa-solid fa-receipt text-slate-400"></i>
+                </div>
+                <div class="mt-2 text-2xl font-bold text-slate-900">₹{{ total_ac_amount|floatformat:2 }}</div>
+                <div class="text-xs text-slate-600 font-medium mt-1">Original AC amount on invoices</div>
+            </div>
+        </div>
+
+        <!-- Received / Verified Amount -->
+        <div class="card bg-white border border-slate-200 shadow-sm">
+            <div class="card-body p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase text-slate-600">Total Received</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">Verified</span>
+                </div>
+                <div class="mt-2 text-2xl font-bold text-emerald-700">₹{{ total_received_amount|floatformat:2 }}</div>
+                <div class="text-xs text-slate-600 font-medium mt-1">Already verified into bank/cash</div>
+            </div>
+        </div>
+
+        <!-- Outstanding Due -->
+        <div class="card bg-white border border-slate-200 shadow-sm">
+            <div class="card-body p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase text-slate-600">Outstanding Due</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-xs font-bold">Unpaid</span>
+                </div>
+                <div class="mt-2 text-2xl font-bold text-rose-700">₹{{ total_due_amount|floatformat:2 }}</div>
+                <div class="text-xs text-slate-600 font-medium mt-1">Remaining to be collected</div>
+            </div>
         </div>
 
     </div>
 
-    <!-- Table -->
-
-    <div class="overflow-x-auto bg-base-200 rounded-3xl shadow-xl p-6">
-
-        <table class="table table-zebra">
-
-            <thead>
-
-                <tr>
-
-                    <th>Date</th>
-
-                    <th>Subdealer</th>
-
-                    <th>Invoice</th>
-
-                    <th>Product</th>
-
-                    <th class="text-center">
-
-                        Qty
-
-                    </th>
-
-                    <th>
-
-                        Payment Mode
-
-                    </th>
-
-                    <th class="text-right">
-
-                        AC Amount
-
-                    </th>
-
-                    <th class="text-right">
-
-                        Received
-
-                    </th>
-
-                    <th class="text-right text-error">
-
-                        Due
-
-                    </th>
-
-                    <th>
-
-                        Status
-
-                    </th>
-
-                    <th class="text-center">
-
-                        Action
-
-                    </th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                {% for item in pending_payments %}
-
-                <tr>
-
-                    <td>
-
-                        {{ item.invoice.invoice_date|date:"j M Y" }}
-
-                    </td>
-
-                    <td>
-
-                        {{ item.subdealer.name }}
-
-                    </td>
-
-                    <td>
-
-                        <span class="font-semibold">
-
-                            {{ item.invoice.invoice_number }}
-
-                        </span>
-
-                    </td>
-
-                    <td>
-
-                        {{ item.display_name }}
-
-                    </td>
-
-                    <td class="text-center">
-
-                        {{ item.quantity }}
-
-                    </td>
-
-                    <td>
-
-                        {% if item.payment_mode == "AC" %}
-
-                        <span class="badge badge-warning">
-
-                            AC
-
-                        </span>
-
-                        {% else %}
-
-                        <span class="badge badge-info">
-
-                            Mixed
-
-                        </span>
-
-                        {% endif %}
-
-                    </td>
-
-                    <td class="text-right">
-
-                        ₹{{ item.ac_amount }}
-
-                    </td>
-
-                    <td class="text-right text-success font-semibold">
-
-                        ₹{{ item.verified_ac_amount }}
-
-                    </td>
-
-                    <td class="text-right">
-
-                        <span class="font-bold text-error">₹{{ item.due_amount }}</span>
-
-                    </td>
-
-                    <td>
-
-                        {% if item.payment_status == "PARTIAL" %}
-                        <span class="badge badge-warning">
-
-                            PARTIAL
-
-                        </span>
-                        {% else %}
-                        <span class="badge badge-error">
-
-                            PENDING
-
-                        </span>
-                        {% endif %}
-
-                    </td>
-
-                    <td class="text-center">
-
-                        <button
-
-                            class="btn btn-success btn-sm verify-btn"
-
-                            data-id="{{ item.id }}"
-
-                            data-url="{% url 'verify_payment' item.id %}"
-
-                            data-invoice="{{ item.invoice.invoice_number }}"
-
-                            data-subdealer="{{ item.subdealer.name }}"
-
-                            data-due="{{ item.due_amount }}"
-
-                            data-ac="{{ item.ac_amount }}"
-
-                        >
-
-                            Verify
-
-                        </button>
-
-                    </td>
-
-                </tr>
-
-                {% empty %}
-
-                <tr>
-
-                    <td colspan="11" class="text-center py-12 text-base-content/60">
-
-                        No Pending Payments Found.
-
-                    </td>
-
-                </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
+    <!-- Search & Filter Controls -->
+    <div class="card bg-white border border-slate-200 shadow-sm mb-6">
+        <div class="card-body p-4">
+            <form method="GET" action="{% url 'CheckPendingVerification' %}" class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                
+                <!-- Search Input -->
+                <div class="relative flex-1">
+                    <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input
+                        type="text"
+                        name="search"
+                        value="{{ search }}"
+                        placeholder="Search by invoice number (e.g. INV-20260807-00001), subdealer, or product..."
+                        class="input input-bordered w-full pl-9 bg-slate-50 font-medium text-slate-900 focus:bg-white"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <!-- Subdealer Dropdown Filter -->
+                <div class="w-full md:w-64">
+                    <select name="subdealer" class="select select-bordered w-full font-semibold text-slate-900 bg-slate-50" onchange="this.form.submit()">
+                        <option value="">All Subdealers</option>
+                        {% for s in subdealers %}
+                        <option value="{{ s.subdealerCode }}" {% if selected_subdealer == s.subdealerCode %}selected{% endif %}>
+                            {{ s.name }} ({{ s.subdealerCode }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-2">
+                    <button type="submit" class="btn btn-primary font-bold">
+                        Filter
+                    </button>
+                    {% if search or selected_subdealer %}
+                    <a href="{% url 'CheckPendingVerification' %}" class="btn btn-outline font-bold" title="Reset Filters">
+                        Clear
+                    </a>
+                    {% endif %}
+                </div>
+
+            </form>
+        </div>
     </div>
 
+    <!-- Payments Verification Table -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+        <div class="overflow-x-auto">
+            <table class="table w-full border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-800 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                        <th class="py-3.5 px-4 text-left whitespace-nowrap">Date</th>
+                        <th class="py-3.5 px-4 text-left">Subdealer</th>
+                        <th class="py-3.5 px-4 text-left whitespace-nowrap">Daily Invoice</th>
+                        <th class="py-3.5 px-4 text-left">Product / Item</th>
+                        <th class="py-3.5 px-4 text-center">Qty</th>
+                        <th class="py-3.5 px-4 text-center">Mode</th>
+                        <th class="py-3.5 px-4 text-right">AC Amount</th>
+                        <th class="py-3.5 px-4 text-right">Received</th>
+                        <th class="py-3.5 px-4 text-right text-rose-700">Due</th>
+                        <th class="py-3.5 px-4 text-center">Status</th>
+                        <th class="py-3.5 px-4 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for item in pending_payments %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        
+                        <!-- Date -->
+                        <td class="px-4 py-3.5 font-mono text-sm font-semibold text-slate-900 whitespace-nowrap">
+                            {{ item.invoice.invoice_date|date:"d M Y" }}
+                        </td>
+
+                        <!-- Subdealer -->
+                        <td class="px-4 py-3.5">
+                            <div class="font-bold text-sm text-slate-900">{{ item.subdealer.name }}</div>
+                            <span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold border border-slate-200">
+                                {{ item.subdealer.subdealerCode }}
+                            </span>
+                        </td>
+
+                        <!-- Invoice Number (Daily Billing Session) -->
+                        <td class="px-4 py-3.5 font-mono font-bold text-xs text-slate-800 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-100 border border-slate-200">
+                                <i class="fa-solid fa-file-invoice text-slate-400"></i>
+                                {{ item.invoice.invoice_number }}
+                            </span>
+                        </td>
+
+                        <!-- Product -->
+                        <td class="px-4 py-3.5 text-sm font-medium text-slate-800">
+                            {{ item.display_name }}
+                        </td>
+
+                        <!-- Qty -->
+                        <td class="px-4 py-3.5 text-center font-mono font-bold text-sm text-slate-800">
+                            {{ item.quantity }}
+                        </td>
+
+                        <!-- Payment Mode -->
+                        <td class="px-4 py-3.5 text-center">
+                            {% if item.payment_mode == "AC" %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300">
+                                    AC
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-900 text-xs font-bold border border-sky-300">
+                                    Mixed
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- AC Amount -->
+                        <td class="px-4 py-3.5 text-right font-mono font-bold text-sm text-slate-900">
+                            ₹{{ item.ac_amount }}
+                        </td>
+
+                        <!-- Verified / Received Amount -->
+                        <td class="px-4 py-3.5 text-right font-mono font-bold text-sm text-emerald-700">
+                            ₹{{ item.verified_ac_amount }}
+                        </td>
+
+                        <!-- Due Amount -->
+                        <td class="px-4 py-3.5 text-right font-mono font-extrabold text-sm text-rose-700">
+                            ₹{{ item.due_amount }}
+                        </td>
+
+                        <!-- Payment Status -->
+                        <td class="px-4 py-3.5 text-center">
+                            {% if item.payment_status == "PARTIAL" %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300">
+                                    PARTIAL
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-900 text-xs font-bold border border-rose-300">
+                                    PENDING
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Action -->
+                        <td class="px-4 py-3.5 text-center">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-primary font-bold text-white shadow-sm gap-1.5 verify-btn hover:scale-105 transition-transform"
+                                data-id="{{ item.id }}"
+                                data-url="{% url 'verify_payment' item.id %}"
+                                data-invoice="{{ item.invoice.invoice_number }}"
+                                data-subdealer="{{ item.subdealer.name }}"
+                                data-product="{{ item.display_name }}"
+                                data-ac="{{ item.ac_amount }}"
+                                data-received="{{ item.verified_ac_amount }}"
+                                data-due="{{ item.due_amount }}"
+                            >
+                                <i class="fa-solid fa-circle-check"></i>
+                                Verify
+                            </button>
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-center py-16 text-slate-500">
+                            <div class="flex flex-col items-center justify-center max-w-sm mx-auto">
+                                <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-3">
+                                    <i class="fa-solid fa-check-double text-2xl"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-900">All Payments Verified</h3>
+                                <p class="text-sm text-slate-600 mt-1">No pending AC or Mixed payments awaiting verification.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
     {% include 'components/pagination.html' %}
 
 </div>
 
-<!-- Modal -->
+<!-- ========================================================= -->
+<!-- PAYMENT VERIFICATION MODAL (DaisyUI) -->
+<!-- ========================================================= -->
+<dialog id="verifyModal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-2xl max-w-lg">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-slate-500 hover:text-slate-800">✕</button>
+        </form>
 
-<dialog id="verifyModal" class="modal">
-
-    <div class="modal-box">
-
-        <h3 class="font-bold text-xl">
-
-            Verify Payment
-
-        </h3>
-
-        <div class="divider"></div>
-
-        <div class="space-y-4">
-
+        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-200">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shadow-sm">
+                <i class="fa-solid fa-hand-holding-dollar text-xl"></i>
+            </div>
             <div>
-
-                <label class="font-semibold">
-
-                    Invoice
-
-                </label>
-
-                <p id="modalInvoice"></p>
-
+                <h3 class="font-extrabold text-2xl text-slate-900">Verify Payment</h3>
+                <p class="text-xs text-slate-600 font-medium mt-0.5">Record AC payment received from subdealer.</p>
             </div>
-
-            <div>
-
-                <label class="font-semibold">
-
-                    Subdealer
-
-                </label>
-
-                <p id="modalDealer"></p>
-
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="font-semibold text-sm">Original AC Amount</label>
-                    <p class="text-base-content/70 font-medium">₹<span id="modalAc"></span></p>
-                </div>
-                <div>
-                    <label class="font-semibold text-sm">Remaining Due</label>
-                    <p class="text-error font-bold text-lg">₹<span id="modalDue"></span></p>
-                </div>
-            </div>
-
-            <div>
-
-                <label class="label">
-
-                    <span class="label-text font-semibold">
-
-                        Received Amount (max: ₹<span id="modalMaxLabel"></span>)
-
-                    </span>
-
-                </label>
-
-                <input
-
-                    id="receivedAmount"
-
-                    type="number"
-
-                    step="0.01"
-
-                    min="0.01"
-
-                    class="input input-bordered w-full"
-
-                >
-
-            </div>
-
-            <p class="text-error text-sm hidden" id="amountError">
-
-                Received amount cannot exceed remaining due amount.
-
-            </p>
-
         </div>
 
-        <div class="modal-action">
+        <form id="verifyForm" method="POST" action="" class="space-y-5">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="verify">
 
-            <button
+            <!-- Summary Details Box -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                <div class="flex justify-between">
+                    <span class="text-slate-600 font-medium">Subdealer:</span>
+                    <strong id="modalSubdealer" class="text-slate-900 font-bold"></strong>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-600 font-medium">Daily Invoice:</span>
+                    <span id="modalInvoice" class="font-mono font-bold text-slate-900"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-600 font-medium">Product / Line:</span>
+                    <strong id="modalProduct" class="text-slate-900"></strong>
+                </div>
+                <div class="pt-2 border-t border-slate-200 flex justify-between">
+                    <span class="text-slate-600 font-medium">Total Billed AC:</span>
+                    <span id="modalAc" class="font-mono font-bold text-slate-900"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-600 font-medium">Already Verified:</span>
+                    <span id="modalReceived" class="font-mono font-bold text-emerald-700"></span>
+                </div>
+                <div class="flex justify-between text-sm pt-1">
+                    <span class="text-rose-700 font-bold">Outstanding Due:</span>
+                    <strong id="modalDue" class="font-mono font-extrabold text-rose-700"></strong>
+                </div>
+            </div>
 
-                class="btn"
+            <!-- Payment Amount Input -->
+            <div class="form-control">
+                <label class="label py-1 flex justify-between items-center">
+                    <span class="label-text font-bold text-slate-900 text-sm">Payment Amount Received (₹) <span class="text-error">*</span></span>
+                    <button type="button" id="payFullDueBtn" class="btn btn-xs btn-outline btn-primary font-bold">
+                        Pay Full Due
+                    </button>
+                </label>
+                <label class="input input-bordered flex items-center gap-2 bg-white font-mono border-slate-300">
+                    <span class="text-slate-500 font-bold">₹</span>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        name="received_amount"
+                        id="modalReceivedInput"
+                        class="grow font-extrabold text-xl text-slate-900 focus:outline-none"
+                        required
+                    >
+                </label>
+            </div>
 
-                onclick="verifyModal.close()">
+            <!-- Remaining Due Live Preview -->
+            <div class="p-3 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-between text-xs font-semibold">
+                <span class="text-slate-700">Remaining Due After Payment:</span>
+                <span id="modalRemainingDue" class="font-mono font-bold text-sm text-slate-900">₹0.00</span>
+            </div>
 
-                Cancel
+            <div class="modal-action mt-6 pt-4 border-t border-slate-200 flex justify-end gap-2">
+                <button type="button" class="btn btn-ghost font-bold text-slate-700" onclick="document.getElementById('verifyModal').close()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary text-white font-bold px-6 shadow-md shadow-primary/20">
+                    <i class="fa-solid fa-check mr-1"></i> Confirm & Verify
+                </button>
+            </div>
 
-            </button>
-
-            <button
-
-                class="btn btn-success"
-
-                id="confirmVerify">
-
-                Verify Payment
-
-            </button>
-
-        </div>
-
+        </form>
     </div>
-
 </dialog>
 
-<form id="verifyForm" method="POST">
-
-    {% csrf_token %}
-
-    <input
-        type="hidden"
-        name="received_amount"
-        id="receivedAmountHidden">
-
-    <!-- next=verify keeps redirect on the verify page -->
-    <input type="hidden" name="next" value="verify">
-
-</form>
-
+<!-- JavaScript for Verification Modal -->
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('verifyModal');
+    const form = document.getElementById('verifyForm');
+    const modalSubdealer = document.getElementById('modalSubdealer');
+    const modalInvoice = document.getElementById('modalInvoice');
+    const modalProduct = document.getElementById('modalProduct');
+    const modalAc = document.getElementById('modalAc');
+    const modalReceived = document.getElementById('modalReceived');
+    const modalDue = document.getElementById('modalDue');
+    const modalReceivedInput = document.getElementById('modalReceivedInput');
+    const modalRemainingDue = document.getElementById('modalRemainingDue');
+    const payFullDueBtn = document.getElementById('payFullDueBtn');
 
-const modal=document.getElementById("verifyModal");
+    let currentDue = 0;
 
-let verifyUrl="";
-let expectedDue=0;
+    function updateRemainingDue() {
+        const paying = parseFloat(modalReceivedInput.value) || 0;
+        const remaining = Math.max(0, currentDue - paying);
+        modalRemainingDue.textContent = '₹' + remaining.toFixed(2);
 
-document.querySelectorAll(".verify-btn").forEach(btn=>{
-
-    btn.onclick=function(){
-
-        verifyUrl=this.dataset.url;
-
-        expectedDue=parseFloat(this.dataset.due);
-
-        document.getElementById("modalInvoice").innerHTML=this.dataset.invoice;
-
-        document.getElementById("modalDealer").innerHTML=this.dataset.subdealer;
-
-        document.getElementById("modalAc").innerHTML=this.dataset.ac;
-
-        document.getElementById("modalDue").innerHTML=parseFloat(this.dataset.due).toFixed(2);
-
-        document.getElementById("modalMaxLabel").innerHTML=parseFloat(this.dataset.due).toFixed(2);
-
-        // Default to full due amount
-        document.getElementById("receivedAmount").value=parseFloat(this.dataset.due).toFixed(2);
-
-        document.getElementById("receivedAmount").max=parseFloat(this.dataset.due).toFixed(2);
-
-        document.getElementById("amountError").classList.add("hidden");
-
-        if(!modal.open){
-            modal.showModal();
+        if (remaining === 0) {
+            modalRemainingDue.className = 'font-mono font-bold text-sm text-emerald-700';
+        } else {
+            modalRemainingDue.className = 'font-mono font-bold text-sm text-rose-700';
         }
-
     }
 
+    modalReceivedInput.addEventListener('input', updateRemainingDue);
+
+    payFullDueBtn.addEventListener('click', function() {
+        modalReceivedInput.value = currentDue.toFixed(2);
+        updateRemainingDue();
+    });
+
+    document.querySelectorAll('.verify-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const data = this.dataset;
+            form.action = data.url;
+            modalSubdealer.textContent = data.subdealer;
+            modalInvoice.textContent = data.invoice;
+            modalProduct.textContent = data.product;
+            modalAc.textContent = '₹' + parseFloat(data.ac).toFixed(2);
+            modalReceived.textContent = '₹' + parseFloat(data.received).toFixed(2);
+            
+            currentDue = parseFloat(data.due) || 0;
+            modalDue.textContent = '₹' + currentDue.toFixed(2);
+            modalReceivedInput.value = currentDue.toFixed(2);
+            modalReceivedInput.max = currentDue;
+
+            updateRemainingDue();
+            modal.showModal();
+        });
+    });
 });
-
-document.getElementById("confirmVerify").onclick = function(){
-
-    const received =
-        parseFloat(document.getElementById("receivedAmount").value);
-
-    if(isNaN(received) || received <= 0){
-
-        alert("Enter a valid received amount.");
-
-        return;
-
-    }
-
-    if(received > expectedDue){
-
-        document.getElementById("amountError").classList.remove("hidden");
-
-        return;
-
-    }
-
-    const form=document.getElementById("verifyForm");
-
-    if(!form){
-
-        alert("verifyForm not found.");
-
-        return;
-
-    }
-
-    form.action = verifyUrl;
-
-    document.getElementById("receivedAmountHidden").value = received;
-
-    form.submit();
-
-}
-
 </script>
-
 {% endblock %}

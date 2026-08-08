@@ -45,6 +45,7 @@
     --color-sky-100: oklch(95.1% 0.026 236.824);
     --color-sky-300: oklch(82.8% 0.111 230.318);
     --color-sky-800: oklch(44.3% 0.11 240.79);
+    --color-sky-900: oklch(39.1% 0.09 240.876);
     --color-sky-950: oklch(29.3% 0.066 243.157);
     --color-blue-50: oklch(97% 0.014 254.604);
     --color-blue-100: oklch(93.2% 0.032 255.585);
@@ -3097,6 +3098,9 @@
   .border-rose-300 {
     border-color: var(--color-rose-300);
   }
+  .border-sky-300 {
+    border-color: var(--color-sky-300);
+  }
   .border-slate-100 {
     border-color: var(--color-slate-100);
   }
@@ -3315,6 +3319,9 @@
       background-color: color-mix(in oklab, var(--color-rose-500) 10%, transparent);
     }
   }
+  .bg-rose-600 {
+    background-color: var(--color-rose-600);
+  }
   .bg-sky-100 {
     background-color: var(--color-sky-100);
   }
@@ -3477,6 +3484,9 @@
     font-size: 0.625rem;
     padding-inline: calc(0.25rem * 2 - var(--border));
   }
+  .px-1\.5 {
+    padding-inline: calc(var(--spacing) * 1.5);
+  }
   .px-2 {
     padding-inline: calc(var(--spacing) * 2);
   }
@@ -3539,6 +3549,9 @@
   }
   .py-16 {
     padding-block: calc(var(--spacing) * 16);
+  }
+  .pt-1 {
+    padding-top: calc(var(--spacing) * 1);
   }
   .pt-2 {
     padding-top: calc(var(--spacing) * 2);
@@ -3912,6 +3925,9 @@
   }
   .text-sky-800 {
     color: var(--color-sky-800);
+  }
+  .text-sky-900 {
+    color: var(--color-sky-900);
   }
   .text-slate-400 {
     color: var(--color-slate-400);
@@ -4543,6 +4559,11 @@
   .md\:w-56 {
     @media (width >= 48rem) {
       width: calc(var(--spacing) * 56);
+    }
+  }
+  .md\:w-64 {
+    @media (width >= 48rem) {
+      width: calc(var(--spacing) * 64);
     }
   }
   .md\:grid-cols-2 {
