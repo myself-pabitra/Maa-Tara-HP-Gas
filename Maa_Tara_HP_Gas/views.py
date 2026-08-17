@@ -59,7 +59,7 @@ def dashboard(request):
 
     cylinder_summary = line_items.aggregate(
         cylinders=Coalesce(
-            Sum("quantity"),
+            Sum("quantity", filter=Q(product__submission_required=True)),
             0,
         )
     )

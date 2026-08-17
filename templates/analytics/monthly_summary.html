@@ -359,9 +359,7 @@
 
                         </h3>
 
-                        <p>
-
-                            ₹ {{ dashboard_highlights.average_invoice_value }}
+                            ₹ {{ dashboard_highlights.average_invoice_value|floatformat:2 }}
 
                         </p>
 
@@ -399,9 +397,7 @@
 
                         </h3>
 
-                        <p>
-
-                            {{ dashboard_highlights.average_cylinder_invoice }}
+                            {{ dashboard_highlights.average_cylinder_invoice|floatformat:2 }}
 
                         </p>
 

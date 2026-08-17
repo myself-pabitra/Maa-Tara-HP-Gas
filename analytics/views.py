@@ -112,7 +112,7 @@ def monthly_summary(request):
 
     cylinder_summary = line_items.aggregate(
         cylinders_sold=Coalesce(
-            Sum("quantity"),
+            Sum("quantity", filter=Q(product__submission_required=True)),
             0,
         ),
         billed_amount=Coalesce(
@@ -292,7 +292,7 @@ def monthly_summary(request):
         .values("year", "month")
         .annotate(
             cylinders=Coalesce(
-                Sum("quantity"),
+                Sum("quantity", filter=Q(product__submission_required=True)),
                 0,
             )
         )
@@ -548,7 +548,7 @@ def monthly_summary(request):
         .annotate(
             invoice_count=Count("invoice", distinct=True),
             cylinders=Coalesce(
-                Sum("quantity"),
+                Sum("quantity", filter=Q(product__submission_required=True)),
                 0,
             ),
             sales=Coalesce(
