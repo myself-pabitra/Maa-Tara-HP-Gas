@@ -102,3 +102,37 @@ class ProductInventory(models.Model):
                 self.productCode = self.generate_product_code()
 
         super().save(*args, **kwargs)
+
+
+class StockBatch(models.Model):
+    """
+    Tracks individual stock purchases (batches) for FIFO profit calculation.
+    Each time stock is topped up, a new batch is created with the buy price
+    at that time. When selling, oldest batches are consumed first.
+    """
+    product = models.ForeignKey(
+        ProductInventory, on_delete=models.CASCADE, related_name="batches"
+    )
+    buy_price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        help_text="Buy price per unit for this batch",
+    )
+    quantity_added = models.PositiveIntegerField(
+        help_text="Original batch size when stock was added",
+    )
+    quantity_remaining = models.PositiveIntegerField(
+        help_text="Units still unsold from this batch",
+    )
+    added_at = models.DateTimeField(auto_now_add=True)
+    notes = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        db_table = "stock_batch"
+        ordering = ["added_at"]  # oldest first for FIFO
+
+    def __str__(self):
+        return (
+            f"{self.product.product_name} — "
+            f"₹{self.buy_price} × {self.quantity_remaining}/{self.quantity_added} "
+            f"({self.added_at:%d %b %Y})"
+        )

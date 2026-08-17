@@ -16,7 +16,7 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 
 from employees.models import Employee
-from inventory.models import ProductInventory
+from inventory.models import ProductInventory, StockBatch
 from UserDAC.models import DACEntry
 
 from .models import (
@@ -373,7 +373,26 @@ def create_invoice(request):
                             raise ValueError(f"Buying price cannot be negative on row {i + 1}.")
                         discounted_price = line_total
                     else:
-                        buying_price = product.buy_price * qty
+                        # -------------------------------------------------
+                        # FIFO batch consumption for accurate profit calc
+                        # -------------------------------------------------
+                        remaining = qty
+                        total_buy = Decimal("0.00")
+                        fifo_batches = product.batches.filter(
+                            quantity_remaining__gt=0
+                        ).order_by("added_at")
+                        for batch in fifo_batches:
+                            if remaining <= 0:
+                                break
+                            consume = min(batch.quantity_remaining, remaining)
+                            total_buy += batch.buy_price * consume
+                            batch.quantity_remaining -= consume
+                            batch.save(update_fields=["quantity_remaining"])
+                            remaining -= consume
+                        # Fallback: if no batches cover the full qty
+                        if remaining > 0:
+                            total_buy += product.buy_price * remaining
+                        buying_price = total_buy
                         remarks = ""
 
                     try:
@@ -1520,7 +1539,16 @@ def edit_invoice(request, invoice_id):
                             raise ValueError(f"Buying price cannot be negative on row {i + 1}.")
                         discounted_price = line_total
                     else:
-                        buying_price = product.buy_price * qty
+                        # On edit, preserve the original buying_price from
+                        # the form (FIFO was already applied at creation).
+                        # If the form provides a buying_price, use it;
+                        # otherwise fall back to current product.buy_price.
+                        try:
+                            buying_price = Decimal(buying_prices[i] or "0")
+                        except (InvalidOperation, IndexError):
+                            buying_price = product.buy_price * qty
+                        if buying_price <= 0:
+                            buying_price = product.buy_price * qty
                         remarks = ""
 
                     try:

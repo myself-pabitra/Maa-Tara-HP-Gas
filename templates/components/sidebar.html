@@ -60,7 +60,7 @@
       </details>
     </li>
     <li>
-      <details {% if page_type == "add_product" or page_type == "view_products" or page_type == "edit_product" or page_type == "manage_products" %}open{% endif %}>
+      <details {% if page_type == "add_product" or page_type == "view_products" or page_type == "edit_product" or page_type == "manage_products" or page_type == "topup_stock" %}open{% endif %}>
         <summary onclick="handleDetailsToggle(event)">
           {% include "icons/products.svg" %}
           Products
@@ -71,6 +71,9 @@
           </li>
           <li>
             <a href="{% url 'manage_products' %}">View Products</a>
+          </li>
+          <li>
+            <a href="{% url 'topup_stock' %}">Top-Up Stock</a>
           </li>
         </ul>
       </details>

@@ -19,4 +19,9 @@ urlpatterns = [
         views.delete_product,
         name="delete_product",
     ),
+    path(
+        "topup-stock/",
+        views.topup_stock,
+        name="topup_stock",
+    ),
 ]

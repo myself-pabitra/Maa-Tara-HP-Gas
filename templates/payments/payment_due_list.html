@@ -127,19 +127,19 @@
         <div class="overflow-x-auto">
             <table class="table w-full border-collapse">
                 <thead>
-                    <tr class="bg-slate-100 text-slate-800 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
-                        <th class="py-3.5 px-4 text-left whitespace-nowrap">Date</th>
-                        <th class="py-3.5 px-4 text-left">Subdealer</th>
-                        <th class="py-3.5 px-4 text-left whitespace-nowrap">Daily Invoice</th>
-                        <th class="py-3.5 px-4 text-left">Product / Item</th>
-                        <th class="py-3.5 px-4 text-center">Qty</th>
-                        <th class="py-3.5 px-4 text-center">Mode</th>
-                        <th class="py-3.5 px-4 text-right">AC Amount</th>
-                        <th class="py-3.5 px-4 text-right">Received</th>
-                        <th class="py-3.5 px-4 text-right text-rose-700">Due Amount</th>
-                        <th class="py-3.5 px-4 text-center">Status</th>
-                        <th class="py-3.5 px-4 text-center whitespace-nowrap">Verified On</th>
-                        <th class="py-3.5 px-4 text-center">Action</th>
+                    <tr class="bg-slate-100 text-slate-800 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                        <th class="py-2.5 px-2.5 text-left whitespace-nowrap">Date</th>
+                        <th class="py-2.5 px-2.5 text-left">Subdealer</th>
+                        <th class="py-2.5 px-2.5 text-left whitespace-nowrap">Invoice</th>
+                        <th class="py-2.5 px-2.5 text-left">Product</th>
+                        <th class="py-2.5 px-2.5 text-center">Qty</th>
+                        <th class="py-2.5 px-2.5 text-center">Mode</th>
+                        <th class="py-2.5 px-2.5 text-right">AC Amt</th>
+                        <th class="py-2.5 px-2.5 text-right">Rcvd</th>
+                        <th class="py-2.5 px-2.5 text-right text-rose-700">Due</th>
+                        <th class="py-2.5 px-2.5 text-center">Status</th>
+                        <th class="py-2.5 px-2.5 text-center whitespace-nowrap">Verified On</th>
+                        <th class="py-2.5 px-2.5 text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200">
@@ -147,94 +147,88 @@
                     <tr class="hover:bg-slate-50 transition-colors">
                         
                         <!-- Date -->
-                        <td class="px-4 py-3.5 font-mono text-sm font-semibold text-slate-900 whitespace-nowrap">
-                            {{ item.invoice.invoice_date|date:"d M Y" }}
+                        <td class="px-2.5 py-2.5 font-mono text-xs font-semibold text-slate-900 whitespace-nowrap">
+                            {{ item.invoice.invoice_date|date:"d M y" }}
                         </td>
 
                         <!-- Subdealer -->
-                        <td class="px-4 py-3.5">
-                            <div class="font-bold text-sm text-slate-900">{{ item.subdealer.name }}</div>
-                            <span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold border border-slate-200">
-                                {{ item.subdealer.subdealerCode }}
-                            </span>
+                        <td class="px-2.5 py-2.5">
+                            <div class="font-bold text-xs text-slate-900 leading-tight">{{ item.subdealer.name }}</div>
+                            <span class="text-slate-500 font-mono text-[10px]">{{ item.subdealer.subdealerCode }}</span>
                         </td>
 
-                        <!-- Daily Invoice Number -->
-                        <td class="px-4 py-3.5 font-mono font-bold text-xs text-slate-800 whitespace-nowrap">
-                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-100 border border-slate-200">
-                                <i class="fa-solid fa-file-invoice text-slate-400"></i>
-                                {{ item.invoice.invoice_number }}
-                            </span>
+                        <!-- Invoice Number -->
+                        <td class="px-2.5 py-2.5 font-mono font-bold text-[11px] text-slate-700 whitespace-nowrap">
+                            {{ item.invoice.invoice_number }}
                         </td>
 
                         <!-- Product -->
-                        <td class="px-4 py-3.5 text-sm font-medium text-slate-800">
+                        <td class="px-2.5 py-2.5 text-xs font-medium text-slate-800 max-w-[120px] truncate">
                             {{ item.display_name }}
                         </td>
 
                         <!-- Qty -->
-                        <td class="px-4 py-3.5 text-center font-mono font-bold text-sm text-slate-800">
+                        <td class="px-2.5 py-2.5 text-center font-mono font-bold text-xs text-slate-800">
                             {{ item.quantity }}
                         </td>
 
                         <!-- Payment Mode -->
-                        <td class="px-4 py-3.5 text-center">
+                        <td class="px-2.5 py-2.5 text-center">
                             {% if item.payment_mode == "AC" %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300">
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold border border-amber-300">
                                     AC
                                 </span>
                             {% else %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-900 text-xs font-bold border border-sky-300">
-                                    Mixed
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-900 text-[10px] font-bold border border-sky-300">
+                                    Mix
                                 </span>
                             {% endif %}
                         </td>
 
                         <!-- AC Amount -->
-                        <td class="px-4 py-3.5 text-right font-mono font-bold text-sm text-slate-900">
+                        <td class="px-2.5 py-2.5 text-right font-mono font-bold text-xs text-slate-900 whitespace-nowrap">
                             ₹{{ item.ac_amount }}
                         </td>
 
                         <!-- Received Amount -->
-                        <td class="px-4 py-3.5 text-right font-mono font-bold text-sm text-emerald-700">
+                        <td class="px-2.5 py-2.5 text-right font-mono font-bold text-xs text-emerald-700 whitespace-nowrap">
                             ₹{{ item.verified_ac_amount }}
                         </td>
 
                         <!-- Due Amount -->
-                        <td class="px-4 py-3.5 text-right font-mono font-extrabold text-base text-rose-700">
+                        <td class="px-2.5 py-2.5 text-right font-mono font-extrabold text-xs text-rose-700 whitespace-nowrap">
                             ₹{{ item.due_amount }}
                         </td>
 
                         <!-- Payment Status -->
-                        <td class="px-4 py-3.5 text-center">
+                        <td class="px-2.5 py-2.5 text-center">
                             {% if item.payment_status == "PARTIAL" %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300">
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold border border-amber-300">
                                     PARTIAL
                                 </span>
                             {% else %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-900 text-xs font-bold border border-rose-300">
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-900 text-[10px] font-bold border border-rose-300">
                                     PENDING
                                 </span>
                             {% endif %}
                         </td>
 
-                        <!-- Verified On (Date/Time or Blank) -->
-                        <td class="px-4 py-3.5 text-center text-xs font-mono font-semibold text-slate-700 whitespace-nowrap">
+                        <!-- Verified On -->
+                        <td class="px-2.5 py-2.5 text-center text-[10px] font-mono font-semibold text-slate-600 whitespace-nowrap">
                             {% if item.verified_at %}
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                    <i class="fa-regular fa-clock text-[10px]"></i>
-                                    {{ item.verified_at|date:"d M Y, h:i A" }}
+                                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    {{ item.verified_at|date:"d M y, h:i A" }}
                                 </span>
                             {% else %}
-                                <span class="text-slate-400 font-medium">—</span>
+                                <span class="text-slate-400">—</span>
                             {% endif %}
                         </td>
 
                         <!-- Action -->
-                        <td class="px-4 py-3.5 text-center">
+                        <td class="px-2.5 py-2.5 text-center">
                             <button
                                 type="button"
-                                class="btn btn-sm btn-primary font-bold text-white shadow-sm gap-1.5 verify-btn hover:scale-105 transition-transform"
+                                class="btn btn-xs btn-primary font-bold text-white shadow-sm gap-1 verify-btn"
                                 data-id="{{ item.id }}"
                                 data-url="{% url 'verify_payment' item.id %}"
                                 data-invoice="{{ item.invoice.invoice_number }}"
@@ -244,7 +238,7 @@
                                 data-received="{{ item.verified_ac_amount }}"
                                 data-due="{{ item.due_amount }}"
                             >
-                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                                <i class="fa-solid fa-hand-holding-dollar text-[10px]"></i>
                                 Settle
                             </button>
                         </td>

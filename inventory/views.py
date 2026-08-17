@@ -4,8 +4,10 @@ from django.contrib import messages
 from django.db.models import F, Q, Sum
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.http import JsonResponse
+from django.db import transaction
 
-from .models import ProductInventory
+from .models import ProductInventory, StockBatch
 
 
 def add_product(request):
@@ -157,3 +159,85 @@ def delete_product(request, product_id):
             messages.error(request, f"Could not delete product: {e}")
 
     return redirect("manage_products")
+
+
+def topup_stock(request):
+    """
+    Dedicated page to top-up product stock.
+    GET: Show product selector with current stock and buy price, plus recent batch history.
+    POST: Create a StockBatch and increment product.product_quantity.
+    """
+    products = ProductInventory.objects.all().order_by("product_name")
+
+    if request.method == "POST":
+        try:
+            product_id = request.POST.get("product_id")
+            quantity = int(request.POST.get("quantity", 0))
+            buy_price = Decimal(request.POST.get("buy_price", "0"))
+            notes = request.POST.get("notes", "").strip()
+
+            if not product_id:
+                raise ValueError("Please select a product.")
+            if quantity <= 0:
+                raise ValueError("Quantity must be greater than zero.")
+            if buy_price < 0:
+                raise ValueError("Buy price cannot be negative.")
+
+            product = get_object_or_404(ProductInventory, id=product_id)
+
+            with transaction.atomic():
+                # Create the batch
+                StockBatch.objects.create(
+                    product=product,
+                    buy_price=buy_price,
+                    quantity_added=quantity,
+                    quantity_remaining=quantity,
+                    notes=notes,
+                )
+
+                # Update product stock and buy price
+                product.product_quantity += quantity
+                product.buy_price = buy_price  # update to latest buy price
+                product.in_stock = True
+                product.save(update_fields=["product_quantity", "buy_price", "in_stock"])
+
+            messages.success(
+                request,
+                f"Added {quantity} units of '{product.product_name}' at ₹{buy_price}/unit. "
+                f"New stock: {product.product_quantity}",
+            )
+            return redirect("topup_stock")
+
+        except (ValueError, InvalidOperation) as e:
+            messages.error(request, str(e))
+        except Exception as e:
+            messages.error(request, f"Error: {e}")
+
+    # Recent top-up history (last 25 batches)
+    recent_batches = (
+        StockBatch.objects.select_related("product")
+        .order_by("-added_at")[:25]
+    )
+
+    # Build product data for JS (current stock, buy price)
+    product_data = {
+        str(p.id): {
+            "name": p.product_name,
+            "code": p.productCode,
+            "current_stock": p.product_quantity,
+            "buy_price": str(p.buy_price),
+            "sell_price": str(p.product_price),
+        }
+        for p in products
+    }
+
+    import json
+
+    context = {
+        "products": products,
+        "product_data_json": json.dumps(product_data),
+        "recent_batches": recent_batches,
+        "page_type": "topup_stock",
+    }
+    return render(request, "inventory/topup_stock.html", context)
+
