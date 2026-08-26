@@ -134,7 +134,7 @@ def view_dac(request):
     # Latest entries first
     entries = entries.order_by("-entry_date", "-created_at", "-id")
 
-    paginator = Paginator(entries, 20)
+    paginator = Paginator(entries, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
