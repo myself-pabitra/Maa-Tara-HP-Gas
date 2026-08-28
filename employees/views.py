@@ -183,3 +183,48 @@ def view_Predefined_Expences(request):
         "employees/view_Predefined_Expences.html",
         context,
     )
+
+
+def edit_predefined_expense(request, expense_id):
+    expense = get_object_or_404(PredefinedExpense, id=expense_id)
+
+    if request.method == "POST":
+        name = request.POST.get("expence_name", "").strip()
+        amount = request.POST.get("expence_amount", "").strip()
+
+        if not name or not amount:
+            messages.error(request, "Name and amount are required.")
+            return redirect("view_Predefined_Expences")
+
+        try:
+            amount = Decimal(amount)
+        except InvalidOperation:
+            messages.error(request, "Please enter a valid amount.")
+            return redirect("view_Predefined_Expences")
+
+        if amount <= 0:
+            messages.error(request, "Amount must be greater than zero.")
+            return redirect("view_Predefined_Expences")
+
+        # Check uniqueness (exclude current)
+        if PredefinedExpense.objects.filter(name__iexact=name).exclude(id=expense_id).exists():
+            messages.warning(request, f"'{name}' already exists.")
+            return redirect("view_Predefined_Expences")
+
+        expense.name = name
+        expense.default_amount = amount
+        expense.save()
+        messages.success(request, f"Expense '{name}' updated successfully!")
+
+    return redirect("view_Predefined_Expences")
+
+
+def delete_predefined_expense(request, expense_id):
+    expense = get_object_or_404(PredefinedExpense, id=expense_id)
+
+    if request.method == "POST":
+        name = expense.name
+        expense.delete()
+        messages.success(request, f"Expense '{name}' deleted successfully.")
+
+    return redirect("view_Predefined_Expences")

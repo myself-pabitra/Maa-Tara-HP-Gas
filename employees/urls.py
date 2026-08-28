@@ -22,4 +22,14 @@ urlpatterns = [
         views.view_Predefined_Expences,
         name="view_Predefined_Expences",
     ),
+    path(
+        "edit-predefined-expense/<int:expense_id>/",
+        views.edit_predefined_expense,
+        name="edit_predefined_expense",
+    ),
+    path(
+        "delete-predefined-expense/<int:expense_id>/",
+        views.delete_predefined_expense,
+        name="delete_predefined_expense",
+    ),
 ]

@@ -189,22 +189,22 @@ View Predefined Expenses
 
                                 <div class="flex justify-center gap-2">
 
-                                    <!-- Future Edit -->
-
                                     <button
-                                        class="btn btn-sm btn-info btn-disabled">
-
+                                        type="button"
+                                        class="btn btn-sm btn-info expense-edit-btn"
+                                        data-id="{{ expense.id }}"
+                                        data-name="{{ expense.name|escapejs }}"
+                                        data-amount="{{ expense.default_amount }}">
                                         Edit
-
                                     </button>
 
-                                    <!-- Future Delete -->
-
                                     <button
-                                        class="btn btn-sm btn-error btn-disabled">
-
+                                        type="button"
+                                        class="btn btn-sm btn-error expense-delete-btn"
+                                        data-id="{{ expense.id }}"
+                                        data-name="{{ expense.name|escapejs }}"
+                                        data-url="{% url 'delete_predefined_expense' expense.id %}">
                                         Delete
-
                                     </button>
 
                                 </div>
@@ -294,5 +294,82 @@ View Predefined Expenses
     </div>
 
 </div>
+
+<!-- ============================================================ -->
+<!-- Edit Expense Modal                                           -->
+<!-- ============================================================ -->
+<dialog id="editExpenseModal" class="modal">
+    <div class="modal-box">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="bg-info/10 text-info rounded-xl p-3">
+                <i class="fa-solid fa-pen-to-square text-xl"></i>
+            </div>
+            <h3 class="font-bold text-lg">Edit Expense</h3>
+        </div>
+        <form id="editExpenseForm" method="POST">
+            {% csrf_token %}
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text font-semibold">Expense Name</span></label>
+                <input type="text" id="editExpenseName" name="expence_name"
+                       class="input input-bordered" required>
+            </div>
+            <div class="form-control mb-6">
+                <label class="label"><span class="label-text font-semibold">Default Amount (₹)</span></label>
+                <input type="number" id="editExpenseAmount" name="expence_amount"
+                       class="input input-bordered" step="0.01" min="0.01" required>
+            </div>
+            <div class="modal-action">
+                <button type="button" class="btn btn-ghost" onclick="editExpenseModal.close()">Cancel</button>
+                <button type="submit" class="btn btn-info">Save Changes</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<!-- ============================================================ -->
+<!-- Delete Expense Modal                                         -->
+<!-- ============================================================ -->
+<dialog id="deleteExpenseModal" class="modal">
+    <div class="modal-box">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="bg-error/10 text-error rounded-xl p-3">
+                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            </div>
+            <h3 class="font-bold text-lg">Delete Expense</h3>
+        </div>
+        <p class="text-base-content/70">Are you sure you want to delete:</p>
+        <p class="font-semibold bg-base-200 rounded-lg px-3 py-2 text-sm mt-2" id="deleteExpenseName"></p>
+        <p class="text-sm text-error/80 mt-3">This action cannot be undone.</p>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="deleteExpenseModal.close()">Cancel</button>
+            <form id="deleteExpenseForm" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-error">Yes, Delete</button>
+            </form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<script>
+document.querySelectorAll('.expense-edit-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const form = document.getElementById('editExpenseForm');
+        form.action = `/employees/edit-predefined-expense/${this.dataset.id}/`;
+        document.getElementById('editExpenseName').value = this.dataset.name;
+        document.getElementById('editExpenseAmount').value = this.dataset.amount;
+        document.getElementById('editExpenseModal').showModal();
+    });
+});
+
+document.querySelectorAll('.expense-delete-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        document.getElementById('deleteExpenseName').textContent = this.dataset.name;
+        document.getElementById('deleteExpenseForm').action = this.dataset.url;
+        document.getElementById('deleteExpenseModal').showModal();
+    });
+});
+</script>
 
 {% endblock %}
