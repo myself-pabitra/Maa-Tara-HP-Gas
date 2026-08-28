@@ -133,8 +133,9 @@ def view_dac(request):
 
     # Latest entries first
     entries = entries.order_by("-entry_date", "-created_at", "-id")
+    total_entries_count = entries.count()
 
-    paginator = Paginator(entries, 10)
+    paginator = Paginator(entries, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -155,6 +156,7 @@ def view_dac(request):
     context = {
         "entries": page_obj,
         "page_obj": page_obj,
+        "total_entries_count": total_entries_count,
         "subdealers": Subdealer.objects.all().order_by("name"),
         "selected_subdealer": subdealer_filter,
         "from_date": from_date,
@@ -368,6 +370,14 @@ def Pending_DAC_Orders(request):
         reverse=True,
     )
 
+    stats = {
+        "total_subdealers": len(rows),
+        "sum_total_refills": sum(r["total_refills"] for r in rows),
+        "sum_effective_dac": sum(r["effective_dac"] for r in rows),
+        "sum_pending_positive": sum(r["pending_order"] for r in rows if r["pending_order"] > 0),
+        "pending_subdealers_count": sum(1 for r in rows if r["pending_order"] > 0),
+    }
+
     paginator = Paginator(rows, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -378,6 +388,7 @@ def Pending_DAC_Orders(request):
         {
             "rows": page_obj,
             "page_obj": page_obj,
+            "stats": stats,
             "subdealers": Subdealer.objects.all().order_by("name"),
             "selected_subdealer": subdealer_filter,
             "selected_month": selected_month,

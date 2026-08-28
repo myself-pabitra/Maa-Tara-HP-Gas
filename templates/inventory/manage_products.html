@@ -1,652 +1,793 @@
 {% extends "layout.html" %}
-{% load static %}
+{% load static humanize %}
 
-{% block title %}Manage Products{% endblock %}
+{% block title %}Product Inventory &amp; Catalog | Maa Tara HP Gas{% endblock %}
 
 {% block content %}
-<div class="px-6 py-8">
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
 
-    <!-- Page Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-            <h2 class="text-3xl font-bold text-primary">Product Inventory</h2>
-            <p class="text-sm text-gray-600 font-medium mt-0.5">Manage products, pricing, stock levels, DAC rules, and cylinder tracking.</p>
-        </div>
-        <div>
-            <a href="{% url 'Add_product' %}" class="btn btn-primary font-bold">
-                <i class="fa-solid fa-plus mr-1"></i> Add New Product
-            </a>
-        </div>
+  /* Table styling */
+  .dash-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+  }
+  .dash-table th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #eef2f6;
+    white-space: nowrap;
+  }
+  .dash-table td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .dash-table tbody tr {
+    transition: background-color .15s ease;
+  }
+  .dash-table tbody tr:hover {
+    background-color: #f8faff;
+  }
+
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .pill-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+  .pill-rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+  .pill-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+  /* KPI Stat Cards */
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all .2s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  /* Custom Input */
+  .filter-input {
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: #1e293b;
+    outline: none;
+    transition: all .15s ease;
+  }
+  .filter-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  }
+
+  /* Filter Chip Buttons */
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .filter-chip:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+  }
+  .filter-chip.active {
+    background: #4f46e5;
+    color: #ffffff;
+    border-color: #4f46e5;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+  }
+
+  /* Action Buttons */
+  .btn-action-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eef2ff;
+    color: #4f46e5;
+    border: 1px solid #e0e7ff;
+    transition: all .15s ease;
+    cursor: pointer;
+  }
+  .btn-action-edit:hover {
+    background: #4f46e5;
+    color: #ffffff;
+  }
+
+  .btn-action-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #fff1f2;
+    color: #be123c;
+    border: 1px solid #fecdd3;
+    transition: all .15s ease;
+    cursor: pointer;
+  }
+  .btn-action-delete:hover {
+    background: #be123c;
+    color: #ffffff;
+  }
+
+  /* Create Button */
+  .btn-create-product {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13.5px;
+    border-radius: 12px;
+    padding: 10px 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all .18s ease;
+  }
+  .btn-create-product:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
+</style>
+
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Warehouse Inventory</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Product Inventory &amp; Catalog</h1>
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-boxes-stacked text-[10px]"></i> {{ total_products|default:0 }} SKUs
+        </span>
+      </div>
     </div>
 
-    <!-- Summary KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        
-        <!-- Total Products Card -->
-        <div class="card bg-base-100 border border-base-200 shadow-sm">
-            <div class="card-body p-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold uppercase text-gray-600">Total Products</span>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-primary text-white text-xs font-bold">{{ total_products }}</span>
-                </div>
-                <div class="mt-2 text-2xl font-bold text-gray-900">{{ total_products }} SKUs</div>
-                <div class="text-xs text-gray-600 font-semibold mt-1">Total warehouse units: <strong class="text-gray-900">{{ total_units }}</strong></div>
-            </div>
-        </div>
+    <div class="flex items-center gap-3">
+      <a href="{% url 'topup_stock' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-arrow-up-from-bracket text-emerald-600"></i> Top-Up Stock
+      </a>
+      <a href="{% url 'Add_product' %}" class="btn-create-product">
+        <i class="fa-solid fa-plus text-xs"></i> Add New Product
+      </a>
+    </div>
+  </div>
 
-        <!-- In Stock Available -->
-        <div class="card bg-base-100 border border-base-200 shadow-sm">
-            <div class="card-body p-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold uppercase text-gray-600">Stock Status</span>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200">{{ in_stock_count }} Active</span>
-                </div>
-                <div class="mt-2 text-2xl font-bold text-emerald-700">{{ in_stock_count }} In Stock</div>
-                <div class="text-xs text-gray-600 font-semibold mt-1">
-                    {% if out_of_stock_count > 0 %}
-                        <span class="text-rose-700 font-bold">{{ out_of_stock_count }} Out of Stock</span>
-                    {% else %}
-                        <span class="text-emerald-700 font-bold">100% In Stock</span>
-                    {% endif %}
-                    {% if low_stock_count > 0 %}
-                        · <span class="text-amber-700 font-bold">{{ low_stock_count }} Low Stock</span>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+  <!-- ════════════════════════════════════════
+       KPI SUMMARY METRIC CARDS
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-        <!-- Inventory Valuation -->
-        <div class="card bg-base-100 border border-base-200 shadow-sm">
-            <div class="card-body p-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold uppercase text-gray-600">Cost Valuation</span>
-                    <i class="fa-solid fa-coins text-amber-500"></i>
-                </div>
-                <div class="mt-2 text-2xl font-bold text-gray-900">₹{{ total_inventory_value|floatformat:2 }}</div>
-                <div class="text-xs text-gray-600 font-semibold mt-1">
-                    Retail (MRP): <strong class="text-primary font-bold">₹{{ total_retail_value|floatformat:2 }}</strong>
-                </div>
-            </div>
-        </div>
-
-        <!-- Rules & Tracking -->
-        <div class="card bg-base-100 border border-base-200 shadow-sm">
-            <div class="card-body p-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold uppercase text-gray-600">Rules Configured</span>
-                    <i class="fa-solid fa-sliders text-blue-600"></i>
-                </div>
-                <div class="mt-2 text-2xl font-bold text-primary">{{ dac_count }} DAC Items</div>
-                <div class="text-xs text-gray-600 font-semibold mt-1">
-                    Empty Cyl. Return Req: <strong class="text-gray-900 font-bold">{{ cylinder_req_count }}</strong>
-                </div>
-            </div>
-        </div>
-
+    <!-- Total Catalog SKUs -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Total Catalog SKUs</div>
+        <div class="text-2xl font-extrabold text-slate-900">{{ total_products }} Items</div>
+        <div class="text-[11px] text-slate-500 mt-0.5 font-medium">Warehouse Units: <strong class="text-slate-800">{{ total_units|intcomma }}</strong></div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-indigo-600 bg-indigo-50 border border-indigo-100">
+        <i class="fa-solid fa-boxes-stacked text-lg"></i>
+      </div>
     </div>
 
-    <!-- Search Bar & Filters -->
-    <div class="card bg-base-200 shadow-sm mb-6">
-        <div class="card-body p-4 space-y-3">
+    <!-- Stock Status -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Stock Availability</div>
+        <div class="text-2xl font-extrabold text-emerald-700">{{ in_stock_count }} Active</div>
+        <div class="text-[11px] mt-0.5 font-medium">
+          {% if out_of_stock_count > 0 %}
+            <span class="text-rose-600 font-bold">{{ out_of_stock_count }} out of stock</span>
+          {% else %}
+            <span class="text-emerald-600 font-bold">100% In Stock</span>
+          {% endif %}
+          {% if low_stock_count > 0 %}
+            · <span class="text-amber-600 font-bold">{{ low_stock_count }} low</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-emerald-600 bg-emerald-50 border border-emerald-100">
+        <i class="fa-solid fa-cubes text-lg"></i>
+      </div>
+    </div>
+
+    <!-- Inventory Valuation (Cost) -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Cost Valuation (Buy)</div>
+        <div class="text-2xl font-extrabold text-slate-900">₹{{ total_inventory_value|floatformat:2|intcomma }}</div>
+        <div class="text-[11px] text-slate-500 mt-0.5 font-medium">Warehouse capital tied</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-amber-600 bg-amber-50 border border-amber-100">
+        <i class="fa-solid fa-vault text-lg"></i>
+      </div>
+    </div>
+
+    <!-- Retail Valuation (MRP) -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Retail Potential (MRP)</div>
+        <div class="text-2xl font-extrabold text-indigo-700">₹{{ total_retail_value|floatformat:2|intcomma }}</div>
+        <div class="text-[11px] text-indigo-500 mt-0.5 font-medium">Gross retail sales value</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-indigo-600 bg-indigo-50 border border-indigo-100">
+        <i class="fa-solid fa-chart-line text-lg"></i>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SEARCH & FILTER CHIPS TOOLBAR
+  ════════════════════════════════════════ -->
+  <div class="billing-card p-4 space-y-3">
+    <div class="relative w-full">
+      <span class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-slate-400">
+        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+      </span>
+      <input
+        id="productSearchInput"
+        type="text"
+        placeholder="Search product by title, SKU code (e.g. HPGA..., 142KG...), price..."
+        class="filter-input w-full pl-9 pr-8"
+        autocomplete="off"
+      >
+      <button
+        id="clearSearchBtn"
+        type="button"
+        class="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-700 hidden"
+        title="Clear Search"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Filter Chips -->
+    <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+      <div class="flex flex-wrap items-center gap-1.5" id="filterContainer">
+        <button type="button" data-filter="all" class="filter-chip active">
+          All ({{ total_products }})
+        </button>
+        <button type="button" data-filter="in-stock" class="filter-chip">
+          In Stock ({{ in_stock_count }})
+        </button>
+        <button type="button" data-filter="out-stock" class="filter-chip">
+          Out of Stock ({{ out_of_stock_count }})
+        </button>
+        {% if low_stock_count > 0 %}
+        <button type="button" data-filter="low-stock" class="filter-chip">
+          Low Stock ({{ low_stock_count }})
+        </button>
+        {% endif %}
+        <button type="button" data-filter="dac" class="filter-chip">
+          DAC Items ({{ dac_count }})
+        </button>
+        <button type="button" data-filter="cylinder" class="filter-chip">
+          Empty Cyl. Req. ({{ cylinder_req_count }})
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-500 font-semibold flex items-center gap-2">
+        <span id="resultsCount">Showing {{ total_products }} of {{ total_products }} products</span>
+        <button id="resetFiltersBtn" type="button" class="text-indigo-600 hover:text-indigo-800 font-bold text-xs hidden">
+          Reset filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PRODUCTS CATALOG TABLE
+  ════════════════════════════════════════ -->
+  <div class="billing-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="dash-table" id="productsTable">
+        <thead>
+          <tr>
+            <th style="min-width: 220px;">Product Name &amp; SKU</th>
+            <th style="width: 140px;" class="text-center">Stock Quantity</th>
+            <th style="width: 130px;" class="text-right">Cost (Buy)</th>
+            <th style="width: 130px;" class="text-right">MRP (Sell)</th>
+            <th style="width: 140px;" class="text-right">Unit Margin</th>
+            <th style="min-width: 170px;">Billing Rules</th>
+            <th style="width: 150px;" class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="productsTableBody">
+          {% for item in enriched_products %}
+          {% with p=item.obj %}
+          <tr class="product-row"
+              data-id="{{ p.id }}"
+              data-name="{{ p.product_name|lower }}"
+              data-code="{{ p.productCode|lower|default:'' }}"
+              data-instock="{% if p.in_stock %}1{% else %}0{% endif %}"
+              data-qty="{{ p.product_quantity }}"
+              data-islowstock="{% if item.is_low_stock %}1{% else %}0{% endif %}"
+              data-dac="{% if p.dac_applicable %}1{% else %}0{% endif %}"
+              data-subreq="{% if p.submission_required %}1{% else %}0{% endif %}"
+              data-buyprice="{{ p.buy_price }}"
+              data-sellprice="{{ p.product_price }}">
             
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <div class="relative flex-1">
-                    <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
-                        </svg>
-                    </span>
-                    <input
-                        id="productSearchInput"
-                        type="text"
-                        placeholder="Search by product name, code, price..."
-                        class="input input-bordered w-full pl-9 bg-base-100 text-gray-900 font-medium"
-                        autocomplete="off"
-                    >
-                    <button
-                        id="clearSearchBtn"
-                        type="button"
-                        class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-800 hidden"
-                        title="Clear Search"
-                    >
-                        ✕
-                    </button>
-                </div>
-            </div>
+            <!-- Details -->
+            <td>
+              <div class="font-bold text-slate-900 text-sm">{{ p.product_name }}</div>
+              <div class="flex items-center gap-1.5 mt-1">
+                {% if p.productCode %}
+                  <span class="font-mono text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
+                    {{ p.productCode }}
+                  </span>
+                {% endif %}
+                {% if p.submission_required %}
+                  <span class="pill pill-amber text-[10px] py-0 px-2">Cylinder Item</span>
+                {% endif %}
+              </div>
+            </td>
 
-            <!-- Filter Pills -->
-            <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-base-300">
-                <div class="flex flex-wrap items-center gap-2" id="filterContainer">
-                    <button type="button" data-filter="all" class="filter-pill btn btn-sm btn-primary">
-                        All ({{ total_products }})
-                    </button>
-                    <button type="button" data-filter="in-stock" class="filter-pill btn btn-sm btn-outline">
-                        In Stock ({{ in_stock_count }})
-                    </button>
-                    <button type="button" data-filter="out-stock" class="filter-pill btn btn-sm btn-outline">
-                        Out of Stock ({{ out_of_stock_count }})
-                    </button>
-                    {% if low_stock_count > 0 %}
-                    <button type="button" data-filter="low-stock" class="filter-pill btn btn-sm btn-outline">
-                        Low Stock ({{ low_stock_count }})
-                    </button>
-                    {% endif %}
-                    <button type="button" data-filter="dac" class="filter-pill btn btn-sm btn-outline">
-                        DAC ({{ dac_count }})
-                    </button>
-                    <button type="button" data-filter="cylinder" class="filter-pill btn btn-sm btn-outline">
-                        Cylinder Req. ({{ cylinder_req_count }})
-                    </button>
-                </div>
+            <!-- Stock Status & Quantity -->
+            <td class="text-center">
+              <div class="flex flex-col items-center justify-center gap-1">
+                {% if not p.in_stock %}
+                  <span class="pill pill-rose text-[10px]">
+                    <i class="fa-solid fa-circle-xmark text-[8px]"></i> Out of Stock
+                  </span>
+                {% elif item.is_low_stock %}
+                  <span class="pill pill-amber text-[10px]">
+                    <i class="fa-solid fa-triangle-exclamation text-[8px]"></i> Low Stock
+                  </span>
+                {% else %}
+                  <span class="pill pill-emerald text-[10px]">
+                    <i class="fa-solid fa-circle-check text-[8px]"></i> In Stock
+                  </span>
+                {% endif %}
+                <span class="text-xs font-mono font-bold text-slate-800">
+                  {{ p.product_quantity|intcomma }} units
+                </span>
+              </div>
+            </td>
 
-                <div class="text-xs text-gray-700 font-semibold flex items-center gap-2">
-                    <span id="resultsCount">Showing {{ total_products }} of {{ total_products }} products</span>
-                    <button id="resetFiltersBtn" type="button" class="link link-primary font-bold text-xs hidden">
-                        Reset filters
-                    </button>
-                </div>
-            </div>
+            <!-- Cost -->
+            <td class="text-right font-mono">
+              <div class="text-sm font-bold text-slate-900">₹{{ p.buy_price|floatformat:2|intcomma }}</div>
+              <div class="text-[10px] text-slate-400">unit cost</div>
+            </td>
 
-        </div>
+            <!-- MRP -->
+            <td class="text-right font-mono">
+              <div class="text-sm font-extrabold text-indigo-700">₹{{ p.product_price|floatformat:2|intcomma }}</div>
+              <div class="text-[10px] text-slate-400">selling rate</div>
+            </td>
+
+            <!-- Margin -->
+            <td class="text-right font-mono">
+              <div class="text-xs font-bold {% if item.margin >= 0 %}text-emerald-700{% else %}text-rose-600{% endif %}">
+                {% if item.margin >= 0 %}+{% endif %}₹{{ item.margin|floatformat:2 }}
+              </div>
+              <span class="inline-flex items-center px-1.5 py-0.2 rounded-md text-[10px] font-extrabold {% if item.margin >= 0 %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %}">
+                {% if item.margin >= 0 %}+{% endif %}{{ item.margin_pct }}%
+              </span>
+            </td>
+
+            <!-- Rules & Flags -->
+            <td>
+              <div class="flex flex-col items-start gap-1">
+                {% if p.dac_applicable %}
+                  <span class="pill pill-blue text-[10px]">
+                    <i class="fa-solid fa-check text-[8px]"></i> DAC Deductible
+                  </span>
+                {% else %}
+                  <span class="text-[11px] text-slate-400 italic">Standard</span>
+                {% endif %}
+                {% if p.submission_required %}
+                  <span class="pill pill-amber text-[10px]">
+                    <i class="fa-solid fa-rotate-left text-[8px]"></i> Empty Return
+                  </span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="flex items-center justify-center gap-1.5">
+                <button type="button"
+                        class="btn-action-edit edit-product-btn"
+                        data-id="{{ p.id }}"
+                        data-name="{{ p.product_name }}"
+                        data-code="{{ p.productCode|default:'' }}"
+                        data-qty="{{ p.product_quantity }}"
+                        data-buyprice="{{ p.buy_price }}"
+                        data-sellprice="{{ p.product_price }}"
+                        data-instock="{% if p.in_stock %}1{% else %}0{% endif %}"
+                        data-dac="{% if p.dac_applicable %}1{% else %}0{% endif %}"
+                        data-subreq="{% if p.submission_required %}1{% else %}0{% endif %}"
+                        data-url="{% url 'update_product' p.id %}"
+                        title="Edit Product Details">
+                  <i class="fa-solid fa-pen-to-square"></i> Edit
+                </button>
+                <button type="button"
+                        class="btn-action-delete delete-product-btn"
+                        data-id="{{ p.id }}"
+                        data-name="{{ p.product_name }}"
+                        data-code="{{ p.productCode|default:'' }}"
+                        data-url="{% url 'delete_product' p.id %}"
+                        title="Delete Product">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endwith %}
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-12 text-slate-400 text-xs">
+              No products found in inventory.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- No Search Matches Notice -->
+      <div id="noSearchMatches" class="text-center py-12 text-slate-500 hidden">
+        <p class="font-bold text-slate-800 text-sm mb-1">No products match your search or filter.</p>
+        <button type="button" id="clearAllFiltersBtn" class="mt-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+          <i class="fa-solid fa-rotate-left mr-1"></i> Clear filters &amp; view all
+        </button>
+      </div>
     </div>
-
-    <!-- Products Table Card -->
-    <div class="overflow-x-auto bg-base-100 rounded-2xl shadow-sm border border-base-200">
-        <table class="table w-full" id="productsTable">
-            <thead>
-                <tr class="text-gray-700 bg-base-200 text-xs font-bold uppercase tracking-wider">
-                    <th class="py-3.5 px-4 text-left">Product Details</th>
-                    <th class="py-3.5 px-4 text-center">Stock & Quantity</th>
-                    <th class="py-3.5 px-4 text-right">Cost (Buy Price)</th>
-                    <th class="py-3.5 px-4 text-right">MRP (Sell Price)</th>
-                    <th class="py-3.5 px-4 text-right">Unit Margin</th>
-                    <th class="py-3.5 px-4 text-left">Rules & Flags</th>
-                    <th class="py-3.5 px-4 text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="productsTableBody">
-                {% for item in enriched_products %}
-                {% with p=item.obj %}
-                <tr class="product-row hover"
-                    data-id="{{ p.id }}"
-                    data-name="{{ p.product_name|lower }}"
-                    data-code="{{ p.productCode|lower|default:'' }}"
-                    data-instock="{% if p.in_stock %}1{% else %}0{% endif %}"
-                    data-qty="{{ p.product_quantity }}"
-                    data-islowstock="{% if item.is_low_stock %}1{% else %}0{% endif %}"
-                    data-dac="{% if p.dac_applicable %}1{% else %}0{% endif %}"
-                    data-subreq="{% if p.submission_required %}1{% else %}0{% endif %}"
-                    data-buyprice="{{ p.buy_price }}"
-                    data-sellprice="{{ p.product_price }}"
-                >
-                    <!-- Product Details -->
-                    <td class="px-4 py-4 align-middle">
-                        <div class="font-bold text-base text-gray-900">
-                            {{ p.product_name }}
-                        </div>
-                        <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
-                            {% if p.productCode %}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded bg-gray-900 text-white font-mono text-[11px] font-bold tracking-wide">
-                                    {{ p.productCode }}
-                                </span>
-                            {% endif %}
-                            {% if p.submission_required %}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[11px] font-bold border border-amber-300">
-                                    Cylinder Item
-                                </span>
-                            {% endif %}
-                        </div>
-                    </td>
-
-                    <!-- Stock Status & Quantity -->
-                    <td class="px-4 py-4 text-center align-middle">
-                        <div class="flex flex-col items-center justify-center gap-1">
-                            {% if not p.in_stock %}
-                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-bold border border-rose-200">
-                                    <i class="fa-solid fa-circle-xmark text-[10px]"></i> Out of Stock
-                                </span>
-                            {% elif item.is_low_stock %}
-                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300">
-                                    <i class="fa-solid fa-triangle-exclamation text-[10px]"></i> Low Stock ({{ p.product_quantity }})
-                                </span>
-                            {% else %}
-                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200">
-                                    <i class="fa-solid fa-circle-check text-[10px]"></i> In Stock
-                                </span>
-                            {% endif %}
-                            <span class="text-xs text-gray-700 font-mono font-bold">
-                                {{ p.product_quantity }} units
-                            </span>
-                        </div>
-                    </td>
-
-                    <!-- Cost (Buy Price) -->
-                    <td class="px-4 py-4 text-right align-middle font-mono">
-                        <div class="text-base font-bold text-gray-900">₹{{ p.buy_price }}</div>
-                        <div class="text-xs text-gray-600 font-medium">per unit cost</div>
-                    </td>
-
-                    <!-- MRP (Sell Price) -->
-                    <td class="px-4 py-4 text-right align-middle font-mono">
-                        <div class="text-base font-bold text-primary">₹{{ p.product_price }}</div>
-                        <div class="text-xs text-gray-600 font-medium">MRP selling price</div>
-                    </td>
-
-                    <!-- Unit Profit Margin -->
-                    <td class="px-4 py-4 text-right align-middle">
-                        <div class="flex flex-col items-end justify-center gap-1">
-                            <span class="text-sm font-bold font-mono {% if item.margin >= 0 %}text-emerald-700{% else %}text-rose-700{% endif %}">
-                                {% if item.margin >= 0 %}+{% endif %}₹{{ item.margin }}
-                            </span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold font-mono {% if item.margin >= 0 %}bg-emerald-100 text-emerald-800 border border-emerald-200{% else %}bg-rose-100 text-rose-800 border border-rose-200{% endif %}">
-                                {% if item.margin >= 0 %}+{% endif %}{{ item.margin_pct }}%
-                            </span>
-                        </div>
-                    </td>
-
-                    <!-- Rules & Flags (Fixed, non-overlapping clean vertical stack) -->
-                    <td class="px-4 py-4 align-middle">
-                        <div class="flex flex-col items-start gap-1.5">
-                            {% if p.dac_applicable %}
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-100 text-blue-800 text-xs font-bold border border-blue-200 whitespace-nowrap shadow-xs">
-                                    <i class="fa-solid fa-check text-[10px]"></i> DAC Applicable
-                                </span>
-                            {% else %}
-                                <span class="text-gray-400 text-xs font-semibold pl-1">No DAC</span>
-                            {% endif %}
-
-                            {% if p.submission_required %}
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300 whitespace-nowrap shadow-xs">
-                                    <i class="fa-solid fa-rotate-left text-[10px]"></i> Empty Cyl. Req.
-                                </span>
-                            {% endif %}
-                        </div>
-                    </td>
-
-                    <!-- Actions -->
-                    <td class="px-4 py-4 text-center align-middle">
-                        <div class="flex items-center justify-center gap-2">
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-info text-white edit-product-btn font-bold"
-                                data-id="{{ p.id }}"
-                                data-name="{{ p.product_name }}"
-                                data-code="{{ p.productCode|default:'' }}"
-                                data-qty="{{ p.product_quantity }}"
-                                data-buyprice="{{ p.buy_price }}"
-                                data-sellprice="{{ p.product_price }}"
-                                data-instock="{% if p.in_stock %}1{% else %}0{% endif %}"
-                                data-dac="{% if p.dac_applicable %}1{% else %}0{% endif %}"
-                                data-subreq="{% if p.submission_required %}1{% else %}0{% endif %}"
-                                data-url="{% url 'update_product' p.id %}"
-                                title="Edit Product Details"
-                            >
-                                Edit
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-error text-white delete-product-btn font-bold"
-                                data-id="{{ p.id }}"
-                                data-name="{{ p.product_name }}"
-                                data-code="{{ p.productCode|default:'' }}"
-                                data-url="{% url 'delete_product' p.id %}"
-                                title="Delete Product"
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                {% endwith %}
-                {% empty %}
-                <tr>
-                    <td colspan="7" class="text-center py-10 text-gray-500 font-medium">
-                        No products found in inventory.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <!-- No Search Matches State -->
-        <div id="noSearchMatches" class="text-center py-10 text-gray-600 hidden">
-            <p class="font-bold text-gray-900 mb-2">No products match your search or filter.</p>
-            <button type="button" id="clearAllFiltersBtn" class="btn btn-outline btn-sm">
-                Clear Filters & View All
-            </button>
-        </div>
-    </div>
+  </div>
 
 </div>
 
-<!-- ========================================================= -->
-<!-- EDIT PRODUCT MODAL (DaisyUI) -->
-<!-- ========================================================= -->
+<!-- ════════════════════════════════════════
+     EDIT PRODUCT MODAL (DaisyUI)
+════════════════════════════════════════ -->
 <dialog id="editProductModal" class="modal">
-    <div class="modal-box max-w-2xl bg-base-100 border border-base-200">
-        <form method="dialog">
-            <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4">✕</button>
-        </form>
-
-        <h3 class="font-bold text-xl text-primary mb-1">Edit Product Details</h3>
-        <p class="text-xs text-gray-600 mb-6">Update prices, stock quantity, and billing rules.</p>
-
-        <form id="editProductForm" method="POST" action="">
-            {% csrf_token %}
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
-                <!-- Product Name -->
-                <div class="form-control sm:col-span-2">
-                    <label class="label py-1"><span class="label-text font-bold text-gray-900">Product Name</span></label>
-                    <input
-                        type="text"
-                        name="product_name"
-                        id="modalProductName"
-                        class="input input-bordered w-full font-semibold text-gray-900"
-                        required
-                    >
-                </div>
-
-                <!-- Product Code -->
-                <div class="form-control">
-                    <label class="label py-1"><span class="label-text font-bold text-gray-900">Product Code (SKU)</span></label>
-                    <input
-                        type="text"
-                        id="modalProductCode"
-                        class="input input-bordered w-full font-mono font-bold bg-base-200"
-                        readonly
-                    >
-                </div>
-
-                <!-- Quantity -->
-                <div class="form-control">
-                    <label class="label py-1"><span class="label-text font-bold text-gray-900">Available Quantity (Units)</span></label>
-                    <input
-                        type="number"
-                        name="product_quantity"
-                        id="modalProductQuantity"
-                        min="0"
-                        class="input input-bordered w-full font-bold text-gray-900"
-                        required
-                    >
-                </div>
-
-                <!-- Buying Price -->
-                <div class="form-control">
-                    <label class="label py-1"><span class="label-text font-bold text-gray-900">Buying Price (₹)</span></label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        name="buy_price"
-                        id="modalBuyPrice"
-                        class="input input-bordered w-full font-bold text-gray-900"
-                        required
-                    >
-                </div>
-
-                <!-- Selling Price (MRP) -->
-                <div class="form-control">
-                    <label class="label py-1"><span class="label-text font-bold text-gray-900">Selling Price (MRP ₹)</span></label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        name="product_price"
-                        id="modalSellPrice"
-                        class="input input-bordered w-full font-bold text-primary"
-                        required
-                    >
-                </div>
-
-            </div>
-
-            <!-- Calculated Margin Preview inside Modal -->
-            <div class="mt-4 p-3 rounded-xl bg-base-200 flex items-center justify-between">
-                <span class="text-xs font-bold text-gray-700">Calculated Profit per Unit:</span>
-                <div class="flex items-center gap-2 font-mono">
-                    <span id="modalMarginProfit" class="font-bold text-sm text-emerald-700">+₹0.00</span>
-                    <span id="modalMarginPct" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">+0.0%</span>
-                </div>
-            </div>
-
-            <!-- Billing Rules -->
-            <div class="mt-4 pt-4 border-t border-base-300 space-y-3">
-                <h4 class="text-xs font-bold uppercase text-gray-700 mb-2">Billing Rules</h4>
-
-                <!-- In Stock -->
-                <label class="flex items-center justify-between p-3 rounded-xl border border-base-200 cursor-pointer hover:bg-base-200">
-                    <div>
-                        <div class="font-bold text-sm text-gray-900">In Stock</div>
-                        <div class="text-xs text-gray-600">Available for billing</div>
-                    </div>
-                    <input type="checkbox" name="in_stock" id="modalInStock" value="1" class="toggle toggle-success">
-                </label>
-
-                <!-- DAC Applicable -->
-                <label class="flex items-center justify-between p-3 rounded-xl border border-base-200 cursor-pointer hover:bg-base-200">
-                    <div>
-                        <div class="font-bold text-sm text-gray-900">DAC Applicable</div>
-                        <div class="text-xs text-gray-600">Deduct DAC percentage during invoice</div>
-                    </div>
-                    <input type="checkbox" name="dac_applicable" id="modalDacApplicable" value="1" class="toggle toggle-info">
-                </label>
-
-                <!-- Empty Cylinder Submission Required -->
-                <label class="flex items-center justify-between p-3 rounded-xl border border-base-200 cursor-pointer hover:bg-base-200">
-                    <div>
-                        <div class="font-bold text-sm text-gray-900">Submission Required</div>
-                        <div class="text-xs text-gray-600">Requires empty cylinder submission</div>
-                    </div>
-                    <input type="checkbox" name="submission_required" id="modalSubReq" value="1" class="toggle toggle-warning">
-                </label>
-            </div>
-
-            <div class="modal-action mt-6">
-                <button type="button" class="btn btn-ghost" onclick="document.getElementById('editProductModal').close()">Cancel</button>
-                <button type="submit" class="btn btn-primary font-bold">Save Changes</button>
-            </div>
-        </form>
+  <div class="modal-box max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl p-6">
+    <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-base shrink-0">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </div>
+        <div>
+          <h3 class="font-extrabold text-slate-900 text-base">Edit Product Details</h3>
+          <p class="text-xs text-slate-500">Update SKU prices, inventory stock units, and operational flags.</p>
+        </div>
+      </div>
+      <button type="button" class="text-slate-400 hover:text-slate-700" onclick="editProductModal.close()">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
     </div>
+
+    <form id="editProductForm" method="POST" action="" class="space-y-4">
+      {% csrf_token %}
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Product Name -->
+        <div class="sm:col-span-2">
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Product Title <span class="text-rose-500">*</span></label>
+          <input type="text" name="product_name" id="modalProductName" class="filter-input w-full font-medium" required>
+        </div>
+
+        <!-- Product Code -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">SKU Product Code</label>
+          <input type="text" id="modalProductCode" class="filter-input w-full font-mono font-bold bg-slate-50 text-slate-500" readonly>
+        </div>
+
+        <!-- Quantity -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Warehouse Quantity (Units) <span class="text-rose-500">*</span></label>
+          <input type="number" name="product_quantity" id="modalProductQuantity" min="0" class="filter-input w-full font-mono font-bold" required>
+        </div>
+
+        <!-- Buying Price -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Buying Cost (₹) <span class="text-rose-500">*</span></label>
+          <input type="number" step="0.01" min="0" name="buy_price" id="modalBuyPrice" class="filter-input w-full font-mono font-bold" required>
+        </div>
+
+        <!-- Selling Price -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Selling Price / MRP (₹) <span class="text-rose-500">*</span></label>
+          <input type="number" step="0.01" min="0" name="product_price" id="modalSellPrice" class="filter-input w-full font-mono font-bold text-indigo-700" required>
+        </div>
+      </div>
+
+      <!-- Margin Preview -->
+      <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+        <span class="text-xs font-bold text-slate-600">Calculated Unit Margin:</span>
+        <div class="flex items-center gap-2 font-mono">
+          <span id="modalMarginProfit" class="font-bold text-xs text-emerald-700">+₹0.00</span>
+          <span id="modalMarginPct" class="pill pill-emerald text-[10px] py-0 px-2">+0.0%</span>
+        </div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="pt-3 border-t border-slate-100 space-y-2">
+        <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50">
+          <div>
+            <div class="font-bold text-xs text-slate-900">In Stock Active</div>
+            <div class="text-[11px] text-slate-500">Available for billing invoices</div>
+          </div>
+          <input type="checkbox" name="in_stock" id="modalInStock" value="1" class="checkbox checkbox-primary checkbox-sm">
+        </label>
+
+        <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50">
+          <div>
+            <div class="font-bold text-xs text-slate-900">DAC Deductible</div>
+            <div class="text-[11px] text-slate-500">Deduct DAC balance on sale</div>
+          </div>
+          <input type="checkbox" name="dac_applicable" id="modalDacApplicable" value="1" class="checkbox checkbox-primary checkbox-sm">
+        </label>
+
+        <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50">
+          <div>
+            <div class="font-bold text-xs text-slate-900">Empty Return Required</div>
+            <div class="text-[11px] text-slate-500">Track empty returns during daily billing</div>
+          </div>
+          <input type="checkbox" name="submission_required" id="modalSubReq" value="1" class="checkbox checkbox-primary checkbox-sm">
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+        <button type="button" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition" onclick="editProductModal.close()">Cancel</button>
+        <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition shadow-sm">
+          <i class="fa-solid fa-floppy-disk mr-1"></i> Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop bg-slate-900/40 backdrop-blur-sm"><button>close</button></form>
 </dialog>
 
-<!-- ========================================================= -->
-<!-- DELETE PRODUCT CONFIRMATION MODAL -->
-<!-- ========================================================= -->
+<!-- ════════════════════════════════════════
+     DELETE PRODUCT MODAL
+════════════════════════════════════════ -->
 <dialog id="deleteProductModal" class="modal">
-    <div class="modal-box bg-base-100 border border-base-200 max-w-md">
-        <h3 class="font-bold text-xl text-error mb-2">Delete Product?</h3>
-        <p class="text-sm text-gray-700">
-            Are you sure you want to delete <strong id="deleteProductName" class="text-gray-900"></strong> (<span id="deleteProductCode" class="font-mono font-bold"></span>)?
-        </p>
-        <p class="text-xs text-gray-500 mt-2">
-            Note: Products linked to existing invoices cannot be deleted to preserve records.
-        </p>
-        <form id="deleteProductForm" method="POST" action="" class="modal-action mt-6">
-            {% csrf_token %}
-            <button type="button" class="btn btn-ghost" onclick="document.getElementById('deleteProductModal').close()">Cancel</button>
-            <button type="submit" class="btn btn-error text-white font-bold">Yes, Delete</button>
-        </form>
+  <div class="modal-box bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 max-w-md">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center text-base shrink-0">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+      <div>
+        <h3 class="font-extrabold text-slate-900 text-base">Delete Inventory Product</h3>
+        <p class="text-xs text-slate-500">Warning: Product will be removed from catalog.</p>
+      </div>
     </div>
+    
+    <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl mb-4">
+      <div class="text-[11px] font-bold uppercase text-slate-400 mb-1">Target Product SKU</div>
+      <div class="font-bold text-slate-800 text-sm break-words" id="deleteProductName"></div>
+      <div class="text-xs font-mono text-indigo-600 mt-0.5" id="deleteProductCode"></div>
+    </div>
+
+    <div class="flex items-center justify-end gap-2.5">
+      <button type="button" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition" onclick="deleteProductModal.close()">
+        Cancel
+      </button>
+      <form id="deleteProductForm" method="POST" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition shadow-sm">
+          <i class="fa-solid fa-trash-can mr-1"></i> Yes, Delete Product
+        </button>
+      </form>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop bg-slate-900/40 backdrop-blur-sm"><button>close</button></form>
 </dialog>
 
-<!-- ========================================================= -->
-<!-- JAVASCRIPT LOGIC -->
-<!-- ========================================================= -->
+<!-- JavaScript: Live Search, Filter Chips, Modal Bindings -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('productSearchInput');
-    const clearSearchBtn = document.getElementById('clearSearchBtn');
-    const filterPills = document.querySelectorAll('.filter-pill');
-    const rows = document.querySelectorAll('.product-row');
-    const totalCount = rows.length;
-    const resultsCount = document.getElementById('resultsCount');
-    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
-    const noMatches = document.getElementById('noSearchMatches');
-    const clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
-    const tableElement = document.getElementById('productsTable');
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('productSearchInput');
+  const clearBtn = document.getElementById('clearSearchBtn');
+  const filterChips = document.querySelectorAll('.filter-chip');
+  const rows = document.querySelectorAll('.product-row');
+  const resultsCount = document.getElementById('resultsCount');
+  const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+  const noSearchMatches = document.getElementById('noSearchMatches');
+  const totalProducts = {{ total_products }};
 
-    let currentFilter = 'all';
+  let activeFilter = 'all';
+  let searchTerm = '';
 
-    function filterProducts() {
-        const query = searchInput.value.trim().toLowerCase();
-        let visibleCount = 0;
+  function filterTable() {
+    let visibleCount = 0;
 
-        if (query) {
-            clearSearchBtn.classList.remove('hidden');
-        } else {
-            clearSearchBtn.classList.add('hidden');
-        }
+    rows.forEach(row => {
+      const name = row.dataset.name || '';
+      const code = row.dataset.code || '';
+      const inStock = row.dataset.instock === '1';
+      const isLowStock = row.dataset.islowstock === '1';
+      const isDac = row.dataset.dac === '1';
+      const isSubReq = row.dataset.subreq === '1';
 
-        rows.forEach(row => {
-            const name = row.dataset.name || '';
-            const code = row.dataset.code || '';
-            const buy = row.dataset.buyprice || '';
-            const sell = row.dataset.sellprice || '';
-            const inStock = row.dataset.instock === '1';
-            const isLowStock = row.dataset.islowstock === '1';
-            const dac = row.dataset.dac === '1';
-            const subreq = row.dataset.subreq === '1';
+      // Text match
+      const textMatch = !searchTerm || name.includes(searchTerm) || code.includes(searchTerm);
 
-            const matchesText = !query || name.includes(query) || code.includes(query) || buy.includes(query) || sell.includes(query);
+      // Chip match
+      let chipMatch = true;
+      if (activeFilter === 'in-stock') chipMatch = inStock;
+      else if (activeFilter === 'out-stock') chipMatch = !inStock;
+      else if (activeFilter === 'low-stock') chipMatch = isLowStock;
+      else if (activeFilter === 'dac') chipMatch = isDac;
+      else if (activeFilter === 'cylinder') chipMatch = isSubReq;
 
-            let matchesCategory = true;
-            if (currentFilter === 'in-stock') matchesCategory = inStock;
-            else if (currentFilter === 'out-stock') matchesCategory = !inStock;
-            else if (currentFilter === 'low-stock') matchesCategory = isLowStock;
-            else if (currentFilter === 'dac') matchesCategory = dac;
-            else if (currentFilter === 'cylinder') matchesCategory = subreq;
+      if (textMatch && chipMatch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
 
-            const isVisible = matchesText && matchesCategory;
-            row.style.display = isVisible ? '' : 'none';
-            if (isVisible) visibleCount++;
-        });
-
-        resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} products`;
-        
-        if (currentFilter !== 'all' || query) {
-            resetFiltersBtn.classList.remove('hidden');
-        } else {
-            resetFiltersBtn.classList.add('hidden');
-        }
-
-        if (totalCount > 0 && visibleCount === 0) {
-            noMatches.classList.remove('hidden');
-            tableElement.classList.add('hidden');
-        } else {
-            noMatches.classList.add('hidden');
-            tableElement.classList.remove('hidden');
-        }
+    resultsCount.textContent = `Showing ${visibleCount} of ${totalProducts} products`;
+    
+    if (visibleCount === 0 && totalProducts > 0) {
+      noSearchMatches.classList.remove('hidden');
+    } else {
+      noSearchMatches.classList.add('hidden');
     }
 
-    searchInput.addEventListener('input', filterProducts);
-
-    clearSearchBtn.addEventListener('click', function() {
-        searchInput.value = '';
-        filterProducts();
-        searchInput.focus();
-    });
-
-    filterPills.forEach(pill => {
-        pill.addEventListener('click', function() {
-            filterPills.forEach(p => {
-                p.classList.remove('btn-primary');
-                p.classList.add('btn-outline');
-            });
-            this.classList.remove('btn-outline');
-            this.classList.add('btn-primary');
-            currentFilter = this.dataset.filter;
-            filterProducts();
-        });
-    });
-
-    function resetAllFilters() {
-        searchInput.value = '';
-        currentFilter = 'all';
-        filterPills.forEach(p => {
-            if (p.dataset.filter === 'all') {
-                p.classList.remove('btn-outline');
-                p.classList.add('btn-primary');
-            } else {
-                p.classList.remove('btn-primary');
-                p.classList.add('btn-outline');
-            }
-        });
-        filterProducts();
+    if (searchTerm || activeFilter !== 'all') {
+      resetFiltersBtn.classList.remove('hidden');
+    } else {
+      resetFiltersBtn.classList.add('hidden');
     }
+  }
 
-    resetFiltersBtn.addEventListener('click', resetAllFilters);
-    clearAllFiltersBtn.addEventListener('click', resetAllFilters);
+  // Search input handler
+  searchInput?.addEventListener('input', (e) => {
+    searchTerm = e.target.value.toLowerCase().trim();
+    clearBtn.classList.toggle('hidden', !searchTerm);
+    filterTable();
+  });
 
-    // Edit Modal
-    const editModal = document.getElementById('editProductModal');
-    const editForm = document.getElementById('editProductForm');
-    const modalProductName = document.getElementById('modalProductName');
-    const modalProductCode = document.getElementById('modalProductCode');
-    const modalProductQuantity = document.getElementById('modalProductQuantity');
-    const modalBuyPrice = document.getElementById('modalBuyPrice');
-    const modalSellPrice = document.getElementById('modalSellPrice');
-    const modalInStock = document.getElementById('modalInStock');
-    const modalDacApplicable = document.getElementById('modalDacApplicable');
-    const modalSubReq = document.getElementById('modalSubReq');
-    const modalMarginProfit = document.getElementById('modalMarginProfit');
-    const modalMarginPct = document.getElementById('modalMarginPct');
+  clearBtn?.addEventListener('click', () => {
+    searchInput.value = '';
+    searchTerm = '';
+    clearBtn.classList.add('hidden');
+    filterTable();
+  });
 
-    function updateModalMargin() {
-        const buy = parseFloat(modalBuyPrice.value) || 0;
-        const sell = parseFloat(modalSellPrice.value) || 0;
-        const profit = sell - buy;
-        const pct = buy > 0 ? ((profit / buy) * 100).toFixed(1) : '0.0';
-
-        modalMarginProfit.textContent = (profit >= 0 ? '+₹' : '-₹') + Math.abs(profit).toFixed(2);
-        modalMarginPct.textContent = (profit >= 0 ? '+' : '') + pct + '%';
-
-        if (profit >= 0) {
-            modalMarginProfit.className = 'font-bold text-sm text-emerald-700';
-            modalMarginPct.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800';
-        } else {
-            modalMarginProfit.className = 'font-bold text-sm text-rose-700';
-            modalMarginPct.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800';
-        }
-    }
-
-    modalBuyPrice.addEventListener('input', updateModalMargin);
-    modalSellPrice.addEventListener('input', updateModalMargin);
-
-    document.querySelectorAll('.edit-product-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const data = this.dataset;
-            editForm.action = data.url;
-            modalProductName.value = data.name;
-            modalProductCode.value = data.code || 'Auto-generated';
-            modalProductQuantity.value = data.qty;
-            modalBuyPrice.value = parseFloat(data.buyprice).toFixed(2);
-            modalSellPrice.value = parseFloat(data.sellprice).toFixed(2);
-            modalInStock.checked = data.instock === '1';
-            modalDacApplicable.checked = data.dac === '1';
-            modalSubReq.checked = data.subreq === '1';
-
-            updateModalMargin();
-            editModal.showModal();
-        });
+  // Filter chips handler
+  filterChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      filterChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      activeFilter = chip.dataset.filter;
+      filterTable();
     });
+  });
 
-    // Delete Modal
-    const deleteModal = document.getElementById('deleteProductModal');
-    const deleteForm = document.getElementById('deleteProductForm');
-    const deleteProductName = document.getElementById('deleteProductName');
-    const deleteProductCode = document.getElementById('deleteProductCode');
+  function resetAll() {
+    searchInput.value = '';
+    searchTerm = '';
+    clearBtn.classList.add('hidden');
+    activeFilter = 'all';
+    filterChips.forEach(c => c.classList.toggle('active', c.dataset.filter === 'all'));
+    filterTable();
+  }
 
-    document.querySelectorAll('.delete-product-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const data = this.dataset;
-            deleteForm.action = data.url;
-            deleteProductName.textContent = data.name;
-            deleteProductCode.textContent = data.code ? `Code: ${data.code}` : '';
-            deleteModal.showModal();
-        });
+  resetFiltersBtn?.addEventListener('click', resetAll);
+  document.getElementById('clearAllFiltersBtn')?.addEventListener('click', resetAll);
+
+  // Edit Product Modal Binding
+  const editModal = document.getElementById('editProductModal');
+  const editForm = document.getElementById('editProductForm');
+  const modalName = document.getElementById('modalProductName');
+  const modalCode = document.getElementById('modalProductCode');
+  const modalQty = document.getElementById('modalProductQuantity');
+  const modalBuy = document.getElementById('modalBuyPrice');
+  const modalSell = document.getElementById('modalSellPrice');
+  const modalInStock = document.getElementById('modalInStock');
+  const modalDac = document.getElementById('modalDacApplicable');
+  const modalSubReq = document.getElementById('modalSubReq');
+  const modalMarginProfit = document.getElementById('modalMarginProfit');
+  const modalMarginPct = document.getElementById('modalMarginPct');
+
+  function updateModalMargin() {
+    const buy = parseFloat(modalBuy.value || 0);
+    const sell = parseFloat(modalSell.value || 0);
+    const margin = sell - buy;
+    const pct = buy > 0 ? ((margin / buy) * 100).toFixed(1) : '0';
+
+    modalMarginProfit.textContent = `${margin >= 0 ? '+' : ''}₹${margin.toFixed(2)}`;
+    modalMarginPct.textContent = `${margin >= 0 ? '+' : ''}${pct}%`;
+  }
+
+  modalBuy?.addEventListener('input', updateModalMargin);
+  modalSell?.addEventListener('input', updateModalMargin);
+
+  document.querySelectorAll('.edit-product-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      editForm.action = this.dataset.url;
+      modalName.value = this.dataset.name;
+      modalCode.value = this.dataset.code;
+      modalQty.value = this.dataset.qty;
+      modalBuy.value = this.dataset.buyprice;
+      modalSell.value = this.dataset.sellprice;
+      modalInStock.checked = this.dataset.instock === '1';
+      modalDac.checked = this.dataset.dac === '1';
+      modalSubReq.checked = this.dataset.subreq === '1';
+      updateModalMargin();
+      editModal.showModal();
     });
+  });
+
+  // Delete Product Modal Binding
+  const deleteModal = document.getElementById('deleteProductModal');
+  const deleteForm = document.getElementById('deleteProductForm');
+  const deleteName = document.getElementById('deleteProductName');
+  const deleteCode = document.getElementById('deleteProductCode');
+
+  document.querySelectorAll('.delete-product-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      deleteForm.action = this.dataset.url;
+      deleteName.textContent = this.dataset.name;
+      deleteCode.textContent = this.dataset.code;
+      deleteModal.showModal();
+    });
+  });
 });
 </script>
 {% endblock %}

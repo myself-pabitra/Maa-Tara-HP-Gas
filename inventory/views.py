@@ -39,10 +39,15 @@ def add_product(request):
             messages.error(request, f"Unable to add product: {e}")
             return redirect("Add_product")
 
+    recent_products = ProductInventory.objects.order_by("-id")[:5]
+    total_products_count = ProductInventory.objects.count()
+
     return render(
         request,
         "inventory/Add_product_to_inventory.html",
         {
+            "recent_products": recent_products,
+            "total_products_count": total_products_count,
             "page_type": "add_product",
         },
     )
@@ -219,6 +224,9 @@ def topup_stock(request):
         .order_by("-added_at")[:25]
     )
 
+    total_batches_count = StockBatch.objects.count()
+    total_units_stocked = StockBatch.objects.aggregate(total=Sum("quantity_added"))["total"] or 0
+
     # Build product data for JS (current stock, buy price)
     product_data = {
         str(p.id): {
@@ -237,6 +245,8 @@ def topup_stock(request):
         "products": products,
         "product_data_json": json.dumps(product_data),
         "recent_batches": recent_batches,
+        "total_batches_count": total_batches_count,
+        "total_units_stocked": total_units_stocked,
         "page_type": "topup_stock",
     }
     return render(request, "inventory/topup_stock.html", context)

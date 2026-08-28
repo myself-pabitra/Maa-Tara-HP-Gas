@@ -1,150 +1,408 @@
 {% extends 'layout.html' %}
-{% load static %}
+{% load static humanize %}
 
-{% block title %}View Subdealers{% endblock title %}
+{% block title %}Subdealers Directory | Maa Tara HP Gas{% endblock title %}
 
 {% block content %}
-<div class="px-6 py-8">
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
+
+  /* Table styling */
+  .dash-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+  }
+  .dash-table th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #eef2f6;
+    white-space: nowrap;
+  }
+  .dash-table td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .dash-table tbody tr {
+    transition: background-color .15s ease;
+  }
+  .dash-table tbody tr:hover {
+    background-color: #f8faff;
+  }
+
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .pill-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+  .pill-rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+  .pill-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+  /* KPI Stat Cards */
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all .2s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  /* Custom Input & Select */
+  .filter-input {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #1e293b;
+    outline: none;
+    transition: all .15s ease;
+  }
+  .filter-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  }
+
+  /* Action Buttons */
+  .btn-action-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eef2ff;
+    color: #4f46e5;
+    border: 1px solid #e0e7ff;
+    transition: all .15s ease;
+  }
+  .btn-action-edit:hover {
+    background: #4f46e5;
+    color: #ffffff;
+  }
+
+  .btn-action-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #fff1f2;
+    color: #be123c;
+    border: 1px solid #fecdd3;
+    transition: all .15s ease;
+    cursor: pointer;
+  }
+  .btn-action-delete:hover {
+    background: #be123c;
+    color: #ffffff;
+  }
+
+  /* Create Subdealer Button */
+  .btn-create-subdealer {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13.5px;
+    border-radius: 12px;
+    padding: 10px 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all .18s ease;
+  }
+  .btn-create-subdealer:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
+</style>
+
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h2 class="text-3xl font-semibold text-primary">Subdealers</h2>
-      <p class="text-sm text-gray-600">Manage your subdealer list, update details, or delete entries.</p>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Subdealers Management</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Subdealers Directory</h1>
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-users text-[10px]"></i> {{ total_subdealers|default:0|intcomma }} Partners
+        </span>
+      </div>
     </div>
-    <div>
-      <a href="{% url 'CreateNewSubDealers' %}" class="btn btn-primary">Add New Subdealer</a>
+
+    <div class="flex items-center gap-3">
+      <a href="{% url 'view_subdealer_discounts' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-tags text-indigo-600"></i> SKU Discounts
+      </a>
+      <a href="{% url 'CreateNewSubDealers' %}" class="btn-create-subdealer">
+        <i class="fa-solid fa-plus text-xs"></i> Add New Subdealer
+      </a>
     </div>
   </div>
 
-  <!-- Search Bar -->
-  <div class="card bg-base-200 shadow-sm mb-6">
-    <div class="card-body p-4">
-      <form method="GET" action="{% url 'view_subdealers' %}" id="searchForm" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <div class="relative flex-1">
-          <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-base-content/50">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
-            </svg>
-          </span>
-          <input
-            id="subdealerSearch"
-            type="text"
-            name="search"
-            value="{{ search }}"
-            placeholder="Search by name, phone, address, or code..."
-            class="input input-bordered w-full pl-9"
-            autocomplete="off"
-          >
-        </div>
-        <div class="flex items-center gap-2">
-          <button type="submit" class="btn btn-primary">Search</button>
-          {% if search %}
-            <a href="{% url 'view_subdealers' %}" class="btn btn-outline gap-1" title="Clear Search">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-              Clear
-            </a>
-          {% endif %}
-        </div>
-      </form>
-      {% if search %}
-        <div class="mt-3 flex items-center justify-between text-sm">
-          <span class="badge badge-primary badge-outline px-3 py-2">
-            Found {{ filtered_count }} subdealer{{ filtered_count|pluralize }} matching "{{ search }}" (out of {{ total_subdealers }})
-          </span>
-          <a href="{% url 'view_subdealers' %}" class="link link-hover text-primary text-xs">View all subdealers</a>
-        </div>
-      {% endif %}
+  <!-- ════════════════════════════════════════
+       SEARCH & QUICK ACTION TOOLBAR
+  ════════════════════════════════════════ -->
+  <div class="billing-card p-4">
+    <form method="GET" action="{% url 'view_subdealers' %}" id="searchForm" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <div class="relative flex-1">
+        <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+          <i class="fa-solid fa-magnifying-glass text-xs"></i>
+        </span>
+        <input
+          id="subdealerSearch"
+          type="text"
+          name="search"
+          value="{{ search }}"
+          placeholder="Search by Subdealer Name, Phone Number, Code, or Address..."
+          class="filter-input w-full pl-9"
+          autocomplete="off"
+        >
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 px-4 rounded-xl transition shadow-sm flex items-center gap-1.5">
+          <i class="fa-solid fa-magnifying-glass text-[11px]"></i> Search
+        </button>
+        {% if search %}
+        <a href="{% url 'view_subdealers' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs py-2.5 px-3 rounded-xl transition flex items-center gap-1" title="Clear Search">
+          <i class="fa-solid fa-xmark"></i> Clear
+        </a>
+        {% endif %}
+      </div>
+    </form>
+
+    {% if search %}
+    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+      <span class="font-medium text-slate-600">
+        Found <strong class="text-indigo-600">{{ filtered_count }}</strong> subdealer{{ filtered_count|pluralize }} matching "<span class="italic text-slate-800">{{ search }}</span>" (out of {{ total_subdealers }} total)
+      </span>
+      <a href="{% url 'view_subdealers' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+        View all subdealers
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SUBDEALERS DIRECTORY TABLE
+  ════════════════════════════════════════ -->
+  <div class="billing-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="dash-table" id="subdealersTable">
+        <thead>
+          <tr>
+            <th style="width: 44px;" class="text-center">#</th>
+            <th style="min-width: 220px;">Subdealer Name</th>
+            <th style="width: 140px;">Subdealer Code</th>
+            <th style="width: 150px;">Phone Number</th>
+            <th style="min-width: 220px;">Business Address</th>
+            <th style="width: 130px;" class="text-center">DAC Rate</th>
+            <th style="width: 150px;" class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="subdealersBody">
+          {% for subdealer in subdealers %}
+          <tr>
+            <!-- Index -->
+            <td class="text-center text-xs font-bold text-slate-400">
+              {{ forloop.counter }}
+            </td>
+
+            <!-- Subdealer Name -->
+            <td>
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-extrabold shrink-0">
+                  {{ subdealer.name|slice:":1"|upper }}
+                </div>
+                <div>
+                  <div class="font-bold text-slate-900 text-sm">{{ subdealer.name }}</div>
+                  <div class="text-[11px] text-slate-400">Registered Partner</div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Subdealer Code -->
+            <td>
+              <span class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg">
+                {{ subdealer.subdealerCode }}
+              </span>
+            </td>
+
+            <!-- Phone Number -->
+            <td>
+              <div class="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
+                <i class="fa-solid fa-phone text-slate-400 text-[10px]"></i>
+                <a href="tel:{{ subdealer.phone_number }}" class="hover:text-indigo-600 transition">
+                  {{ subdealer.phone_number }}
+                </a>
+              </div>
+            </td>
+
+            <!-- Address -->
+            <td class="text-xs text-slate-600">
+              {% if subdealer.address %}
+                <div class="flex items-start gap-1.5">
+                  <i class="fa-solid fa-location-dot text-slate-400 text-[11px] mt-0.5 shrink-0"></i>
+                  <span>{{ subdealer.address|linebreaksbr }}</span>
+                </div>
+              {% else %}
+                <span class="text-slate-400 italic">—</span>
+              {% endif %}
+            </td>
+
+            <!-- DAC Percentage -->
+            <td class="text-center">
+              <span class="pill pill-emerald text-xs">
+                {{ subdealer.dac_percentage }}%
+              </span>
+            </td>
+
+            <!-- Action Buttons -->
+            <td>
+              <div class="flex items-center justify-center gap-1.5">
+                <a href="{% url 'edit_subdealer' subdealer.id %}" class="btn-action-edit" title="Edit Subdealer">
+                  <i class="fa-solid fa-pen-to-square"></i> Edit
+                </a>
+                <button type="button"
+                        class="btn-action-delete subdealer-delete-btn"
+                        data-url="{% url 'delete_subdealer' subdealer.id %}"
+                        data-name="{{ subdealer.name }} ({{ subdealer.subdealerCode }})"
+                        title="Delete Subdealer">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-12">
+              <div class="max-w-sm mx-auto space-y-3">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mx-auto text-xl">
+                  <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="text-sm font-bold text-slate-700">No Subdealers Found</div>
+                <p class="text-xs text-slate-500">
+                  {% if search %}
+                    No registered partners match your search query "{{ search }}". Try clearing the search.
+                  {% else %}
+                    No subdealers have been created yet. Add your first partner to begin invoicing.
+                  {% endif %}
+                </p>
+                <div>
+                  {% if search %}
+                    <a href="{% url 'view_subdealers' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                      <i class="fa-solid fa-rotate-left"></i> Clear search &amp; view all
+                    </a>
+                  {% else %}
+                    <a href="{% url 'CreateNewSubDealers' %}" class="btn-create-subdealer text-xs py-2 px-3.5">
+                      <i class="fa-solid fa-plus text-xs"></i> Add First Subdealer
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div class="overflow-x-auto bg-base-200 rounded-2xl shadow-sm">
-    <table class="table w-full" id="subdealersTable">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <!-- <th>Code</th> -->
-          <th>Phone</th>
-          <th>Address</th>
-          <th>DAC Percentage</th>
-          <th class="text-center">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="subdealersBody">
-        {% for subdealer in subdealers %}
-        <tr class="hover">
-          <td class="font-medium">{{ subdealer.name }}</td>
-          <!-- <td>{{ subdealer.subdealerCode }}</td> -->
-          <td>{{ subdealer.phone_number }}</td>
-          <td>{{ subdealer.address|linebreaksbr|default:"—" }}</td>
-          <td>{{ subdealer.dac_percentage }}%</td>
-          <td class="space-x-2 text-center">
-            <a href="{% url 'edit_subdealer' subdealer.id %}" class="btn btn-sm btn-info">Edit</a>
-            <button type="button"
-                    class="btn btn-sm btn-error subdealer-delete-btn"
-                    data-url="{% url 'delete_subdealer' subdealer.id %}"
-                    data-name="{{ subdealer.name }}">Delete</button>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5" class="text-center py-10">
-            {% if search %}
-              <p class="text-base font-semibold text-gray-600 mb-2">No subdealers found matching "{{ search }}"</p>
-              <a href="{% url 'view_subdealers' %}" class="btn btn-sm btn-outline">Clear Search & View All</a>
-            {% else %}
-              <p class="text-base text-gray-500 mb-2">No subdealers found.</p>
-              <a href="{% url 'CreateNewSubDealers' %}" class="btn btn-sm btn-primary">Add New Subdealer</a>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  <!-- ════════════════════════════════════════
+       PAGINATION
+  ════════════════════════════════════════ -->
   {% include 'components/pagination.html' %}
+
 </div>
 
-<script>
-  // Form submits on Enter key or clicking Search button (zero server hits on keystrokes)
-  const searchInput = document.getElementById('subdealerSearch');
-  if (searchInput && searchInput.value) {
-    searchInput.focus();
-    const len = searchInput.value.length;
-    searchInput.setSelectionRange(len, len);
-  }
-</script>
-
-<!-- Delete Subdealer Modal -->
+<!-- ════════════════════════════════════════
+     DELETE SUBDEALER CONFIRMATION MODAL
+════════════════════════════════════════ -->
 <dialog id="subdealerDeleteModal" class="modal">
-    <div class="modal-box">
-        <div class="flex items-center gap-3 mb-4">
-            <div class="bg-error/10 text-error rounded-xl p-3">
-                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-            </div>
-            <h3 class="font-bold text-lg">Delete Subdealer</h3>
-        </div>
-        <p class="text-base-content/70">Are you sure you want to delete subdealer:</p>
-        <p class="font-semibold bg-base-200 rounded-lg px-3 py-2 text-sm mt-2" id="subdealerDeleteName"></p>
-        <p class="text-sm text-error/80 mt-3">This will also delete all DAC entries linked to this subdealer.</p>
-        <div class="modal-action">
-            <button class="btn btn-ghost" onclick="subdealerDeleteModal.close()">Cancel</button>
-            <form id="subdealerDeleteForm" method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-error">Yes, Delete</button>
-            </form>
-        </div>
+  <div class="modal-box bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 max-w-md">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-11 h-11 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center text-lg shrink-0">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h3 class="font-extrabold text-slate-900 text-base">Delete Subdealer Partner</h3>
+        <p class="text-xs text-slate-500">Warning: This action will permanently remove the partner.</p>
+      </div>
     </div>
-    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    
+    <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl mb-4">
+      <div class="text-[11px] font-bold uppercase text-slate-400 mb-1">Target Subdealer</div>
+      <div class="font-bold text-slate-800 text-sm break-words" id="subdealerDeleteName"></div>
+    </div>
+
+    <div class="flex items-center justify-end gap-2.5">
+      <button type="button" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition" onclick="subdealerDeleteModal.close()">
+        Cancel
+      </button>
+      <form id="subdealerDeleteForm" method="post" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition shadow-sm">
+          <i class="fa-solid fa-trash-can mr-1"></i> Yes, Delete Subdealer
+        </button>
+      </form>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop bg-slate-900/40 backdrop-blur-sm"><button>close</button></form>
 </dialog>
 
 <script>
 document.querySelectorAll('.subdealer-delete-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        document.getElementById('subdealerDeleteName').textContent = this.dataset.name;
-        document.getElementById('subdealerDeleteForm').action = this.dataset.url;
-        document.getElementById('subdealerDeleteModal').showModal();
-    });
+  btn.addEventListener('click', function() {
+    document.getElementById('subdealerDeleteName').textContent = this.dataset.name;
+    document.getElementById('subdealerDeleteForm').action = this.dataset.url;
+    document.getElementById('subdealerDeleteModal').showModal();
+  });
 });
 </script>
 

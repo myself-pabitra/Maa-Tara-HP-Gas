@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% load static %}
+{% load static humanize %}
 
 {% block title %}Dashboard | Maa Tara HP Gas{% endblock %}
 
@@ -293,21 +293,102 @@
   </div>
 
   <!-- ════════════════════════════════════════
+       DASHBOARD PERIOD FILTER BAR
+  ════════════════════════════════════════ -->
+  <div class="dash-card p-4 sm:p-5">
+    <form method="get" id="dashboardFilterForm" class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <!-- Left: Filter Type Selection & Inputs -->
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 mr-1">
+          <i class="fa-solid fa-filter text-indigo-600"></i> Period Filter:
+        </span>
+
+        <!-- Filter Mode Radios -->
+        <div class="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
+          <label class="cursor-pointer">
+            <input type="radio" name="filter_type" value="today" class="sr-only filter-mode-radio" {% if filter_type == 'today' %}checked{% endif %} onchange="handleFilterModeChange('today')">
+            <span class="inline-block px-3 py-1.5 rounded-lg transition {% if filter_type == 'today' %}bg-white text-indigo-700 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+              Today
+            </span>
+          </label>
+
+          <label class="cursor-pointer">
+            <input type="radio" name="filter_type" value="date" class="sr-only filter-mode-radio" {% if filter_type == 'date' %}checked{% endif %} onchange="handleFilterModeChange('date')">
+            <span class="inline-block px-3 py-1.5 rounded-lg transition {% if filter_type == 'date' %}bg-white text-indigo-700 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+              Specific Date
+            </span>
+          </label>
+
+          <label class="cursor-pointer">
+            <input type="radio" name="filter_type" value="month" class="sr-only filter-mode-radio" {% if filter_type == 'month' %}checked{% endif %} onchange="handleFilterModeChange('month')">
+            <span class="inline-block px-3 py-1.5 rounded-lg transition {% if filter_type == 'month' %}bg-white text-indigo-700 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+              Specific Month
+            </span>
+          </label>
+
+          <label class="cursor-pointer">
+            <input type="radio" name="filter_type" value="all" class="sr-only filter-mode-radio" {% if filter_type == 'all' %}checked{% endif %} onchange="handleFilterModeChange('all')">
+            <span class="inline-block px-3 py-1.5 rounded-lg transition {% if filter_type == 'all' %}bg-white text-indigo-700 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+              All Time
+            </span>
+          </label>
+        </div>
+
+        <!-- Date Picker Input (Visible when filter_type == 'date') -->
+        <div id="dateInputWrap" class="{% if filter_type != 'date' %}hidden{% endif %} flex items-center gap-2">
+          <input type="date" name="date" id="dateInput" value="{{ selected_date|default:today|date:'Y-m-d' }}"
+                 class="h-9 px-3 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                 onchange="this.form.submit()">
+        </div>
+
+        <!-- Month Picker Input (Visible when filter_type == 'month') -->
+        <div id="monthInputWrap" class="{% if filter_type != 'month' %}hidden{% endif %} flex items-center gap-2">
+          {% if available_months %}
+            <select name="month" id="monthInput" class="h-9 px-3 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm cursor-pointer" onchange="this.form.submit()">
+              {% for m in available_months %}
+                <option value="{{ m.value }}" {% if selected_month == m.value %}selected{% endif %}>{{ m.label }}</option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <input type="month" name="month" id="monthInput" value="{{ selected_month|default:today|date:'Y-m' }}"
+                   class="h-9 px-3 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                   onchange="this.form.submit()">
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Right: Active Period Badge & Reset Button -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-indigo-50/80 border border-indigo-100 px-3.5 py-1.5 rounded-xl">
+          <i class="fa-solid fa-calendar-check text-indigo-600"></i>
+          <span>Viewing: <strong>{{ period_title }}</strong></span>
+        </div>
+
+        {% if filter_type != 'today' %}
+          <a href="{% url 'dashboard' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-3 py-1.5 rounded-xl transition" title="Reset to today's live data">
+            <i class="fa-solid fa-rotate-left text-[10px]"></i> Reset
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- ════════════════════════════════════════
        KPI ROW 1 — Financial
   ════════════════════════════════════════ -->
   <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
 
-    <!-- Today's Sales -->
+    <!-- Total Sales in Period -->
     <div class="kpi-card">
       <div class="flex items-start justify-between mb-3">
         <div class="kpi-icon" style="background:#eef2ff;color:#6366f1;">
           <i class="fa-solid fa-indian-rupee-sign"></i>
         </div>
-        <span class="pill pill-indigo">Today</span>
+        <span class="pill pill-indigo">{% if filter_type == 'month' %}Month{% elif filter_type == 'date' %}Day{% elif filter_type == 'all' %}All{% else %}Today{% endif %}</span>
       </div>
-      <div class="kpi-label">Today's Sales</div>
-      <div class="kpi-value">₹{{ invoice_summary.total_sales }}</div>
-      <div class="kpi-sub"><i class="fa-solid fa-file-invoice mr-1 opacity-70"></i>Invoice Amount</div>
+      <div class="kpi-label">Sales Amount</div>
+      <div class="kpi-value">₹{{ invoice_summary.total_sales|floatformat:2|intcomma }}</div>
+      <div class="kpi-sub"><i class="fa-solid fa-file-invoice mr-1 opacity-70"></i>Total Invoiced</div>
     </div>
 
     <!-- Gross Profit -->
@@ -319,8 +400,8 @@
         <span class="pill pill-ok"><i class="fa-solid fa-circle-check text-[9px]"></i>Profit</span>
       </div>
       <div class="kpi-label">Gross Profit</div>
-      <div class="kpi-value text-emerald-700">₹{{ gross_profit }}</div>
-      <div class="kpi-sub">Before Expenses</div>
+      <div class="kpi-value text-emerald-700">₹{{ gross_profit|floatformat:2|intcomma }}</div>
+      <div class="kpi-sub">Before Operating Exp.</div>
     </div>
 
     <!-- Cash Collection -->
@@ -331,9 +412,9 @@
         </div>
         <span class="pill pill-blue">Cash</span>
       </div>
-      <div class="kpi-label">Cash Collection</div>
-      <div class="kpi-value">₹{{ payment_summary.cash }}</div>
-      <div class="kpi-sub">Today's collection</div>
+      <div class="kpi-label">Cash Collected</div>
+      <div class="kpi-value">₹{{ payment_summary.cash|floatformat:2|intcomma }}</div>
+      <div class="kpi-sub">Period cash intake</div>
     </div>
 
     <!-- Outstanding Due -->
@@ -345,8 +426,8 @@
         <span class="pill pill-err">Pending</span>
       </div>
       <div class="kpi-label">Outstanding Due</div>
-      <div class="kpi-value text-rose-600">₹{{ payment_summary.due }}</div>
-      <div class="kpi-sub">Due from today's bills</div>
+      <div class="kpi-value text-rose-600">₹{{ payment_summary.due|floatformat:2|intcomma }}</div>
+      <div class="kpi-sub">Uncollected in period</div>
     </div>
 
   </div>
@@ -364,9 +445,9 @@
         </div>
         <span class="pill pill-indigo">Invoices</span>
       </div>
-      <div class="kpi-label">Today's Bills</div>
-      <div class="kpi-value">{{ invoice_summary.total_invoices }}</div>
-      <div class="kpi-sub">Invoices generated</div>
+      <div class="kpi-label">Total Invoices</div>
+      <div class="kpi-value">{{ invoice_summary.total_invoices|intcomma }}</div>
+      <div class="kpi-sub">Invoices in period</div>
     </div>
 
     <!-- Cylinders -->
@@ -378,8 +459,8 @@
         <span class="pill pill-ok">Units</span>
       </div>
       <div class="kpi-label">Cylinders Sold</div>
-      <div class="kpi-value text-emerald-800">{{ cylinder_summary.cylinders }}</div>
-      <div class="kpi-sub">Total cylinders dispatched</div>
+      <div class="kpi-value text-emerald-800">{{ cylinder_summary.cylinders|intcomma }}</div>
+      <div class="kpi-sub">Total dispatched units</div>
     </div>
 
     <!-- Stock Value -->
@@ -391,7 +472,7 @@
         <span class="pill pill-blue">Asset</span>
       </div>
       <div class="kpi-label">Stock Value</div>
-      <div class="kpi-value text-xl">₹{{ stock_value }}</div>
+      <div class="kpi-value text-xl">₹{{ stock_value|floatformat:2|intcomma }}</div>
       <div class="kpi-sub">Current inventory worth</div>
     </div>
 
@@ -404,7 +485,7 @@
         <span class="pill pill-warn">Action</span>
       </div>
       <div class="kpi-label">Pending AC</div>
-      <div class="kpi-value text-amber-700">{{ payment_summary.pending }}</div>
+      <div class="kpi-value text-amber-700">{{ payment_summary.pending|intcomma }}</div>
       <div class="kpi-sub">Awaiting verification</div>
     </div>
 
@@ -460,7 +541,7 @@
           </div>
           <span class="stat-mini-label">Inventory Products</span>
         </div>
-        <span class="stat-mini-value">{{ active_products }}</span>
+        <span class="stat-mini-value">{{ active_products|intcomma }}</span>
       </div>
       <div class="stat-mini">
         <div class="flex items-center gap-2.5">
@@ -469,7 +550,7 @@
           </div>
           <span class="stat-mini-label">Registered Subdealers</span>
         </div>
-        <span class="stat-mini-value">{{ active_subdealers }}</span>
+        <span class="stat-mini-value">{{ active_subdealers|intcomma }}</span>
       </div>
       <div class="stat-mini">
         <div class="flex items-center gap-2.5">
@@ -478,7 +559,7 @@
           </div>
           <span class="stat-mini-label">Active Employees</span>
         </div>
-        <span class="stat-mini-value">{{ active_employees }}</span>
+        <span class="stat-mini-value">{{ active_employees|intcomma }}</span>
       </div>
     </div>
 
@@ -494,7 +575,7 @@
       <div class="chart-header">
         <div class="chart-title">
           <i class="fa-solid fa-chart-line text-indigo-600"></i>
-          <span>Last 30 Days Sales Trend</span>
+          <span>{% if filter_type == 'month' %}{{ period_title }} Daily Sales{% else %}30-Day Sales Trend{% endif %}</span>
         </div>
         <span id="salesTotalBadge" class="pill pill-indigo">Loading...</span>
       </div>
@@ -508,7 +589,7 @@
       <div class="chart-header">
         <div class="chart-title">
           <i class="fa-solid fa-chart-simple text-emerald-600"></i>
-          <span>Last 30 Days Gross Profit</span>
+          <span>{% if filter_type == 'month' %}{{ period_title }} Daily Profit{% else %}30-Day Gross Profit{% endif %}</span>
         </div>
         <span id="profitTotalBadge" class="pill pill-ok">Loading...</span>
       </div>
@@ -596,10 +677,13 @@
     <!-- Pending AC Verification -->
     <div class="dash-card">
       <div class="dash-card-header">
-        <span class="dash-card-title">
-          <i class="fa-solid fa-clock text-amber-500"></i> Pending AC Verifications
-        </span>
-        <a href="{% url 'CheckPendingVerification' %}" class="pill pill-warn hover:opacity-80 transition">
+        <div>
+          <span class="dash-card-title">
+            <i class="fa-solid fa-clock text-amber-500"></i> Pending AC Verifications
+          </span>
+          <span class="text-[11px] text-slate-400 font-medium ml-2">Top 5 recent</span>
+        </div>
+        <a href="{% url 'CheckPendingVerification' %}" class="pill pill-warn hover:opacity-80 transition" title="View all pending verifications">
           {{ payment_summary.pending }} Pending <i class="fa-solid fa-arrow-right text-[9px]"></i>
         </a>
       </div>
@@ -611,7 +695,7 @@
             <tr>
               <td class="font-mono text-xs font-semibold text-slate-700">{{ item.invoice.invoice_number }}</td>
               <td class="font-medium text-slate-800">{{ item.subdealer.name }}</td>
-              <td class="text-right font-bold text-amber-700">₹{{ item.ac_amount }}</td>
+              <td class="text-right font-bold text-amber-700">₹{{ item.ac_amount|floatformat:2|intcomma }}</td>
             </tr>
             {% empty %}
             <tr>
@@ -629,21 +713,31 @@
     <!-- Negative DAC Balance -->
     <div class="dash-card">
       <div class="dash-card-header">
-        <span class="dash-card-title">
-          <i class="fa-solid fa-scale-unbalanced text-rose-500"></i> Negative DAC Balances
-        </span>
-        <a href="{% url 'view_dac' %}" class="pill pill-err hover:opacity-80 transition">
-          {{ negative_dac|length }} Negative <i class="fa-solid fa-arrow-right text-[9px]"></i>
+        <div>
+          <span class="dash-card-title">
+            <i class="fa-solid fa-scale-unbalanced text-rose-500"></i> Negative DAC Balances
+          </span>
+          <span class="text-[11px] text-slate-400 font-medium ml-2">Top 5 by deficit</span>
+        </div>
+        <a href="{% url 'view_dac' %}" class="pill pill-err hover:opacity-80 transition" title="View DAC ledger">
+          {{ total_negative_dac_count }} Negative <i class="fa-solid fa-arrow-right text-[9px]"></i>
         </a>
       </div>
       <div class="overflow-x-auto">
         <table class="dash-table w-full">
-          <thead><tr><th>Subdealer Name</th><th class="text-right">Closing Balance</th></tr></thead>
+          <thead><tr><th>Subdealer Name</th><th class="text-right">Current Balance</th></tr></thead>
           <tbody>
             {% for entry in negative_dac %}
             <tr>
-              <td class="font-medium text-slate-800">{{ entry.subdealer.name }}</td>
-              <td class="text-right"><span class="font-mono font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">{{ entry.closing_balance }}</span></td>
+              <td class="font-medium text-slate-800">
+                {{ entry.subdealer.name }}
+                <span class="text-[10px] font-mono text-slate-400 ml-1">({{ entry.subdealer.subdealerCode }})</span>
+              </td>
+              <td class="text-right">
+                <span class="font-mono font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                  {{ entry.closing_balance }}
+                </span>
+              </td>
             </tr>
             {% empty %}
             <tr>
@@ -667,22 +761,44 @@
 {% block js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+function handleFilterModeChange(mode) {
+  const dateWrap = document.getElementById('dateInputWrap');
+  const monthWrap = document.getElementById('monthInputWrap');
+  const form = document.getElementById('dashboardFilterForm');
+  
+  if (mode === 'today' || mode === 'all') {
+    dateWrap.classList.add('hidden');
+    monthWrap.classList.add('hidden');
+    form.submit();
+  } else if (mode === 'date') {
+    dateWrap.classList.remove('hidden');
+    monthWrap.classList.add('hidden');
+    const dInput = document.getElementById('dateInput');
+    if (dInput) dInput.focus();
+  } else if (mode === 'month') {
+    monthWrap.classList.remove('hidden');
+    dateWrap.classList.add('hidden');
+    const mInput = document.getElementById('monthInput');
+    if (mInput) mInput.focus();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   const labels = {{ chart_labels|safe }};
   const rawSales = {{ chart_sales|safe }};
   const rawProfit = {{ chart_profit|safe }};
 
-  // Calculate 30-day totals for badges
+  // Calculate totals for badges
   const totalSalesVal = rawSales.reduce((acc, v) => acc + (Number(v) || 0), 0);
   const totalProfitVal = rawProfit.reduce((acc, v) => acc + (Number(v) || 0), 0);
 
   const salesBadge = document.getElementById('salesTotalBadge');
   if (salesBadge) {
-    salesBadge.textContent = '30d Total: ₹' + totalSalesVal.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    salesBadge.textContent = 'Total: ₹' + totalSalesVal.toLocaleString('en-IN', { maximumFractionDigits: 0 });
   }
   const profitBadge = document.getElementById('profitTotalBadge');
   if (profitBadge) {
-    profitBadge.textContent = '30d Total: ₹' + totalProfitVal.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    profitBadge.textContent = 'Total: ₹' + totalProfitVal.toLocaleString('en-IN', { maximumFractionDigits: 0 });
   }
 
   // Shared chart typography & defaults

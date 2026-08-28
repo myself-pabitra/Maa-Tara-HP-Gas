@@ -1,127 +1,387 @@
-
 {% extends 'layout.html' %}
-{% load static %}
+{% load static humanize %}
 
-{% block title %}Add Product{% endblock %}
+{% block title %}Add Product to Inventory | Maa Tara HP Gas{% endblock %}
 
 {% block content %}
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
 
-<div class="p-8 max-w-6xl mx-auto">
+  /* Custom input styling */
+  .custom-input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    outline: none;
+    transition: all .18s ease;
+  }
+  .custom-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3.5px rgba(99,102,241,.12);
+  }
 
-    <div class="mb-8">
-        <h2 class="text-4xl font-bold text-primary">Add New Product</h2>
-        <p class="text-gray-500 mt-2">
-            Create a new product for inventory and billing.
+  .input-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64748b;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+
+  /* Submit button gradient */
+  .btn-create-product {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all .18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-create-product:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
+
+  /* Toggle Cards */
+  .toggle-card {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all .18s ease;
+    background: #ffffff;
+  }
+  .toggle-card:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
+  .toggle-card input:checked ~ div .toggle-title {
+    color: #4f46e5;
+  }
+</style>
+
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <a href="{% url 'manage_products' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          Inventory
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Add Product SKU</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Add New Product</h1>
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-box text-[10px]"></i> {{ total_products_count|default:0 }} SKUs in Catalog
+        </span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <a href="{% url 'manage_products' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-boxes-stacked text-indigo-600"></i> Manage Catalog
+      </a>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       2-COLUMN STUDIO GRID
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- LEFT COLUMN: PRODUCT FORM (8 COLS) -->
+    <div class="lg:col-span-8">
+      <form method="post" class="billing-card p-6 sm:p-8 space-y-6">
+        {% csrf_token %}
+
+        <!-- Section: Basic Info -->
+        <div class="space-y-4">
+          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 pb-2 border-b border-slate-100">
+            <i class="fa-solid fa-circle-info text-indigo-600"></i> Product Core Information
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <!-- Product Name -->
+            <div class="sm:col-span-2">
+              <label class="input-label">
+                <i class="fa-solid fa-tag text-slate-400 mr-1"></i> Product Full Name <span class="text-rose-500">*</span>
+              </label>
+              <input type="text"
+                     id="productNameInput"
+                     name="product_name"
+                     placeholder="e.g. 14.2 KG Domestic Refill or 2-Burner Gas Stove"
+                     class="custom-input font-medium"
+                     required />
+            </div>
+
+            <!-- Opening Quantity -->
+            <div>
+              <label class="input-label">
+                <i class="fa-solid fa-boxes-stacked text-slate-400 mr-1"></i> Opening Stock Units <span class="text-rose-500">*</span>
+              </label>
+              <input type="number"
+                     name="product_quantity"
+                     min="0"
+                     value="0"
+                     class="custom-input font-bold text-slate-900 font-mono"
+                     required />
+            </div>
+
+            <!-- Product Code Preview Badge -->
+            <div>
+              <label class="input-label">
+                <i class="fa-solid fa-barcode text-slate-400 mr-1"></i> SKU Product Code
+              </label>
+              <div class="h-[44px] px-3.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-indigo-700" id="generatedCodePreview">AUTO-GENERATED</span>
+                <span class="text-[10px] uppercase font-bold text-slate-400">Unique Code</span>
+              </div>
+            </div>
+
+            <!-- Buying Price (Cost) -->
+            <div>
+              <label class="input-label">
+                <i class="fa-solid fa-receipt text-slate-400 mr-1"></i> Buying Cost Price (₹) <span class="text-rose-500">*</span>
+              </label>
+              <div class="flex items-stretch rounded-xl border-2 border-slate-200 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 overflow-hidden bg-white transition">
+                <span class="inline-flex items-center px-4 bg-slate-50 text-slate-600 font-bold text-sm border-r border-slate-200 select-none shrink-0">
+                  ₹
+                </span>
+                <input type="number"
+                       id="buyPriceInput"
+                       name="buy_price"
+                       step="0.01"
+                       min="0"
+                       placeholder="0.00"
+                       class="w-full px-3.5 py-2 text-sm font-bold text-slate-900 outline-none bg-transparent font-mono"
+                       required />
+              </div>
+            </div>
+
+            <!-- Selling Price (MRP) -->
+            <div>
+              <label class="input-label">
+                <i class="fa-solid fa-money-bill-wave text-slate-400 mr-1"></i> Selling Price / MRP (₹) <span class="text-rose-500">*</span>
+              </label>
+              <div class="flex items-stretch rounded-xl border-2 border-slate-200 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 overflow-hidden bg-white transition">
+                <span class="inline-flex items-center px-4 bg-slate-50 text-slate-600 font-bold text-sm border-r border-slate-200 select-none shrink-0">
+                  ₹
+                </span>
+                <input type="number"
+                       id="productPriceInput"
+                       name="product_price"
+                       step="0.01"
+                       min="0"
+                       placeholder="0.00"
+                       class="w-full px-3.5 py-2 text-sm font-bold text-slate-900 outline-none bg-transparent font-mono"
+                       required />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Live Margin Calculation Widget -->
+        <div class="p-4 rounded-xl bg-slate-50/90 border border-slate-200 space-y-2.5">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Unit Profit Margin Preview</div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <div class="text-[11px] text-slate-500">Cost Price</div>
+              <div class="font-mono font-bold text-slate-800 text-sm" id="marginCostPreview">₹0.00</div>
+            </div>
+            <div>
+              <div class="text-[11px] text-slate-500">Selling Price</div>
+              <div class="font-mono font-bold text-slate-800 text-sm" id="marginMrpPreview">₹0.00</div>
+            </div>
+            <div>
+              <div class="text-[11px] text-slate-500">Gross Margin</div>
+              <div class="font-mono font-extrabold text-emerald-700 text-sm" id="marginGrossPreview">₹0.00 (0%)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Configuration Toggles -->
+        <div class="space-y-4 pt-2">
+          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 pb-2 border-b border-slate-100">
+            <i class="fa-solid fa-sliders text-indigo-600"></i> Operational Configuration
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            <!-- In Stock -->
+            <label class="toggle-card">
+              <div>
+                <div class="font-bold text-xs text-slate-800 toggle-title">In Stock Active</div>
+                <div class="text-[11px] text-slate-500">Ready for billing</div>
+              </div>
+              <input type="checkbox" name="in_stock" class="checkbox checkbox-primary checkbox-sm" checked />
+            </label>
+
+            <!-- DAC Applicable -->
+            <label class="toggle-card">
+              <div>
+                <div class="font-bold text-xs text-slate-800 toggle-title">DAC Applicable</div>
+                <div class="text-[11px] text-slate-500">Deduct DAC balance</div>
+              </div>
+              <input type="checkbox" name="dac_applicable" class="checkbox checkbox-primary checkbox-sm" />
+            </label>
+
+            <!-- Empty Submission Required -->
+            <label class="toggle-card">
+              <div>
+                <div class="font-bold text-xs text-slate-800 toggle-title">Submission Reqd.</div>
+                <div class="text-[11px] text-slate-500">Expect empty return</div>
+              </div>
+              <input type="checkbox" name="submission_required" class="checkbox checkbox-primary checkbox-sm" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <a href="{% url 'manage_products' %}"
+             class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+            Cancel
+          </a>
+          <button type="submit" class="btn-create-product">
+            <i class="fa-solid fa-plus text-xs"></i> Add Product to Inventory
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- RIGHT COLUMN: CONTEXT & RECENT CATALOG (4 COLS) -->
+    <div class="lg:col-span-4 space-y-6">
+
+      <!-- SKU Generation Info -->
+      <div class="billing-card p-5 space-y-3 bg-gradient-to-br from-indigo-50/50 to-white border-indigo-100">
+        <div class="flex items-center gap-2 text-xs font-bold text-indigo-950 uppercase tracking-wider">
+          <i class="fa-solid fa-barcode text-indigo-600"></i> Smart SKU Auto-Code
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          The system automatically cleans and constructs an immutable alphanumeric SKU code upon creation based on the product title.
         </p>
+      </div>
+
+      <!-- Recent Added Products -->
+      <div class="billing-card p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> Recently Added SKUs
+          </div>
+          <span class="text-[11px] text-slate-400">{{ recent_products|length }} recent</span>
+        </div>
+
+        <div class="space-y-2.5">
+          {% for p in recent_products %}
+          <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/60 flex items-center justify-between">
+            <div class="space-y-0.5">
+              <div class="font-bold text-xs text-slate-800">{{ p.product_name }}</div>
+              <div class="text-[11px] font-mono text-indigo-600">{{ p.productCode }}</div>
+            </div>
+            <div class="text-right">
+              <div class="font-mono font-extrabold text-xs text-slate-900">₹{{ p.product_price }}</div>
+              <span class="pill pill-emerald text-[10px] py-0 px-2">{{ p.product_quantity }} in stock</span>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-6 text-xs text-slate-400">
+            No products added yet.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
     </div>
 
-    <div class="bg-base-100 rounded-3xl shadow-xl border border-base-300">
-
-        <form method="post" class="p-8">
-            {% csrf_token %}
-
-            <div class="flex items-center gap-3 mb-8">
-                <div class="w-12 h-12 rounded-xl bg-primary text-primary-content flex items-center justify-center">
-                    <i class="fa-solid fa-box text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold">Product Information</h3>
-                    <p class="text-sm text-gray-500">Fill the product details below.</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-semibold">Product Name</span></label>
-                    <input type="text" name="product_name" class="input input-bordered input-lg w-full"
-                           placeholder="Example : HP 14.2 Kg Refill" required>
-                </div>
-
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-semibold">Product Code</span></label>
-                    <div class="alert alert-info rounded-xl">
-                        <i class="fa-solid fa-barcode"></i>
-                        <span>Generated Automatically</span>
-                    </div>
-                </div>
-
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-semibold">Opening Quantity</span></label>
-                    <input type="number" name="product_quantity" min="0" value="0"
-                           class="input input-bordered input-lg w-full" required>
-                </div>
-
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-semibold">Selling Price (MRP)</span></label>
-                    <label class="input input-bordered input-lg flex items-center gap-2">
-                        <span>₹</span>
-                        <input class="grow" type="number" name="product_price" min="0" step="0.01"
-                               placeholder="0.00" required>
-                    </label>
-                </div>
-
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-semibold">Buying Price</span></label>
-                    <label class="input input-bordered input-lg flex items-center gap-2">
-                        <span>₹</span>
-                        <input class="grow" type="number" name="buy_price" min="0" step="0.01"
-                               placeholder="0.00" required>
-                    </label>
-                </div>
-
-            </div>
-
-            <div class="divider text-base font-semibold mt-8">Configuration</div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                <label class="border border-base-300 rounded-2xl p-5 flex justify-between items-center cursor-pointer hover:bg-base-200">
-                    <div>
-                        <div class="font-bold">Product In Stock</div>
-                        <div class="text-sm text-gray-500">Available for billing</div>
-                    </div>
-                    <input type="checkbox" name="in_stock" class="toggle toggle-primary toggle-lg" checked>
-                </label>
-
-                <label class="border border-base-300 rounded-2xl p-5 flex justify-between items-center cursor-pointer hover:bg-base-200">
-                    <div>
-                        <div class="font-bold">DAC Applicable</div>
-                        <div class="text-sm text-gray-500">Deduct DAC during invoice</div>
-                    </div>
-                    <input type="checkbox" name="dac_applicable" class="toggle toggle-success toggle-lg">
-                </label>
-
-                <label class="border border-base-300 rounded-2xl p-5 flex justify-between items-center cursor-pointer hover:bg-base-200">
-                    <div>
-                        <div class="font-bold">Submission Reqd.</div>
-                        <div class="text-sm text-gray-500">Empty cylinders expected</div>
-                    </div>
-                    <input type="checkbox" name="submission_required" class="toggle toggle-warning toggle-lg">
-                </label>
-
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="flex justify-end gap-3">
-
-                <a href="{% url 'manage_products' %}" class="btn btn-outline">
-                    <i class="fa-solid fa-arrow-left mr-2"></i>
-                    Back
-                </a>
-
-                <button class="btn btn-primary btn-wide">
-                    <i class="fa-solid fa-plus mr-2"></i>
-                    Add Product
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
+  </div>
 
 </div>
 
+<!-- Live Calculation Script -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const nameInput = document.getElementById('productNameInput');
+  const buyPriceInput = document.getElementById('buyPriceInput');
+  const productPriceInput = document.getElementById('productPriceInput');
+  const generatedCodePreview = document.getElementById('generatedCodePreview');
+  const marginCostPreview = document.getElementById('marginCostPreview');
+  const marginMrpPreview = document.getElementById('marginMrpPreview');
+  const marginGrossPreview = document.getElementById('marginGrossPreview');
+
+  function updatePricing() {
+    const cost = parseFloat(buyPriceInput.value || 0);
+    const mrp = parseFloat(productPriceInput.value || 0);
+    const grossMargin = mrp - cost;
+    const marginPct = cost > 0 ? ((grossMargin / cost) * 100).toFixed(1) : '0';
+
+    marginCostPreview.textContent = '₹' + cost.toFixed(2);
+    marginMrpPreview.textContent = '₹' + mrp.toFixed(2);
+    
+    if (grossMargin >= 0) {
+      marginGrossPreview.className = 'font-mono font-extrabold text-emerald-700 text-sm';
+      marginGrossPreview.textContent = `₹${grossMargin.toFixed(2)} (+${marginPct}%)`;
+    } else {
+      marginGrossPreview.className = 'font-mono font-extrabold text-rose-600 text-sm';
+      marginGrossPreview.textContent = `₹${grossMargin.toFixed(2)} (${marginPct}%)`;
+    }
+  }
+
+  function updateCode() {
+    const raw = (nameInput.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    generatedCodePreview.textContent = raw ? raw.slice(0, 16) : 'AUTO-GENERATED';
+  }
+
+  nameInput?.addEventListener('input', updateCode);
+  buyPriceInput?.addEventListener('input', updatePricing);
+  productPriceInput?.addEventListener('input', updatePricing);
+  updatePricing();
+});
+</script>
 {% endblock %}

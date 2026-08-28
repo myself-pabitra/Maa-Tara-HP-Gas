@@ -1,271 +1,254 @@
 {% extends "layout.html" %}
-{% load static %}
+{% load static humanize %}
 
-{% block title %}Add Employee{% endblock %}
+{% block title %}Add New Employee | Maa Tara HP Gas{% endblock %}
 
 {% block content %}
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
 
-<div class="max-w-7xl mx-auto px-6 py-8">
+  /* Custom input styling */
+  .custom-input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    outline: none;
+    transition: all .18s ease;
+  }
+  .custom-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3.5px rgba(99,102,241,.12);
+  }
 
-    <!-- Header -->
+  .input-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64748b;
+    margin-bottom: 6px;
+    display: block;
+  }
 
-    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mb-8">
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
 
-        <div>
+  /* Submit button gradient */
+  .btn-create-emp {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all .18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-create-emp:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
 
-            <h1 class="text-4xl font-bold text-primary">
-                Employee Management
-            </h1>
+  .toggle-card {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all .18s ease;
+    background: #ffffff;
+  }
+  .toggle-card:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
+</style>
 
-            <p class="text-base-content/70 mt-2">
-                Create and manage employees working in Maa Tara HP Gas.
-            </p>
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
 
-        </div>
-
-        <a href="{% url 'view_employees' %}"
-           class="btn btn-primary btn-lg">
-
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 class="w-5 h-5 mr-2"
-                 fill="none"
-                 viewBox="0 0 24 24"
-                 stroke="currentColor">
-
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17 20h5V4H2v16h5m10 0v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2m12 0H7m10-10a4 4 0 11-8 0 4 4 0 018 0z"/>
-
-            </svg>
-
-            View Employees
-
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
         </a>
-
+        <span class="text-xs text-slate-300">/</span>
+        <a href="{% url 'view_employees' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          Staff Directory
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Add Employee</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Add New Employee</h1>
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-user-plus text-[10px]"></i> Staff Onboarding
+        </span>
+      </div>
     </div>
 
-    <div class="grid lg:grid-cols-5 gap-8">
+    <div class="flex items-center gap-2.5">
+      <a href="{% url 'view_employees' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-users text-indigo-600"></i> View All Staff ({{ total_employees }})
+      </a>
+    </div>
+  </div>
 
-        <!-- Left Card -->
+  <!-- ════════════════════════════════════════
+       2-COLUMN STUDIO GRID
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-        <div class="lg:col-span-2">
+    <!-- LEFT COLUMN: EMPLOYEE REGISTRATION FORM (7 COLS) -->
+    <div class="lg:col-span-7">
+      <form method="post" class="billing-card p-6 sm:p-8 space-y-6">
+        {% csrf_token %}
 
-            <div class="card bg-primary text-primary-content shadow-xl h-full">
+        <div class="space-y-5">
 
-                <div class="card-body justify-center">
+          <!-- Employee Name -->
+          <div>
+            <label class="input-label">
+              <i class="fa-solid fa-user text-slate-400 mr-1"></i> Full Name <span class="text-rose-500">*</span>
+            </label>
+            <input type="text"
+                   name="employee_name"
+                   placeholder="e.g. Debashis Mondal"
+                   class="custom-input font-medium"
+                   required />
+          </div>
 
-                    <div class="text-center">
+          <!-- Mobile Phone Number -->
+          <div>
+            <label class="input-label">
+              <i class="fa-solid fa-phone text-slate-400 mr-1"></i> Contact Mobile Number <span class="text-rose-500">*</span>
+            </label>
+            <input type="text"
+                   name="phone"
+                   maxlength="10"
+                   placeholder="10-digit mobile number"
+                   class="custom-input font-medium font-mono"
+                   required />
+          </div>
 
-                        <div class="text-7xl mb-5">
-                            👨‍💼
-                        </div>
+          <!-- Residential Address -->
+          <div>
+            <label class="input-label">
+              <i class="fa-solid fa-location-dot text-slate-400 mr-1"></i> Residential / Communication Address <span class="text-rose-500">*</span>
+            </label>
+            <textarea name="address"
+                      rows="3"
+                      placeholder="Village/locality, post office, district, PIN..."
+                      class="w-full border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
+                      required></textarea>
+          </div>
 
-                        <h2 class="text-3xl font-bold mb-3">
-
-                            Employee Registration
-
-                        </h2>
-
-                        <p class="leading-7 opacity-90">
-
-                            Register employees who work under your agency.
-
-                        </p>
-
-                        <div class="divider"></div>
-
-                        <div class="space-y-3 text-left">
-
-                            <div class="flex items-center gap-3">
-
-                                ✅ Employee Code generated automatically
-
-                            </div>
-
-                            <div class="flex items-center gap-3">
-
-                                ✅ Mobile Number must be unique
-
-                            </div>
-
-                            <div class="flex items-center gap-3">
-
-                                ✅ Employees can be edited later
-
-                            </div>
-
-                            <div class="flex items-center gap-3">
-
-                                ✅ Active / Inactive status supported
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
+          <!-- Active Status Toggle -->
+          <label class="toggle-card">
+            <div>
+              <div class="font-bold text-xs text-slate-900">Active Profile Status</div>
+              <div class="text-[11px] text-slate-500">Available to select for delivery trips and invoices</div>
             </div>
+            <input type="checkbox" name="is_active" class="checkbox checkbox-primary checkbox-sm" checked />
+          </label>
 
         </div>
 
-        <!-- Right Card -->
-
-        <div class="lg:col-span-3">
-
-            <div class="card bg-base-200 shadow-xl">
-
-                <div class="card-body">
-
-                    <h2 class="card-title text-2xl mb-6">
-
-                        Add New Employee
-
-                    </h2>
-
-                    <form method="post">
-
-                        {% csrf_token %}
-
-                        <div class="grid md:grid-cols-2 gap-5">
-
-                            <div class="form-control">
-
-                                <label class="label">
-
-                                    <span class="label-text font-semibold">
-
-                                        Employee Name
-
-                                    </span>
-
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="employee_name"
-                                    class="input input-bordered"
-                                    placeholder="Enter employee name"
-                                    required>
-
-                            </div>
-
-                            <div class="form-control">
-
-                                <label class="label">
-
-                                    <span class="label-text font-semibold">
-
-                                        Mobile Number
-
-                                    </span>
-
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="phone"
-                                    maxlength="10"
-                                    class="input input-bordered"
-                                    placeholder="9876543210"
-                                    required>
-
-                            </div>
-
-                        </div>
-
-                        <div class="form-control mt-5">
-
-                            <label class="label">
-
-                                <span class="label-text font-semibold">
-
-                                    Address
-
-                                </span>
-
-                            </label>
-
-                            <textarea
-                                rows="4"
-                                name="address"
-                                class="textarea textarea-bordered"
-                                placeholder="Enter complete employee address"
-                                required></textarea>
-
-                        </div>
-
-                        <div class="flex justify-between items-center mt-6 border rounded-xl p-5 bg-base-100">
-
-                            <div>
-
-                                <h3 class="font-semibold">
-
-                                    Employee Status
-
-                                </h3>
-
-                                <p class="text-sm opacity-70">
-
-                                    Disable this employee whenever required.
-
-                                </p>
-
-                            </div>
-
-                            <input
-                                type="checkbox"
-                                name="is_active"
-                                class="toggle toggle-success toggle-lg"
-                                checked>
-
-                        </div>
-
-                        <div class="flex justify-end gap-4 mt-8">
-
-                            <button
-                                type="reset"
-                                class="btn btn-outline">
-
-                                Clear
-
-                            </button>
-
-                            <button
-                                type="submit"
-                                class="btn btn-primary">
-
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                     class="w-5 h-5 mr-2"
-                                     fill="none"
-                                     viewBox="0 0 24 24"
-                                     stroke="currentColor">
-
-                                    <path stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                          stroke-width="2"
-                                          d="M12 4v16m8-8H4"/>
-
-                                </svg>
-
-                                Add Employee
-
-                            </button>
-
-                        </div>
-
-                    </form>
-
-                </div>
-
-            </div>
-
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <a href="{% url 'view_employees' %}"
+             class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+            Cancel
+          </a>
+          <button type="submit" class="btn-create-emp">
+            <i class="fa-solid fa-user-plus text-xs"></i> Register Employee
+          </button>
         </div>
 
+      </form>
     </div>
+
+    <!-- RIGHT COLUMN: CONTEXT & RECENT STAFF (5 COLS) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- Employee Code Generation Notice -->
+      <div class="billing-card p-5 space-y-3 bg-gradient-to-br from-indigo-50/50 to-white border-indigo-100">
+        <div class="flex items-center gap-2 text-xs font-bold text-indigo-950 uppercase tracking-wider">
+          <i class="fa-solid fa-id-card text-indigo-600"></i> Smart Employee Code
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          The system automatically generates a unique employee code (e.g. <code>EMP...</code>) upon saving for internal identification and invoice attribution.
+        </p>
+      </div>
+
+      <!-- Recently Added Staff -->
+      <div class="billing-card p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> Recently Added Staff
+          </div>
+          <span class="text-[11px] text-slate-400">{{ recent_employees|length }} recent</span>
+        </div>
+
+        <div class="space-y-2.5">
+          {% for emp in recent_employees %}
+          <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/60 flex items-center justify-between">
+            <div class="space-y-0.5">
+              <div class="font-bold text-xs text-slate-800">{{ emp.name }}</div>
+              <div class="text-[11px] font-mono text-indigo-600">{{ emp.employeeCode }}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="pill pill-emerald text-[10px] py-0.5 px-2 font-mono">{{ emp.phone }}</span>
+              <a href="{% url 'edit_employee' emp.employeeCode %}"
+                 class="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs transition"
+                 title="Edit employee">
+                <i class="fa-solid fa-pen text-[10px]"></i>
+              </a>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-6 text-xs text-slate-400">
+            No employees registered yet.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
 
 </div>
-
 {% endblock %}

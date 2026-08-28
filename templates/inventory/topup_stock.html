@@ -1,233 +1,464 @@
 {% extends 'layout.html' %}
-{% load static %}
+{% load static humanize %}
 
-{% block title %}Top-Up Stock{% endblock %}
+{% block title %}Top-Up Product Stock | Maa Tara HP Gas{% endblock %}
 
 {% block content %}
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
 
-<div class="p-4 sm:p-8 max-w-6xl mx-auto">
+  /* Table styling */
+  .dash-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+  }
+  .dash-table th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #eef2f6;
+    white-space: nowrap;
+  }
+  .dash-table td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .dash-table tbody tr {
+    transition: background-color .15s ease;
+  }
+  .dash-table tbody tr:hover {
+    background-color: #f8faff;
+  }
 
-    <!-- Page Header -->
-    <div class="mb-8">
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900">Top-Up Stock</h2>
-        <p class="text-slate-500 mt-1.5 text-sm">Add new stock to your products. Each top-up is tracked as a separate batch for accurate profit calculation.</p>
+  /* Custom input styling */
+  .custom-input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    outline: none;
+    transition: all .18s ease;
+  }
+  .custom-input:focus {
+    border-color: #059669;
+    box-shadow: 0 0 0 3.5px rgba(16, 185, 129, .15);
+  }
+
+  .input-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64748b;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+  /* Submit button gradient */
+  .btn-topup-submit {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, .32);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all .18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-topup-submit:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, .42);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
+</style>
+
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <a href="{% url 'manage_products' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          Inventory
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Stock Top-Up</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Top-Up Warehouse Stock</h1>
+        <span class="pill pill-emerald">
+          <i class="fa-solid fa-layer-group text-[10px]"></i> {{ total_batches_count|default:0 }} Batches Processed
+        </span>
+      </div>
     </div>
 
-    <!-- Top-Up Form Card -->
-    <div class="bg-white rounded-2xl shadow-lg border border-slate-200 mb-8">
-
-        <form method="post" id="topupForm" class="p-6 sm:p-8">
-            {% csrf_token %}
-
-            <div class="flex items-center gap-3 mb-7">
-                <div class="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm">
-                    <i class="fa-solid fa-boxes-stacked text-lg"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900">Add New Stock</h3>
-                    <p class="text-xs text-slate-500">Select a product, set buy price, and enter quantity to add.</p>
-                </div>
-            </div>
-
-            <!-- Product Selector -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-semibold text-slate-700">Product <span class="text-rose-500">*</span></span></label>
-                    <select name="product_id" id="productSelect" class="select select-bordered w-full font-medium" required>
-                        <option value="" disabled selected>Choose a product…</option>
-                        {% for p in products %}
-                        <option value="{{ p.id }}">{{ p.productCode }} — {{ p.product_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <!-- Current Stock Info (auto-populated) -->
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-semibold text-slate-700">Current Stock</span></label>
-                    <div id="stockInfoCard" class="flex items-center gap-4 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 min-h-[48px]">
-                        <span id="stockInfoText" class="text-slate-400 text-sm">Select a product to see stock info</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Buy Price + Quantity -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-semibold text-slate-700">Buy Price (per unit) <span class="text-rose-500">*</span></span></label>
-                    <label class="input input-bordered flex items-center gap-2">
-                        <span class="text-slate-500 font-bold">₹</span>
-                        <input type="number" name="buy_price" id="buyPriceInput" step="0.01" min="0" class="grow" placeholder="0.00" required>
-                    </label>
-                </div>
-
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-semibold text-slate-700">Quantity to Add <span class="text-rose-500">*</span></span></label>
-                    <input type="number" name="quantity" id="quantityInput" min="1" class="input input-bordered w-full" placeholder="e.g. 100" required>
-                </div>
-
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-semibold text-slate-700">Notes <span class="text-slate-400 text-xs font-normal">(optional)</span></span></label>
-                    <input type="text" name="notes" class="input input-bordered w-full" placeholder="e.g. Monthly delivery">
-                </div>
-            </div>
-
-            <!-- Summary Preview -->
-            <div id="summaryPreview" class="hidden rounded-xl bg-emerald-50 border border-emerald-200 p-4 mb-6">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fa-solid fa-receipt text-emerald-700 text-sm"></i>
-                    <span class="font-bold text-sm text-emerald-900">Top-Up Summary</span>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                    <div>
-                        <div class="text-emerald-700 text-xs font-medium">Product</div>
-                        <div id="prevProduct" class="font-bold text-slate-900 truncate">—</div>
-                    </div>
-                    <div>
-                        <div class="text-emerald-700 text-xs font-medium">Adding</div>
-                        <div id="prevQty" class="font-bold text-slate-900">—</div>
-                    </div>
-                    <div>
-                        <div class="text-emerald-700 text-xs font-medium">Buy Price</div>
-                        <div id="prevPrice" class="font-bold text-slate-900">—</div>
-                    </div>
-                    <div>
-                        <div class="text-emerald-700 text-xs font-medium">Total Cost</div>
-                        <div id="prevTotal" class="font-extrabold text-emerald-800">—</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Submit -->
-            <button type="submit" class="btn btn-primary btn-md text-white font-bold shadow-md gap-2 px-8">
-                <i class="fa-solid fa-plus"></i>
-                Top Up Stock
-            </button>
-        </form>
+    <div class="flex items-center gap-2.5">
+      <a href="{% url 'manage_products' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-boxes-stacked text-indigo-600"></i> View Catalog SKUs
+      </a>
     </div>
+  </div>
 
-    <!-- Recent Top-Ups Table -->
-    <div class="bg-white rounded-2xl shadow-lg border border-slate-200">
-        <div class="flex items-center gap-3 px-6 sm:px-8 pt-6 pb-4 border-b border-slate-100">
-            <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
-                <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+  <!-- ════════════════════════════════════════
+       2-COLUMN STUDIO GRID
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- LEFT COLUMN: TOP-UP FORM (7 COLS) -->
+    <div class="lg:col-span-7">
+      <form method="post" id="topupForm" class="billing-card p-6 sm:p-8 space-y-6">
+        {% csrf_token %}
+
+        <div class="space-y-5">
+          
+          <!-- Product Selector -->
+          <div>
+            <label class="input-label">
+              <i class="fa-solid fa-box text-slate-400 mr-1"></i> Select Inventory SKU <span class="text-rose-500">*</span>
+            </label>
+            <select name="product_id" id="productSelect" class="custom-input font-medium" required>
+              <option value="" disabled selected>Select a product to top-up stock...</option>
+              {% for p in products %}
+              <option value="{{ p.id }}">{{ p.product_name }} ({{ p.productCode }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Current Stock Dynamic Info Card -->
+          <div id="stockInfoCard" class="p-4 rounded-xl bg-slate-50 border border-slate-200 transition">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Current Warehouse State</div>
+            <div id="stockInfoContent" class="text-xs text-slate-400">
+              Please choose a product SKU above to view stock and pricing.
             </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Buy Price -->
             <div>
-                <h3 class="text-base font-bold text-slate-900">Recent Top-Ups</h3>
-                <p class="text-xs text-slate-500">Last 25 stock additions across all products</p>
+              <label class="input-label">
+                <i class="fa-solid fa-receipt text-slate-400 mr-1"></i> Buy Price / Unit (₹) <span class="text-rose-500">*</span>
+              </label>
+              <div class="flex items-stretch rounded-xl border-2 border-slate-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100 overflow-hidden bg-white transition">
+                <span class="inline-flex items-center px-4 bg-slate-50 text-slate-600 font-bold text-sm border-r border-slate-200 select-none shrink-0">
+                  ₹
+                </span>
+                <input type="number"
+                       name="buy_price"
+                       id="buyPriceInput"
+                       step="0.01"
+                       min="0"
+                       placeholder="0.00"
+                       class="w-full px-3.5 py-2 text-sm font-bold text-slate-900 outline-none bg-transparent font-mono"
+                       required />
+              </div>
             </div>
+
+            <!-- Quantity to Add -->
+            <div>
+              <label class="input-label">
+                <i class="fa-solid fa-circle-plus text-slate-400 mr-1"></i> Quantity to Add <span class="text-rose-500">*</span>
+              </label>
+              <div class="flex items-stretch rounded-xl border-2 border-slate-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100 overflow-hidden bg-white transition">
+                <input type="number"
+                       name="quantity"
+                       id="quantityInput"
+                       min="1"
+                       placeholder="e.g. 100"
+                       class="w-full px-3.5 py-2 text-sm font-bold text-slate-900 outline-none bg-transparent font-mono"
+                       required />
+                <span class="inline-flex items-center px-3 bg-slate-50 text-slate-500 font-semibold text-xs border-l border-slate-200 select-none shrink-0">
+                  units
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label class="input-label">
+              <i class="fa-solid fa-pen text-slate-400 mr-1"></i> Batch Memo / Supplier Delivery Note <span class="text-slate-400 font-normal lowercase">(optional)</span>
+            </label>
+            <input type="text"
+                   name="notes"
+                   placeholder="e.g. Weekly Bottling Plant Delivery, Truck No. WB-34-XXXX"
+                   class="custom-input font-medium text-xs" />
+          </div>
+
+          <!-- Live Top-Up Investment Summary -->
+          <div id="summaryPreview" class="hidden rounded-xl bg-emerald-50 border border-emerald-200 p-4 space-y-2.5">
+            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-950">
+              <i class="fa-solid fa-calculator text-emerald-600"></i> Top-Up Investment Calculation
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+              <div>
+                <div class="text-[10px] text-emerald-700 font-bold uppercase">Product SKU</div>
+                <div id="prevProduct" class="font-bold text-slate-900 text-xs truncate">—</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-emerald-700 font-bold uppercase">Stock Increment</div>
+                <div id="prevQty" class="font-mono font-extrabold text-emerald-700 text-sm">—</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-emerald-700 font-bold uppercase">Batch Rate</div>
+                <div id="prevPrice" class="font-mono font-bold text-slate-900 text-xs">—</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-emerald-700 font-bold uppercase">Batch Capital Cost</div>
+                <div id="prevTotal" class="font-mono font-extrabold text-emerald-900 text-sm">—</div>
+              </div>
+            </div>
+          </div>
+
         </div>
-        <div class="overflow-x-auto">
-            <table class="table w-full">
-                <thead>
-                    <tr class="bg-slate-50 text-slate-700 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
-                        <th class="py-3 px-4">Date</th>
-                        <th class="py-3 px-4">Product</th>
-                        <th class="py-3 px-4 text-right">Buy Price</th>
-                        <th class="py-3 px-4 text-center">Added</th>
-                        <th class="py-3 px-4 text-center">Remaining</th>
-                        <th class="py-3 px-4">Notes</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    {% for batch in recent_batches %}
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-4 py-3 font-mono text-sm text-slate-800 whitespace-nowrap">
-                            {{ batch.added_at|date:"d M Y, h:i A" }}
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="font-bold text-sm text-slate-900">{{ batch.product.product_name }}</div>
-                            <span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px] font-bold border border-slate-200">
-                                {{ batch.product.productCode }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 text-right font-mono font-bold text-sm text-slate-900">₹{{ batch.buy_price }}</td>
-                        <td class="px-4 py-3 text-center">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200">
-                                +{{ batch.quantity_added }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 text-center font-mono font-semibold text-sm {% if batch.quantity_remaining == 0 %}text-slate-400{% else %}text-slate-800{% endif %}">
-                            {{ batch.quantity_remaining }}
-                        </td>
-                        <td class="px-4 py-3 text-sm text-slate-500 max-w-[200px] truncate">
-                            {{ batch.notes|default:"—" }}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center py-12 text-slate-400">
-                            <div class="flex flex-col items-center">
-                                <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
-                                    <i class="fa-solid fa-box-open text-xl"></i>
-                                </div>
-                                <p class="font-semibold text-slate-500">No top-ups yet</p>
-                                <p class="text-xs text-slate-400 mt-0.5">Add your first stock top-up above.</p>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <a href="{% url 'manage_products' %}"
+             class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+            Cancel
+          </a>
+          <button type="submit" class="btn-topup-submit">
+            <i class="fa-solid fa-plus text-xs"></i> Top Up Warehouse Stock
+          </button>
         </div>
+
+      </form>
     </div>
+
+    <!-- RIGHT COLUMN: FIFO BATCH TRACKING & INSIGHTS (5 COLS) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- Batch Integrity Card -->
+      <div class="billing-card p-5 space-y-3 bg-gradient-to-br from-emerald-50/60 to-white border-emerald-100">
+        <div class="flex items-center gap-2 text-xs font-bold text-emerald-950 uppercase tracking-wider">
+          <i class="fa-solid fa-shield-halved text-emerald-600"></i> FIFO Batch Cost Accounting
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Each inventory top-up creates an isolated stock batch with its purchase rate. When subdealers and customers purchase cylinders, profit margins are calculated with FIFO precision.
+        </p>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="billing-card p-5 space-y-3">
+        <div class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-chart-simple text-indigo-600"></i> Warehouse Intake Statistics
+        </div>
+        
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Total Units Stocked</div>
+            <div class="text-lg font-extrabold text-slate-900 font-mono mt-0.5">{{ total_units_stocked|intcomma }}</div>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Batches Logged</div>
+            <div class="text-lg font-extrabold text-emerald-700 font-mono mt-0.5">{{ total_batches_count|intcomma }}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       RECENT TOP-UPS BATCH LEDGER
+  ════════════════════════════════════════ -->
+  <div class="billing-card overflow-hidden">
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center justify-center text-xs font-bold">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <div>
+          <h3 class="font-extrabold text-slate-900 text-sm">Recent Stock Intake Batches</h3>
+          <p class="text-[11px] text-slate-500">History of the latest 25 stock batches added to the agency</p>
+        </div>
+      </div>
+      <span class="pill pill-slate text-[10px]">Showing 25 Latest</span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th style="width: 170px;">Date &amp; Time</th>
+            <th style="min-width: 220px;">Product SKU</th>
+            <th style="width: 130px;" class="text-right">Buy Rate</th>
+            <th style="width: 130px;" class="text-center">Added Units</th>
+            <th style="width: 130px;" class="text-center">Remaining</th>
+            <th style="min-width: 200px;">Delivery Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for batch in recent_batches %}
+          <tr>
+            <!-- Date -->
+            <td class="font-mono text-xs text-slate-800 whitespace-nowrap">
+              <i class="fa-regular fa-calendar text-slate-400 mr-1 text-[11px]"></i>
+              {{ batch.added_at|date:"d M Y, h:i A" }}
+            </td>
+
+            <!-- Product -->
+            <td>
+              <div class="font-bold text-slate-900 text-xs">{{ batch.product.product_name }}</div>
+              <div class="font-mono text-[10px] text-indigo-600 mt-0.5">{{ batch.product.productCode }}</div>
+            </td>
+
+            <!-- Buy Rate -->
+            <td class="text-right font-mono font-bold text-xs text-slate-900">
+              ₹{{ batch.buy_price|floatformat:2|intcomma }}
+            </td>
+
+            <!-- Quantity Added -->
+            <td class="text-center">
+              <span class="pill pill-emerald text-[11px] font-mono">
+                +{{ batch.quantity_added|intcomma }}
+              </span>
+            </td>
+
+            <!-- Quantity Remaining -->
+            <td class="text-center font-mono font-bold text-xs">
+              {% if batch.quantity_remaining > 0 %}
+                <span class="text-slate-800">{{ batch.quantity_remaining|intcomma }}</span>
+              {% else %}
+                <span class="text-slate-400 line-through">0 (Sold)</span>
+              {% endif %}
+            </td>
+
+            <!-- Notes -->
+            <td class="text-xs text-slate-600">
+              {{ batch.notes|default:"—" }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center py-12">
+              <div class="max-w-sm mx-auto space-y-3">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto text-xl">
+                  <i class="fa-solid fa-boxes-stacked"></i>
+                </div>
+                <div class="text-sm font-bold text-slate-700">No Stock Intake Batches</div>
+                <p class="text-xs text-slate-500">
+                  Select a product above and enter a quantity to record your first stock intake batch.
+                </p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
 </div>
 
+<!-- JavaScript: Live Stock Info & Investment Calculation -->
 <script>
 (function() {
-    const productData = {{ product_data_json|safe }};
-    const productSelect = document.getElementById('productSelect');
-    const stockInfoText = document.getElementById('stockInfoText');
-    const buyPriceInput = document.getElementById('buyPriceInput');
-    const quantityInput = document.getElementById('quantityInput');
-    const summaryPreview = document.getElementById('summaryPreview');
-    const prevProduct = document.getElementById('prevProduct');
-    const prevQty = document.getElementById('prevQty');
-    const prevPrice = document.getElementById('prevPrice');
-    const prevTotal = document.getElementById('prevTotal');
+  const productData = {{ product_data_json|safe }};
+  const productSelect = document.getElementById('productSelect');
+  const stockInfoContent = document.getElementById('stockInfoContent');
+  const buyPriceInput = document.getElementById('buyPriceInput');
+  const quantityInput = document.getElementById('quantityInput');
+  const summaryPreview = document.getElementById('summaryPreview');
+  const prevProduct = document.getElementById('prevProduct');
+  const prevQty = document.getElementById('prevQty');
+  const prevPrice = document.getElementById('prevPrice');
+  const prevTotal = document.getElementById('prevTotal');
 
-    function updateStockInfo() {
-        const id = productSelect.value;
-        if (!id || !productData[id]) {
-            stockInfoText.innerHTML = '<span class="text-slate-400 text-sm">Select a product to see stock info</span>';
-            buyPriceInput.value = '';
-            return;
-        }
-
-        const p = productData[id];
-        stockInfoText.innerHTML =
-            '<div class="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">' +
-            '<span class="font-bold text-slate-900">' + p.current_stock + ' units</span>' +
-            '<span class="text-slate-400">|</span>' +
-            '<span class="text-slate-600">Buy: <span class="font-bold text-slate-900">₹' + p.buy_price + '</span></span>' +
-            '<span class="text-slate-400">|</span>' +
-            '<span class="text-slate-600">Sell: <span class="font-bold text-slate-900">₹' + p.sell_price + '</span></span>' +
-            '</div>';
-
-        buyPriceInput.value = p.buy_price;
-        updatePreview();
+  function updateStockInfo() {
+    const id = productSelect.value;
+    if (!id || !productData[id]) {
+      stockInfoContent.innerHTML = '<span class="text-slate-400">Please choose a product SKU above to view stock and pricing.</span>';
+      buyPriceInput.value = '';
+      updatePreview();
+      return;
     }
 
-    function updatePreview() {
-        const id = productSelect.value;
-        const qty = parseInt(quantityInput.value) || 0;
-        const price = parseFloat(buyPriceInput.value) || 0;
+    const p = productData[id];
+    stockInfoContent.innerHTML = `
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-bold">Current Stock</div>
+          <div class="font-mono font-extrabold text-slate-900 text-sm mt-0.5">${p.current_stock} units</div>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-bold">Cost Rate</div>
+          <div class="font-mono font-bold text-slate-800 text-sm mt-0.5">₹${p.buy_price}</div>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-bold">MRP Retail</div>
+          <div class="font-mono font-bold text-indigo-700 text-sm mt-0.5">₹${p.sell_price}</div>
+        </div>
+      </div>
+    `;
 
-        if (id && qty > 0 && price >= 0) {
-            summaryPreview.classList.remove('hidden');
-            prevProduct.textContent = productData[id] ? productData[id].name : '—';
-            prevQty.textContent = '+' + qty + ' units';
-            prevPrice.textContent = '₹' + price.toFixed(2);
-            prevTotal.textContent = '₹' + (qty * price).toFixed(2);
-        } else {
-            summaryPreview.classList.add('hidden');
-        }
+    buyPriceInput.value = p.buy_price;
+    updatePreview();
+  }
+
+  function updatePreview() {
+    const id = productSelect.value;
+    const qty = parseInt(quantityInput.value) || 0;
+    const price = parseFloat(buyPriceInput.value) || 0;
+
+    if (id && qty > 0 && price >= 0) {
+      summaryPreview.classList.remove('hidden');
+      prevProduct.textContent = productData[id] ? productData[id].name : '—';
+      prevQty.textContent = '+' + qty + ' units';
+      prevPrice.textContent = '₹' + price.toFixed(2);
+      prevTotal.textContent = '₹' + (qty * price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    } else {
+      summaryPreview.classList.add('hidden');
     }
+  }
 
-    productSelect.addEventListener('change', updateStockInfo);
-    buyPriceInput.addEventListener('input', updatePreview);
-    quantityInput.addEventListener('input', updatePreview);
+  productSelect?.addEventListener('change', updateStockInfo);
+  buyPriceInput?.addEventListener('input', updatePreview);
+  quantityInput?.addEventListener('input', updatePreview);
 })();
 </script>
-
 {% endblock %}

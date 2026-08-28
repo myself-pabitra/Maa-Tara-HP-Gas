@@ -11,10 +11,14 @@
             {% endblock title %}
         </title>
         <link rel="stylesheet" href="{% static 'src/output.css' %}" />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
                 defer></script>
     </head>
-    <body>
+    <body style="font-family: 'Inter', sans-serif;">
         <main {% if page_type != 'print_invoice' %}class="pt-[60px]"{% endif %}>
             {% if page_type != 'print_invoice' %}
                 <section>
@@ -22,7 +26,7 @@
                 </section>
             {% endif %}
             <section class="relative flex min-h-[calc(100vh-60px)]">
-                {% if page_type != 'create_invoice' and page_type != 'print_invoice' %}
+                {% if page_type != 'create_invoice' and page_type != 'edit_invoice' and page_type != 'print_invoice' %}
                     <aside id="sidebarContainer"
                            class="fixed top-[60px] bottom-0 left-0 z-50 min-h-0 w-72 -translate-x-full border-r border-gray-200 bg-base-100 shadow-xl transition-transform duration-300 ease-in-out lg:sticky lg:top-[60px] lg:bottom-auto lg:h-[calc(100vh-60px)] lg:flex-shrink-0 lg:translate-x-0 lg:shadow-none">
                         {% include "components/sidebar.html" %}
@@ -37,6 +41,7 @@
                 </main>
             </section>
             <!--  alert component here -->
+            {% include "components/alert.html" %}
             {% block js %}
             {% endblock js %}
         </main>

@@ -1,296 +1,463 @@
 {% extends "layout.html" %}
-{% load static %}
+{% load static humanize %}
 
-{% block title %}DAC Entry - Maa Tara HP Gas{% endblock %}
+{% block title %}Record DAC Entry | Maa Tara HP Gas{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
 
-    <!-- Page Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-            <h2 class="text-3xl font-bold text-primary">DAC Entry</h2>
-            <p class="text-sm text-gray-600 font-medium mt-0.5">
-                Record Credit (+) or Debit (-) DAC transactions for subdealers.
-            </p>
-        </div>
-        <div class="flex items-center gap-2">
-            <a href="{% url 'view_dac' %}" class="btn btn-outline btn-sm font-bold gap-1.5">
-                <i class="fa-solid fa-book-open"></i> View Ledger
-            </a>
-            <a href="{% url 'pending_dac_orders' %}" class="btn btn-ghost btn-sm font-bold">
-                Pending Orders
-            </a>
-        </div>
+  /* Custom input styling */
+  .custom-input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    outline: none;
+    transition: all .18s ease;
+  }
+  .custom-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3.5px rgba(99,102,241,.12);
+  }
+
+  .input-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64748b;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+  /* Submit button gradient */
+  .btn-submit-dac {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all .18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-submit-dac:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
+
+  /* Transaction Type Radio Card */
+  .tx-type-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all .15s ease;
+    background: #ffffff;
+  }
+  .tx-type-card:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
+  input[type="radio"]:checked + .tx-type-card-cr {
+    border-color: #10b981;
+    background: #f0fdf4;
+  }
+  input[type="radio"]:checked + .tx-type-card-dr {
+    border-color: #f43f5e;
+    background: #fff1f2;
+  }
+
+  .preset-chip {
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .preset-chip:hover {
+    background: #e0e7ff;
+    color: #4338ca;
+    border-color: #c7d2fe;
+  }
+</style>
+
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <a href="{% url 'view_dac' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          DAC Ledger
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Record Entry</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Record DAC Entry</h1>
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-scale-balanced text-[10px]"></i> Credit &amp; Debit Transactions
+        </span>
+      </div>
     </div>
 
-    <!-- Main Entry Form Card -->
-    <div class="card bg-base-100 border border-base-200 shadow-md">
-        <div class="card-body p-6 sm:p-8">
+    <div class="flex items-center gap-2.5">
+      <a href="{% url 'view_dac' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-book-open text-indigo-600"></i> View Ledger
+      </a>
+      <a href="{% url 'pending_dac_orders' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-hourglass-half text-amber-600"></i> Pending DAC
+      </a>
+    </div>
+  </div>
 
-            <form method="POST" id="dacEntryForm" class="space-y-6">
-                {% csrf_token %}
+  <!-- ════════════════════════════════════════
+       2-COLUMN STUDIO GRID
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-                <!-- Subdealer Selection -->
-                <div class="form-control">
-                    <label class="label py-1 flex justify-between items-center">
-                        <span class="label-text font-bold text-gray-900">Select Subdealer <span class="text-error">*</span></span>
-                        <span id="currentBalanceDisplay" class="text-xs font-semibold text-gray-600 hidden">
-                            Current Balance: <strong id="currentBalNumber" class="font-mono text-gray-900">0.00</strong>
-                        </span>
-                    </label>
-                    <select
-                        id="subdealerSelect"
-                        name="subdealer_code"
-                        class="select select-bordered w-full font-semibold text-gray-900 bg-base-100 focus:outline-none"
-                        required
-                    >
-                        <option value="">-- Choose a Subdealer --</option>
-                        {% for item in subdealers_with_balance %}
-                        <option
-                            value="{{ item.code }}"
-                            data-name="{{ item.name }}"
-                            data-code="{{ item.code }}"
-                            data-balance="{{ item.current_balance }}"
-                        >
-                            {{ item.name }} ({{ item.code }}) — Bal: {{ item.current_balance }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+    <!-- LEFT COLUMN: DAC ENTRY FORM (7 COLS) -->
+    <div class="lg:col-span-7">
+      <form method="POST" id="dacEntryForm" class="billing-card p-6 sm:p-8 space-y-6">
+        {% csrf_token %}
 
-                <!-- Date & Transaction Type Row -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    
-                    <!-- Date Input -->
-                    <div class="form-control">
-                        <label class="label py-1">
-                            <span class="label-text font-bold text-gray-900">Entry Date <span class="text-error">*</span></span>
-                        </label>
-                        <input
-                            type="date"
-                            name="dac_date"
-                            id="dacDateInput"
-                            value="{{ today|date:'Y-m-d' }}"
-                            class="input input-bordered w-full font-semibold text-gray-900 focus:outline-none"
-                            required
-                        >
+        <div class="space-y-5">
+
+          <!-- Subdealer Selection -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="input-label mb-0">
+                <i class="fa-solid fa-user-tag text-slate-400 mr-1"></i> Target Subdealer <span class="text-rose-500">*</span>
+              </label>
+              <span id="currentBalanceBadge" class="text-xs font-semibold text-slate-500 hidden">
+                Current: <strong id="currentBalNumber" class="font-mono text-slate-900">0.00</strong>
+              </span>
+            </div>
+            <select id="subdealerSelect"
+                    name="subdealer_code"
+                    class="custom-input font-medium"
+                    required>
+              <option value="" disabled selected>-- Select a Subdealer Partner --</option>
+              {% for item in subdealers_with_balance %}
+              <option value="{{ item.code }}"
+                      data-name="{{ item.name }}"
+                      data-code="{{ item.code }}"
+                      data-balance="{{ item.current_balance }}">
+                {{ item.name }} ({{ item.code }}) — Bal: {{ item.current_balance }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Date & Transaction Type -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Entry Date -->
+            <div>
+              <label class="input-label">
+                <i class="fa-regular fa-calendar text-slate-400 mr-1"></i> Entry Date <span class="text-rose-500">*</span>
+              </label>
+              <input type="date"
+                     name="dac_date"
+                     id="dacDateInput"
+                     value="{{ today|date:'Y-m-d' }}"
+                     class="custom-input font-medium font-mono"
+                     required />
+            </div>
+
+            <!-- Transaction Type (CR / DR) -->
+            <div>
+              <label class="input-label">
+                <i class="fa-solid fa-arrow-right-arrow-left text-slate-400 mr-1"></i> Type <span class="text-rose-500">*</span>
+              </label>
+              <div class="grid grid-cols-2 gap-2.5">
+                <label class="block">
+                  <input type="radio" name="transaction_type" value="CR" class="sr-only" checked />
+                  <div class="tx-type-card tx-type-card-cr text-center">
+                    <div class="font-extrabold text-xs text-emerald-800 flex items-center justify-center gap-1">
+                      <i class="fa-solid fa-plus text-[10px]"></i> Credit (CR)
                     </div>
+                    <div class="text-[10px] text-slate-500 mt-0.5 font-medium">Return DAC</div>
+                  </div>
+                </label>
 
-                    <!-- Transaction Type -->
-                    <div class="form-control">
-                        <label class="label py-1">
-                            <span class="label-text font-bold text-gray-900">Transaction Type <span class="text-error">*</span></span>
-                        </label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <label class="cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="transaction_type"
-                                    value="CR"
-                                    class="peer sr-only"
-                                    checked
-                                >
-                                <div class="p-3 rounded-xl border-2 border-base-300 peer-checked:border-success peer-checked:bg-emerald-50 text-center transition-all">
-                                    <div class="font-bold text-sm text-gray-900 peer-checked:text-emerald-800">
-                                        <span class="text-success font-black mr-1">+</span> Credit (CR)
-                                    </div>
-                                    <div class="text-[11px] text-gray-600">Returning DAC</div>
-                                </div>
-                            </label>
-
-                            <label class="cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="transaction_type"
-                                    value="DR"
-                                    class="peer sr-only"
-                                >
-                                <div class="p-3 rounded-xl border-2 border-base-300 peer-checked:border-error peer-checked:bg-rose-50 text-center transition-all">
-                                    <div class="font-bold text-sm text-gray-900 peer-checked:text-rose-800">
-                                        <span class="text-error font-black mr-1">−</span> Debit (DR)
-                                    </div>
-                                    <div class="text-[11px] text-gray-600">Issued DAC</div>
-                                </div>
-                            </label>
-                        </div>
+                <label class="block">
+                  <input type="radio" name="transaction_type" value="DR" class="sr-only" />
+                  <div class="tx-type-card tx-type-card-dr text-center">
+                    <div class="font-extrabold text-xs text-rose-800 flex items-center justify-center gap-1">
+                      <i class="fa-solid fa-minus text-[10px]"></i> Debit (DR)
                     </div>
+                    <div class="text-[10px] text-slate-500 mt-0.5 font-medium">Issued DAC</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
 
-                </div>
+          <!-- Quantity with Presets & Steppers -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="input-label mb-0">
+                <i class="fa-solid fa-boxes-stacked text-slate-400 mr-1"></i> DAC Quantity Units <span class="text-rose-500">*</span>
+              </label>
+              <div class="flex items-center gap-1">
+                <button type="button" class="preset-chip" onclick="setDacQty(5)">5</button>
+                <button type="button" class="preset-chip" onclick="setDacQty(10)">10</button>
+                <button type="button" class="preset-chip" onclick="setDacQty(20)">20</button>
+                <button type="button" class="preset-chip" onclick="setDacQty(50)">50</button>
+                <button type="button" class="preset-chip" onclick="setDacQty(100)">100</button>
+              </div>
+            </div>
 
-                <!-- Quantity Input with Solid, High-Visibility Steppers -->
-                <div class="form-control">
-                    <label class="label py-1 flex justify-between items-center">
-                        <span class="label-text font-bold text-gray-900">DAC Quantity (Units) <span class="text-error">*</span></span>
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-xs text-gray-600 font-semibold mr-0.5">Presets:</span>
-                            <button type="button" class="btn btn-xs btn-outline font-bold" onclick="setDacQty(5)">5</button>
-                            <button type="button" class="btn btn-xs btn-outline font-bold" onclick="setDacQty(10)">10</button>
-                            <button type="button" class="btn btn-xs btn-outline font-bold" onclick="setDacQty(20)">20</button>
-                            <button type="button" class="btn btn-xs btn-outline font-bold" onclick="setDacQty(50)">50</button>
-                            <button type="button" class="btn btn-xs btn-outline font-bold" onclick="setDacQty(100)">100</button>
-                        </div>
-                    </label>
-                    <div class="flex items-center gap-3">
-                        <button
-                            type="button"
-                            class="btn bg-gray-200 hover:bg-gray-300 text-gray-900 border border-gray-300 font-black text-2xl w-14 h-14 rounded-2xl flex items-center justify-center transition-colors shadow-sm shrink-0"
-                            onclick="adjustDacQty(-1)"
-                            title="Decrease quantity by 1"
-                        >
-                            −
-                        </button>
-                        <input
-                            type="number"
-                            name="transaction_quantity"
-                            id="dacQuantityInput"
-                            min="1"
-                            step="1"
-                            placeholder="Enter quantity"
-                            class="input input-bordered flex-1 h-14 text-center font-extrabold text-2xl text-gray-900 bg-base-100 border-base-300 focus:outline-none rounded-2xl"
-                            required
-                        >
-                        <button
-                            type="button"
-                            class="btn btn-primary text-white font-black text-2xl w-14 h-14 rounded-2xl flex items-center justify-center transition-colors shadow-md shadow-primary/20 shrink-0"
-                            onclick="adjustDacQty(1)"
-                            title="Increase quantity by 1"
-                        >
-                            +
-                        </button>
-                    </div>
-                </div>
+            <div class="flex items-stretch rounded-xl border-2 border-slate-200 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 overflow-hidden bg-white transition">
+              <button type="button"
+                      class="px-4 bg-slate-50 hover:bg-slate-100 text-slate-700 font-extrabold text-lg border-r border-slate-200 transition select-none shrink-0"
+                      onclick="adjustDacQty(-1)">
+                −
+              </button>
+              <input type="number"
+                     name="transaction_quantity"
+                     id="dacQuantityInput"
+                     min="1"
+                     step="1"
+                     placeholder="Enter units"
+                     class="w-full py-2.5 text-center font-mono font-extrabold text-xl text-slate-900 outline-none bg-transparent"
+                     required />
+              <button type="button"
+                      class="px-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold text-lg border-l border-slate-200 transition select-none shrink-0"
+                      onclick="adjustDacQty(1)">
+                +
+              </button>
+            </div>
+          </div>
 
-                <!-- Description / Remarks -->
-                <div class="form-control">
-                    <label class="label py-1">
-                        <span class="label-text font-bold text-gray-900">Description / Remarks</span>
-                        <span class="text-xs text-gray-500">Optional</span>
-                    </label>
-                    <input
-                        type="text"
-                        name="description"
-                        placeholder="e.g. Returned empty cylinders on Challan #104, Weekly settlement, etc."
-                        class="input input-bordered w-full text-sm font-medium text-gray-900 focus:outline-none"
-                    >
-                </div>
+          <!-- Description / Remarks -->
+          <div>
+            <label class="input-label">
+              <i class="fa-solid fa-note-sticky text-slate-400 mr-1"></i> Remarks / Reference Memo <span class="text-slate-400 font-normal lowercase">(optional)</span>
+            </label>
+            <input type="text"
+                   name="description"
+                   placeholder="e.g. Return on Challan #104, Weekly reconciliation, etc."
+                   class="custom-input font-medium text-xs" />
+          </div>
 
-                <!-- Compact Live Balance Preview Box -->
-                <div id="liveBalanceBox" class="p-4 rounded-2xl bg-base-200 border border-base-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div class="text-xs text-gray-700 font-medium">
-                        <div>Subdealer: <strong id="previewDealerLabel" class="text-gray-900">Select a subdealer above</strong></div>
-                        <div class="mt-0.5">Current: <span id="previewCurrentBal" class="font-mono font-bold text-gray-900">0.00</span> | Change: <span id="previewTxDelta" class="font-mono font-bold text-success">+0.00</span></div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <div class="text-right">
-                            <span class="text-[11px] font-bold uppercase text-gray-500 block">Projected Balance</span>
-                            <span id="previewNewBal" class="font-mono font-black text-xl text-gray-900">0.00</span>
-                        </div>
-                        <span id="previewStatusBadge" class="badge badge-neutral font-bold text-xs">Ready</span>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="pt-4 border-t border-base-200 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
-                    <a href="{% url 'view_dac' %}" class="btn btn-ghost font-bold text-gray-700 w-full sm:w-auto">
-                        Cancel / View Ledger
-                    </a>
-                    <button
-                        type="submit"
-                        class="btn btn-primary font-bold text-white px-8 shadow-md shadow-primary/20 w-full sm:w-auto"
-                    >
-                        <i class="fa-solid fa-check mr-1"></i> Save DAC Entry
-                    </button>
-                </div>
-
-            </form>
+          <!-- Live Balance Preview Box -->
+          <div id="liveBalanceBox" class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="text-xs text-slate-600 space-y-0.5">
+              <div>Subdealer: <strong id="previewDealerLabel" class="text-slate-900">Select a subdealer above</strong></div>
+              <div>Current: <span id="previewCurrentBal" class="font-mono font-bold text-slate-800">0.00</span> | Delta: <span id="previewTxDelta" class="font-mono font-bold text-emerald-700">+0.00</span></div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="text-right">
+                <span class="text-[10px] font-bold uppercase text-slate-400 block">Projected Balance</span>
+                <span id="previewNewBal" class="font-mono font-extrabold text-lg text-slate-900">0.00</span>
+              </div>
+              <span id="previewStatusBadge" class="pill pill-slate text-[10px]">Ready</span>
+            </div>
+          </div>
 
         </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <a href="{% url 'view_dac' %}"
+             class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+            Cancel
+          </a>
+          <button type="submit" class="btn-submit-dac">
+            <i class="fa-solid fa-check text-xs"></i> Record DAC Transaction
+          </button>
+        </div>
+
+      </form>
     </div>
+
+    <!-- RIGHT COLUMN: RECENT ENTRIES & RULES (5 COLS) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- Accounting Rules Card -->
+      <div class="billing-card p-5 space-y-3 bg-gradient-to-br from-indigo-50/50 to-white border-indigo-100">
+        <div class="flex items-center gap-2 text-xs font-bold text-indigo-950 uppercase tracking-wider">
+          <i class="fa-solid fa-circle-info text-indigo-600"></i> DAC Ledger Rules
+        </div>
+        <ul class="text-xs text-slate-600 space-y-1.5 leading-relaxed">
+          <li class="flex items-start gap-2">
+            <span class="font-bold text-emerald-700">+CR (Credit):</span> Subdealer returns DAC cylinders to agency (Increases balance).
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="font-bold text-rose-700">-DR (Debit):</span> Agency issues DAC to subdealer (Deducts balance).
+          </li>
+          <li class="flex items-start gap-2 text-[11px] text-slate-500 pt-1 border-t border-indigo-100/60">
+            Ledger recalculation runs automatically across all subsequent historical entries.
+          </li>
+        </ul>
+      </div>
+
+      <!-- Recent DAC Entries Feed -->
+      <div class="billing-card p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> Recent DAC Entries
+          </div>
+          <a href="{% url 'view_dac' %}" class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800">
+            View All Ledger
+          </a>
+        </div>
+
+        <div class="space-y-2.5">
+          {% for entry in recent_entries %}
+          <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/60 flex items-center justify-between">
+            <div class="space-y-0.5">
+              <div class="font-bold text-xs text-slate-800">{{ entry.subdealer.name }}</div>
+              <div class="text-[10px] text-slate-400 font-mono">{{ entry.entry_date|date:"d M Y" }}</div>
+            </div>
+            <div class="text-right space-y-1">
+              {% if entry.transaction_type == 'CR' %}
+                <span class="pill pill-emerald text-[10px] py-0 px-2 font-mono font-bold">+{{ entry.transaction_quantity }} CR</span>
+              {% else %}
+                <span class="pill pill-rose text-[10px] py-0 px-2 font-mono font-bold">-{{ entry.transaction_quantity }} DR</span>
+              {% endif %}
+              <div class="text-[10px] font-mono text-slate-500 font-semibold">Bal: {{ entry.closing_balance }}</div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-6 text-xs text-slate-400">
+            No DAC entries recorded yet.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
 
 </div>
 
 <!-- JavaScript Logic for Live Calculations -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const subdealerSelect = document.getElementById('subdealerSelect');
-    const qtyInput = document.getElementById('dacQuantityInput');
-    const typeRadios = document.querySelectorAll('input[name="transaction_type"]');
+  const subdealerSelect = document.getElementById('subdealerSelect');
+  const qtyInput = document.getElementById('dacQuantityInput');
+  const typeRadios = document.querySelectorAll('input[name="transaction_type"]');
+  
+  const previewDealerLabel = document.getElementById('previewDealerLabel');
+  const previewCurrentBal = document.getElementById('previewCurrentBal');
+  const previewTxDelta = document.getElementById('previewTxDelta');
+  const previewNewBal = document.getElementById('previewNewBal');
+  const previewStatusBadge = document.getElementById('previewStatusBadge');
+  const currentBalanceBadge = document.getElementById('currentBalanceBadge');
+  const currentBalNumber = document.getElementById('currentBalNumber');
+
+  function updateLivePreview() {
+    const selectedOption = subdealerSelect.options[subdealerSelect.selectedIndex];
+    let currentBal = 0;
     
-    const previewDealerLabel = document.getElementById('previewDealerLabel');
-    const previewCurrentBal = document.getElementById('previewCurrentBal');
-    const previewTxDelta = document.getElementById('previewTxDelta');
-    const previewNewBal = document.getElementById('previewNewBal');
-    const previewStatusBadge = document.getElementById('previewStatusBadge');
-    const currentBalanceDisplay = document.getElementById('currentBalanceDisplay');
-    const currentBalNumber = document.getElementById('currentBalNumber');
+    if (selectedOption && selectedOption.value) {
+      const name = selectedOption.dataset.name;
+      currentBal = parseFloat(selectedOption.dataset.balance) || 0;
 
-    function updateLivePreview() {
-        const selectedOption = subdealerSelect.options[subdealerSelect.selectedIndex];
-        let currentBal = 0;
-        
-        if (selectedOption && selectedOption.value) {
-            const name = selectedOption.dataset.name;
-            currentBal = parseFloat(selectedOption.dataset.balance) || 0;
+      previewDealerLabel.textContent = name;
+      previewCurrentBal.textContent = currentBal.toFixed(2);
 
-            previewDealerLabel.textContent = name;
-            previewCurrentBal.textContent = currentBal.toFixed(2);
-
-            currentBalanceDisplay.classList.remove('hidden');
-            currentBalNumber.textContent = currentBal.toFixed(2);
-        } else {
-            previewDealerLabel.textContent = 'Select a subdealer above';
-            previewCurrentBal.textContent = '0.00';
-            currentBalanceDisplay.classList.add('hidden');
-        }
-
-        let txType = 'CR';
-        typeRadios.forEach(r => {
-            if (r.checked) txType = r.value;
-        });
-
-        const qty = parseFloat(qtyInput.value) || 0;
-        let delta = txType === 'CR' ? qty : -qty;
-        let closing = currentBal + delta;
-
-        if (txType === 'CR') {
-            previewTxDelta.textContent = '+' + qty.toFixed(2);
-            previewTxDelta.className = 'font-mono font-bold text-success';
-        } else {
-            previewTxDelta.textContent = '-' + qty.toFixed(2);
-            previewTxDelta.className = 'font-mono font-bold text-error';
-        }
-
-        previewNewBal.textContent = closing.toFixed(2);
-
-        if (closing >= 0) {
-            previewNewBal.className = 'font-mono font-black text-xl text-success';
-            previewStatusBadge.className = 'badge badge-success text-white font-bold text-xs';
-            previewStatusBadge.textContent = 'In Credit';
-        } else {
-            previewNewBal.className = 'font-mono font-black text-xl text-error';
-            previewStatusBadge.className = 'badge badge-error text-white font-bold text-xs';
-            previewStatusBadge.textContent = 'In Dues';
-        }
+      currentBalanceBadge.classList.remove('hidden');
+      currentBalNumber.textContent = currentBal.toFixed(2);
+    } else {
+      previewDealerLabel.textContent = 'Select a subdealer above';
+      previewCurrentBal.textContent = '0.00';
+      currentBalanceBadge.classList.add('hidden');
     }
 
-    subdealerSelect.addEventListener('change', updateLivePreview);
-    qtyInput.addEventListener('input', updateLivePreview);
-    typeRadios.forEach(r => r.addEventListener('change', updateLivePreview));
+    let txType = 'CR';
+    typeRadios.forEach(r => {
+      if (r.checked) txType = r.value;
+    });
 
-    window.adjustDacQty = function(delta) {
-        let current = parseInt(qtyInput.value) || 0;
-        current = Math.max(1, current + delta);
-        qtyInput.value = current;
-        updateLivePreview();
-    };
+    const qty = parseFloat(qtyInput.value) || 0;
+    let delta = txType === 'CR' ? qty : -qty;
+    let closing = currentBal + delta;
 
-    window.setDacQty = function(val) {
-        qtyInput.value = val;
-        updateLivePreview();
-    };
+    if (txType === 'CR') {
+      previewTxDelta.textContent = '+' + qty.toFixed(2);
+      previewTxDelta.className = 'font-mono font-bold text-emerald-700';
+    } else {
+      previewTxDelta.textContent = '-' + qty.toFixed(2);
+      previewTxDelta.className = 'font-mono font-bold text-rose-600';
+    }
 
+    previewNewBal.textContent = closing.toFixed(2);
+
+    if (closing >= 0) {
+      previewNewBal.className = 'font-mono font-extrabold text-lg text-emerald-700';
+      previewStatusBadge.className = 'pill pill-emerald text-[10px]';
+      previewStatusBadge.textContent = 'In Credit';
+    } else {
+      previewNewBal.className = 'font-mono font-extrabold text-lg text-rose-600';
+      previewStatusBadge.className = 'pill pill-rose text-[10px]';
+      previewStatusBadge.textContent = 'In Dues';
+    }
+  }
+
+  subdealerSelect?.addEventListener('change', updateLivePreview);
+  qtyInput?.addEventListener('input', updateLivePreview);
+  typeRadios.forEach(r => r.addEventListener('change', updateLivePreview));
+
+  window.adjustDacQty = function(delta) {
+    let current = parseInt(qtyInput.value) || 0;
+    current = Math.max(1, current + delta);
+    qtyInput.value = current;
     updateLivePreview();
+  };
+
+  window.setDacQty = function(val) {
+    qtyInput.value = val;
+    updateLivePreview();
+  };
+
+  updateLivePreview();
 });
 </script>
 {% endblock %}

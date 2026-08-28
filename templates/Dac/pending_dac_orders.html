@@ -1,215 +1,358 @@
 {% extends "layout.html" %}
-{% load static %}
+{% load static humanize %}
 
-{% block title %}Pending DAC Orders{% endblock %}
+{% block title %}Pending DAC Orders | Maa Tara HP Gas{% endblock %}
 
 {% block content %}
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
 
-<div class="max-w-7xl mx-auto p-8">
+  /* Table styling */
+  .dash-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+  }
+  .dash-table th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #eef2f6;
+    white-space: nowrap;
+  }
+  .dash-table td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .dash-table tbody tr {
+    transition: background-color .15s ease;
+  }
+  .dash-table tbody tr:hover {
+    background-color: #f8faff;
+  }
 
-    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mb-8">
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .pill-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+  .pill-rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+  .pill-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
 
-        <div>
-            <h1 class="text-3xl font-bold text-primary">
-                Pending DAC Orders
-            </h1>
+  /* KPI Stat Cards */
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all .2s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
 
-            <p class="text-base-content/70 mt-1">
-                Pending refill quantity for
-                <span class="font-semibold text-primary">
-                    {{ selected_month }}
-                </span>
-                based on monthly DAC allocation.
-            </p>
-        </div>
+  /* Custom Input & Select */
+  .filter-input {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 13px;
+    color: #1e293b;
+    outline: none;
+    transition: all .15s ease;
+  }
+  .filter-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  }
 
-        <a href="{% url 'CreateNewSubDealers' %}" class="btn btn-primary btn-lg">
-            + Add Subdealer
+  /* Create Button */
+  .btn-create-dac {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13.5px;
+    border-radius: 12px;
+    padding: 10px 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all .18s ease;
+  }
+  .btn-create-dac:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
+</style>
+
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
         </a>
-
+        <span class="text-xs text-slate-300">/</span>
+        <a href="{% url 'view_dac' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          DAC Operations
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Pending Orders</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Pending DAC Orders</h1>
+        <span class="pill pill-indigo">
+          <i class="fa-regular fa-calendar text-[10px]"></i> Month: {{ selected_month }}
+        </span>
+      </div>
     </div>
 
-    <div class="bg-base-200 rounded-3xl shadow-lg p-6 mb-8">
+    <div class="flex items-center gap-3">
+      <a href="{% url 'view_dac' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-book-open text-indigo-600"></i> DAC Ledger
+      </a>
+      <a href="{% url 'dac_entry' %}" class="btn-create-dac">
+        <i class="fa-solid fa-plus text-xs"></i> New DAC Entry
+      </a>
+    </div>
+  </div>
 
-        <form method="GET">
+  <!-- ════════════════════════════════════════
+       KPI SUMMARY METRICS BAR
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-            <div class="grid grid-cols-12 gap-4 items-end">
-
-                <div class="col-span-12 lg:col-span-6">
-
-                    <label class="label">
-                        <span class="label-text font-semibold">
-                            Subdealer
-                        </span>
-                    </label>
-
-                    <select
-                        name="subdealer"
-                        class="select select-bordered select-lg w-full">
-
-                        <option value="">All Subdealers</option>
-
-                        {% for subdealer in subdealers %}
-
-                        <option value="{{ subdealer.id }}"
-                            {% if selected_subdealer == subdealer.id|stringformat:"s" %}
-                            selected
-                            {% endif %}>
-
-                            {{ subdealer.name }}
-
-                        </option>
-
-                        {% endfor %}
-
-                    </select>
-
-                </div>
-
-                <div class="col-span-12 lg:col-span-3">
-
-                    <label class="label">
-                        <span class="label-text font-semibold">
-                            Month
-                        </span>
-                    </label>
-
-                    <input
-                        type="month"
-                        name="month"
-                        value="{{ selected_month }}"
-                        class="input input-bordered input-lg w-full">
-
-                </div>
-
-                <div class="col-span-12 lg:col-span-3 flex gap-3">
-
-                    <button type="submit"
-                            class="btn btn-primary btn-lg flex-1">
-                        Apply
-                    </button>
-
-                    <a href="{% url 'pending_dac_orders' %}"
-                       class="btn btn-outline btn-lg">
-                        Reset
-                    </a>
-
-                </div>
-
-            </div>
-
-        </form>
-
+    <!-- Total Pending Cylinders -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Pending Refill Orders</div>
+        <div class="text-2xl font-extrabold text-amber-600">{{ stats.sum_pending_positive|default:0|intcomma }}</div>
+        <div class="text-[11px] text-amber-700 font-medium mt-0.5">{{ stats.pending_subdealers_count }} subdealers pending</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-amber-600 bg-amber-50 border border-amber-100">
+        <i class="fa-solid fa-hourglass-half text-lg"></i>
+      </div>
     </div>
 
-    <div class="overflow-x-auto bg-base-200 rounded-3xl shadow-xl p-6">
-
-        <table class="table table-zebra">
-
-            <thead>
-
-                <tr>
-
-                    <th>Subdealer</th>
-
-                    <th class="text-right">
-                        Refills (Month)
-                    </th>
-
-                    <th class="text-right">
-                        Current DAC Balance
-                    </th>
-
-                    <th class="text-center">
-                        DAC %
-                    </th>
-
-                    <th class="text-right">
-                        Effective DAC (Month)
-                    </th>
-
-                    <th class="text-right">
-                        Pending Cylinders
-                    </th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                {% for row in rows %}
-
-                <tr>
-
-                    <td class="font-semibold">
-                        {{ row.subdealer.name }}
-                    </td>
-
-                    <td class="text-right">
-                        {{ row.total_refills }}
-                    </td>
-
-                    <td class="text-right">
-                        {{ row.current_dac }}
-                    </td>
-
-                    <td class="text-center">
-                        <span class="badge badge-primary badge-lg">
-                            {{ row.dac_percentage }}%
-                        </span>
-                    </td>
-
-                    <td class="text-right font-semibold">
-                        {{ row.effective_dac }}
-                    </td>
-
-                    <td class="text-right">
-
-                        {% if row.pending_order > 0 %}
-
-                        <span class="badge badge-success badge-lg w-28 justify-center">
-                            +{{ row.pending_order }}
-                        </span>
-
-                        {% elif row.pending_order < 0 %}
-
-                        <span class="badge badge-error badge-lg w-28 justify-center">
-                            {{ row.pending_order }}
-                        </span>
-
-                        {% else %}
-
-                        <span class="badge badge-neutral badge-lg w-28 justify-center">
-                            0
-                        </span>
-
-                        {% endif %}
-
-                    </td>
-
-                </tr>
-
-                {% empty %}
-
-                <tr>
-
-                    <td colspan="6" class="text-center py-10 text-base-content/60">
-                        No pending order data found.
-                    </td>
-
-                </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
+    <!-- Effective DAC Target -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Effective DAC Target</div>
+        <div class="text-2xl font-extrabold text-indigo-700">{{ stats.sum_effective_dac|default:0|intcomma }}</div>
+        <div class="text-[11px] text-indigo-500 font-medium mt-0.5">Allocated Refills (Month)</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-indigo-600 bg-indigo-50 border border-indigo-100">
+        <i class="fa-solid fa-gas-pump text-lg"></i>
+      </div>
     </div>
 
-    {% include 'components/pagination.html' %}
+    <!-- Actual Refills Sold -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Refills Dispatched</div>
+        <div class="text-2xl font-extrabold text-emerald-700">{{ stats.sum_total_refills|default:0|intcomma }}</div>
+        <div class="text-[11px] text-emerald-600 font-medium mt-0.5">Fulfilled in {{ selected_month }}</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-emerald-600 bg-emerald-50 border border-emerald-100">
+        <i class="fa-solid fa-circle-check text-lg"></i>
+      </div>
+    </div>
+
+    <!-- Subdealers Tracked -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Subdealers Tracked</div>
+        <div class="text-2xl font-extrabold text-slate-900">{{ stats.total_subdealers|default:0|intcomma }}</div>
+        <div class="text-[11px] text-slate-500 mt-0.5">Active Partners</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-slate-700 bg-slate-100 border border-slate-200">
+        <i class="fa-solid fa-users text-lg"></i>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SEARCH & FILTER TOOLBAR
+  ════════════════════════════════════════ -->
+  <div class="billing-card p-4">
+    <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+      
+      <!-- Subdealer Filter -->
+      <div class="lg:col-span-6">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-solid fa-users text-slate-400 mr-1"></i> Filter by Subdealer
+        </label>
+        <select name="subdealer" class="filter-input w-full">
+          <option value="">All Subdealers</option>
+          {% for subdealer in subdealers %}
+          <option value="{{ subdealer.id }}" {% if selected_subdealer == subdealer.id|stringformat:"s" %}selected{% endif %}>
+            {{ subdealer.name }} ({{ subdealer.subdealerCode }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Month Selector -->
+      <div class="lg:col-span-4">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-regular fa-calendar mr-1 text-slate-400"></i> Target Month
+        </label>
+        <input type="month" name="month" value="{{ selected_month }}" class="filter-input w-full">
+      </div>
+
+      <!-- Actions -->
+      <div class="lg:col-span-2 flex items-center gap-2">
+        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 px-3 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-filter text-[11px]"></i> Apply
+        </button>
+        {% if selected_subdealer or selected_month %}
+        <a href="{% url 'pending_dac_orders' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center" title="Reset Filters">
+          <i class="fa-solid fa-xmark"></i>
+        </a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PENDING ORDERS DATA TABLE
+  ════════════════════════════════════════ -->
+  <div class="billing-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th style="min-width: 220px;">Subdealer</th>
+            <th style="width: 140px;" class="text-right">Refills Sold (Month)</th>
+            <th style="width: 150px;" class="text-right">Overall DAC Balance</th>
+            <th style="width: 110px;" class="text-center">DAC % Rate</th>
+            <th style="width: 150px;" class="text-right">Effective DAC Target</th>
+            <th style="width: 180px;" class="text-center">Pending Cylinder Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <!-- Subdealer -->
+            <td>
+              <div class="font-bold text-slate-800 text-sm">{{ row.subdealer.name }}</div>
+              <div class="text-[11px] font-mono text-indigo-600">{{ row.subdealer.subdealerCode }}</div>
+            </td>
+
+            <!-- Refills Sold -->
+            <td class="text-right font-semibold text-slate-800">
+              <span class="inline-flex items-center gap-1 font-mono">
+                <i class="fa-solid fa-gas-pump text-[10px] text-slate-400"></i> {{ row.total_refills|intcomma }}
+              </span>
+            </td>
+
+            <!-- Current DAC Balance -->
+            <td class="text-right">
+              {% if row.current_dac >= 0 %}
+                <span class="font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 text-xs">
+                  {{ row.current_dac|intcomma }}
+                </span>
+              {% else %}
+                <span class="font-mono font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200 text-xs">
+                  {{ row.current_dac|intcomma }}
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- DAC % -->
+            <td class="text-center">
+              <span class="pill pill-indigo text-xs">
+                {{ row.dac_percentage }}%
+              </span>
+            </td>
+
+            <!-- Effective DAC -->
+            <td class="text-right font-bold text-slate-900 font-mono">
+              {{ row.effective_dac|intcomma }}
+            </td>
+
+            <!-- Pending Status -->
+            <td class="text-center">
+              {% if row.pending_order > 0 %}
+                <span class="pill pill-amber text-xs font-extrabold px-3 py-1">
+                  <i class="fa-solid fa-clock text-[10px]"></i> +{{ row.pending_order|intcomma }} Pending
+                </span>
+              {% elif row.pending_order < 0 %}
+                <span class="pill pill-blue text-xs font-semibold px-3 py-1">
+                  <i class="fa-solid fa-circle-check text-[10px]"></i> Surplus ({{ row.pending_order|intcomma }})
+                </span>
+              {% else %}
+                <span class="pill pill-emerald text-xs font-semibold px-3 py-1">
+                  <i class="fa-solid fa-check text-[10px]"></i> Fulfilled (0)
+                </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center py-12">
+              <div class="max-w-sm mx-auto space-y-3">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mx-auto text-xl">
+                  <i class="fa-solid fa-hourglass-half"></i>
+                </div>
+                <div class="text-sm font-bold text-slate-700">No Pending Order Data Found</div>
+                <p class="text-xs text-slate-500">
+                  No subdealer records or refills found for {{ selected_month }}. Try changing the month or resetting the filter.
+                </p>
+                <div>
+                  <a href="{% url 'pending_dac_orders' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                    <i class="fa-solid fa-rotate-left"></i> Reset filter to current month
+                  </a>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PAGINATION
+  ════════════════════════════════════════ -->
+  {% include 'components/pagination.html' %}
 
 </div>
-
 {% endblock %}

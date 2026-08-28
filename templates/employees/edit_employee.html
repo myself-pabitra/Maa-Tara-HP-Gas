@@ -1,231 +1,209 @@
 {% extends "layout.html" %}
-{% load static %}
+{% load static humanize %}
 
-{% block title %}Edit Employee{% endblock %}
+{% block title %}Edit Employee {{ employee.name }} | Maa Tara HP Gas{% endblock %}
 
 {% block content %}
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
 
-<div class="max-w-4xl mx-auto px-6 py-8">
+  /* Custom input styling */
+  .custom-input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    outline: none;
+    transition: all .18s ease;
+  }
+  .custom-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3.5px rgba(99,102,241,.12);
+  }
+  .custom-input:read-only {
+    background: #f8fafc;
+    color: #64748b;
+    border-color: #e2e8f0;
+  }
 
-    <!-- Header -->
+  .input-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64748b;
+    margin-bottom: 6px;
+    display: block;
+  }
 
-    <div class="flex justify-between items-center mb-8">
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
 
-        <div>
+  /* Submit button gradient */
+  .btn-save-emp {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all .18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-save-emp:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
 
-            <h1 class="text-4xl font-bold text-primary">
+  .toggle-card {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all .18s ease;
+    background: #ffffff;
+  }
+  .toggle-card:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
+</style>
 
-                Employee Management
+<div class="max-w-2xl mx-auto space-y-6 pb-12">
 
-            </h1>
-
-            <p class="text-base-content/70 mt-2">
-
-                Update employee information.
-
-            </p>
-
-        </div>
-
-        <a href="{% url 'view_employees' %}"
-           class="btn btn-outline btn-primary">
-
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 class="w-5 h-5 mr-2"
-                 fill="none"
-                 viewBox="0 0 24 24"
-                 stroke="currentColor">
-
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 19l-7-7 7-7"/>
-
-            </svg>
-
-            Back
-
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'view_employees' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-arrow-left mr-1"></i> Back to Staff Directory
         </a>
-
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Edit Profile</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Edit Employee</h1>
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-id-badge text-[10px]"></i> {{ employee.employeeCode }}
+        </span>
+      </div>
     </div>
-
-    <!-- Form -->
-
-    <div class="card bg-base-200 shadow-xl border border-base-300">
-
-        <div class="card-body">
-
-            <h2 class="text-2xl font-bold mb-6">
-
-                Edit Employee
-
-            </h2>
-
-            <form method="post">
-
-                {% csrf_token %}
-
-                <!-- Employee Code -->
-
-                <div class="form-control mb-5">
-
-                    <label class="label">
-
-                        <span class="label-text font-semibold">
-
-                            Employee Code
-
-                        </span>
-
-                    </label>
-
-                    <input
-                        type="text"
-                        class="input input-bordered bg-base-100"
-                        value="{{ employee.employeeCode }}"
-                        readonly>
-
-                </div>
-
-                <!-- Name -->
-
-                <div class="form-control mb-5">
-
-                    <label class="label">
-
-                        <span class="label-text font-semibold">
-
-                            Employee Name
-
-                        </span>
-
-                    </label>
-
-                    <input
-                        type="text"
-                        name="employee_name"
-                        class="input input-bordered"
-                        value="{{ employee.name }}"
-                        required>
-
-                </div>
-
-                <!-- Phone -->
-
-                <div class="form-control mb-5">
-
-                    <label class="label">
-
-                        <span class="label-text font-semibold">
-
-                            Mobile Number
-
-                        </span>
-
-                    </label>
-
-                    <input
-                        type="text"
-                        name="phone"
-                        maxlength="10"
-                        class="input input-bordered"
-                        value="{{ employee.phone }}"
-                        required>
-
-                </div>
-
-                <!-- Address -->
-
-                <div class="form-control mb-5">
-
-                    <label class="label">
-
-                        <span class="label-text font-semibold">
-
-                            Address
-
-                        </span>
-
-                    </label>
-
-                    <textarea
-                        name="address"
-                        rows="4"
-                        class="textarea textarea-bordered"
-                        required>{{ employee.address }}</textarea>
-
-                </div>
-
-                <!-- Status -->
-
-                <div class="flex justify-between items-center py-4 border-t border-base-300">
-
-                    <div>
-
-                        <h3 class="font-semibold">
-
-                            Employee Status
-
-                        </h3>
-
-                        <p class="text-sm text-base-content/60">
-
-                            Enable if employee is currently active.
-
-                        </p>
-
-                    </div>
-
-                    <input
-                        type="checkbox"
-                        name="is_active"
-                        class="toggle toggle-success toggle-lg"
-                        {% if employee.is_active %}
-                        checked
-                        {% endif %}>
-
-                </div>
-
-                <!-- Buttons -->
-
-                <div class="flex justify-end gap-3 mt-8">
-
-                    <a href="{% url 'view_employees' %}"
-                       class="btn btn-outline">
-
-                        Cancel
-
-                    </a>
-
-                    <button
-                        type="submit"
-                        class="btn btn-primary">
-
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             class="w-5 h-5 mr-2"
-                             fill="none"
-                             viewBox="0 0 24 24"
-                             stroke="currentColor">
-
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M5 13l4 4L19 7"/>
-
-                        </svg>
-
-                        Update Employee
-
-                    </button>
-
-                </div>
-
-            </form>
-
+  </div>
+
+  <!-- ════════════════════════════════════════
+       EDIT FORM CARD
+  ════════════════════════════════════════ -->
+  <form method="post" class="billing-card p-6 sm:p-8 space-y-6">
+    {% csrf_token %}
+
+    <div class="space-y-5">
+
+      <!-- Employee Code (Read Only) -->
+      <div>
+        <label class="input-label">
+          <i class="fa-solid fa-fingerprint text-slate-400 mr-1"></i> Employee Code (System ID)
+        </label>
+        <input type="text"
+               value="{{ employee.employeeCode }}"
+               class="custom-input font-mono font-bold"
+               readonly />
+      </div>
+
+      <!-- Employee Name -->
+      <div>
+        <label class="input-label">
+          <i class="fa-solid fa-user text-slate-400 mr-1"></i> Full Name <span class="text-rose-500">*</span>
+        </label>
+        <input type="text"
+               name="employee_name"
+               value="{{ employee.name }}"
+               placeholder="Enter employee name"
+               class="custom-input font-medium"
+               required />
+      </div>
+
+      <!-- Mobile Phone Number -->
+      <div>
+        <label class="input-label">
+          <i class="fa-solid fa-phone text-slate-400 mr-1"></i> Contact Mobile Phone <span class="text-rose-500">*</span>
+        </label>
+        <input type="text"
+               name="phone"
+               maxlength="10"
+               value="{{ employee.phone }}"
+               placeholder="10-digit mobile number"
+               class="custom-input font-medium font-mono"
+               required />
+      </div>
+
+      <!-- Address -->
+      <div>
+        <label class="input-label">
+          <i class="fa-solid fa-location-dot text-slate-400 mr-1"></i> Residential / Communication Address <span class="text-rose-500">*</span>
+        </label>
+        <textarea name="address"
+                  rows="3"
+                  placeholder="Enter complete employee address..."
+                  class="w-full border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
+                  required>{{ employee.address }}</textarea>
+      </div>
+
+      <!-- Active Status Toggle -->
+      <label class="toggle-card">
+        <div>
+          <div class="font-bold text-xs text-slate-900">Active Profile Status</div>
+          <div class="text-[11px] text-slate-500">Enable if staff member is currently working and active for trips</div>
         </div>
+        <input type="checkbox"
+               name="is_active"
+               class="checkbox checkbox-primary checkbox-sm"
+               {% if employee.is_active %}checked{% endif %} />
+      </label>
 
     </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+      <a href="{% url 'view_employees' %}"
+         class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        Cancel
+      </a>
+      <button type="submit" class="btn-save-emp">
+        <i class="fa-solid fa-floppy-disk text-xs"></i> Update Employee Profile
+      </button>
+    </div>
+
+  </form>
 
 </div>
-
 {% endblock %}

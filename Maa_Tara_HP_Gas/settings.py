@@ -17,6 +17,8 @@ ALLOWED_HOSTS = [
     "sumanchanda760.pythonanywhere.com",
     "127.0.0.1",
     "localhost",
+    "testserver",
+    "*",
 ]
 
 
@@ -29,6 +31,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
     "accounts",
     "inventory",
     "SubDealers",

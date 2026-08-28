@@ -197,13 +197,19 @@ def addSubDealersProductDiscount(request):
 
         return redirect("view_subdealer_discounts")
 
-    subdealers = Subdealer.objects.all()
-    products = ProductInventory.objects.all()
+    subdealers = Subdealer.objects.all().order_by("name")
+    products = ProductInventory.objects.all().order_by("product_name")
+    recent_discounts = SubDealerSKUDiscount.objects.select_related(
+        "subdealer", "product"
+    ).order_by("-id")[:6]
+    total_discounts_count = SubDealerSKUDiscount.objects.count()
 
     context = {
         "subdealers": subdealers,
         "products": products,
         "existing_discount": existing_discount,
+        "recent_discounts": recent_discounts,
+        "total_discounts_count": total_discounts_count,
         "page_type": "add_discount",
     }
     return render(request, "SubDealers/add_subdealer_product_discount.html", context)
@@ -215,18 +221,26 @@ def view_subdealer_discounts(request):
 
     discounts = SubDealerSKUDiscount.objects.select_related(
         "subdealer", "product"
-    ).all()
+    ).all().order_by("subdealer__name", "product__product_name")
 
     if subdealer_filter:
         discounts = discounts.filter(subdealer__id=subdealer_filter)
     if product_filter:
         discounts = discounts.filter(product__id=product_filter)
 
-    subdealers = Subdealer.objects.all()
-    products = ProductInventory.objects.all()
+    total_discounts_count = discounts.count()
+
+    paginator = Paginator(discounts, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    subdealers = Subdealer.objects.all().order_by("name")
+    products = ProductInventory.objects.all().order_by("product_name")
 
     context = {
-        "discounts": discounts,
+        "discounts": page_obj,
+        "page_obj": page_obj,
+        "total_discounts_count": total_discounts_count,
         "subdealers": subdealers,
         "products": products,
         "selected_subdealer": subdealer_filter,
@@ -234,6 +248,21 @@ def view_subdealer_discounts(request):
         "page_type": "view_discount",
     }
     return render(request, "SubDealers/view_subdealer_discounts.html", context)
+
+
+def delete_subdealer_discount(request, discount_id):
+    discount = get_object_or_404(SubDealerSKUDiscount, pk=discount_id)
+    if request.method == "POST":
+        sub_name = discount.subdealer.name
+        prod_name = discount.product.product_name
+        discount.delete()
+        messages.success(
+            request, f"Discount for '{sub_name}' on '{prod_name}' deleted successfully."
+        )
+        return redirect("view_subdealer_discounts")
+
+    messages.error(request, "Invalid delete request.")
+    return redirect("view_subdealer_discounts")
 
 
 def create_invoice(request):
@@ -600,10 +629,52 @@ def create_invoice(request):
 
 
 def view_invoices(request):
-    invoices_qs = DailyInvoice.objects.all().order_by("-invoice_date", "-invoice_number")
+    invoices_qs = (
+        DailyInvoice.objects.all()
+        .prefetch_related("employees", "line_items__subdealer", "line_items__product", "expenses")
+        .order_by("-invoice_date", "-invoice_number")
+    )
+
+    q = request.GET.get("q", "").strip()
+    payment_mode = request.GET.get("payment_mode", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+
+    if q:
+        invoices_qs = invoices_qs.filter(
+            Q(invoice_number__icontains=q)
+            | Q(employees__name__icontains=q)
+            | Q(line_items__subdealer__name__icontains=q)
+            | Q(line_items__remarks__icontains=q)
+        ).distinct()
+
+    if payment_mode:
+        invoices_qs = invoices_qs.filter(payment_mode=payment_mode)
+
+    if date_from:
+        try:
+            invoices_qs = invoices_qs.filter(invoice_date__gte=datetime.strptime(date_from, "%Y-%m-%d").date())
+        except ValueError:
+            pass
+
+    if date_to:
+        try:
+            invoices_qs = invoices_qs.filter(invoice_date__lte=datetime.strptime(date_to, "%Y-%m-%d").date())
+        except ValueError:
+            pass
+
+    # Aggregate financial summary stats for the active filter set
+    stats = invoices_qs.aggregate(
+        total_invoices=Count("id"),
+        total_subtotal=Sum("subtotal"),
+        total_expenses=Sum("other_expense"),
+        total_grand=Sum("grand_total"),
+    )
+
     paginator = Paginator(invoices_qs, 20)
-    page_number = request.GET.get('page')
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+
     return render(
         request,
         "billing/view_daily_sell_invoices.html",
@@ -611,6 +682,11 @@ def view_invoices(request):
             "invoices": page_obj,
             "page_obj": page_obj,
             "page_type": "view_invoices",
+            "stats": stats,
+            "q": q,
+            "payment_mode": payment_mode,
+            "date_from": date_from,
+            "date_to": date_to,
         },
     )
 
@@ -1303,21 +1379,27 @@ def Cylender_Mismatch(request):
     if invoice:
         queryset = queryset.filter(invoice__invoice_number__icontains=invoice)
 
+    # Aggregate total shortage and excess across the entire queryset
+    shortage_aggregate = queryset.filter(quantity__gt=F("submitted_blank")).aggregate(
+        total=Sum(F("quantity") - F("submitted_blank"))
+    )["total"] or 0
+
+    excess_aggregate = queryset.filter(submitted_blank__gt=F("quantity")).aggregate(
+        total=Sum(F("submitted_blank") - F("quantity"))
+    )["total"] or 0
+
     paginator = Paginator(queryset, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     mismatch_items = []
 
-    total_difference = 0
-
     for item in page_obj:
         difference = item.quantity - item.submitted_blank
 
-        total_difference += abs(difference)
-
         mismatch_items.append(
             {
+                "invoice_id": item.invoice.id,
                 "invoice_number": item.invoice.invoice_number,
                 "invoice_date": item.invoice.invoice_date,
                 "subdealer": item.subdealer,
@@ -1333,7 +1415,9 @@ def Cylender_Mismatch(request):
     context = {
         "mismatch_items": mismatch_items,
         "total_records": queryset.count(),
-        "total_difference": total_difference,
+        "total_shortage": shortage_aggregate,
+        "total_excess": excess_aggregate,
+        "total_difference": shortage_aggregate + excess_aggregate,
         "subdealers": Subdealer.objects.all().order_by("name"),
         "selected_subdealer": subdealer,
         "invoice_search": invoice,

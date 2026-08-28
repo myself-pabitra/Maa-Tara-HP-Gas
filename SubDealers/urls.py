@@ -13,6 +13,11 @@ urlpatterns = [
         views.view_subdealer_discounts,
         name="view_subdealer_discounts",
     ),
+    path(
+        "delete-discount/<int:discount_id>/",
+        views.delete_subdealer_discount,
+        name="delete_subdealer_discount",
+    ),
     path("view-subdealers/", views.view_subdealers, name="view_subdealers"),
     path(
         "edit-subdealer/<int:subdealer_id>/",

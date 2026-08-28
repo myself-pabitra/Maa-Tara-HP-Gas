@@ -1,57 +1,199 @@
 {% extends 'layout.html' %}
-{% load static %}
+{% load static humanize %}
 
-{% block title %}Edit Subdealer{% endblock title %}
+{% block title %}Edit Subdealer {{ subdealer.name }} | Maa Tara HP Gas{% endblock title %}
 
 {% block content %}
-<div class="flex justify-center mt-8">
-  <form method="post" class="w-full max-w-lg bg-base-200 p-8 rounded-2xl shadow-xl space-y-6">
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
+
+  /* Custom input styling */
+  .custom-input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    outline: none;
+    transition: all .18s ease;
+  }
+  .custom-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3.5px rgba(99,102,241,.12);
+  }
+  .custom-input:read-only {
+    background: #f8fafc;
+    color: #64748b;
+    border-color: #e2e8f0;
+  }
+
+  .input-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64748b;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+
+  /* Submit button gradient */
+  .btn-save-subdealer {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all .18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-save-subdealer:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
+</style>
+
+<div class="max-w-2xl mx-auto space-y-6 pb-12">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'view_subdealers' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-arrow-left mr-1"></i> Back to Subdealers
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Edit Partner</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Edit Subdealer</h1>
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-tag text-[10px]"></i> {{ subdealer.subdealerCode }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       EDIT FORM CARD
+  ════════════════════════════════════════ -->
+  <form method="post" class="billing-card p-6 sm:p-8 space-y-6">
     {% csrf_token %}
-    <h2 class="text-2xl font-semibold text-center mb-6 text-primary">Edit Subdealer</h2>
 
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-medium">Subdealer Code</span>
-      </label>
-      <input type="text" value="{{ subdealer.subdealerCode }}" class="input input-bordered w-full focus:outline-none bg-gray-100" readonly />
+    <div class="space-y-5">
+
+      <!-- Subdealer Code (Read Only) -->
+      <div>
+        <label class="input-label">
+          <i class="fa-solid fa-fingerprint text-slate-400 mr-1"></i> Subdealer Code (System Identifier)
+        </label>
+        <input type="text"
+               value="{{ subdealer.subdealerCode }}"
+               class="custom-input font-mono font-bold"
+               readonly />
+      </div>
+
+      <!-- Subdealer Name -->
+      <div>
+        <label class="input-label">
+          <i class="fa-solid fa-user text-slate-400 mr-1"></i> Subdealer Full Name <span class="text-rose-500">*</span>
+        </label>
+        <input type="text"
+               name="name"
+               value="{{ subdealer.name }}"
+               placeholder="Enter subdealer name"
+               class="custom-input font-medium"
+               required />
+      </div>
+
+      <!-- Phone Number -->
+      <div>
+        <label class="input-label">
+          <i class="fa-solid fa-phone text-slate-400 mr-1"></i> Contact Phone Number <span class="text-rose-500">*</span>
+        </label>
+        <input type="text"
+               name="phone_number"
+               value="{{ subdealer.phone_number }}"
+               placeholder="Enter phone number"
+               class="custom-input font-medium"
+               required />
+      </div>
+
+      <!-- Business Address -->
+      <div>
+        <label class="input-label">
+          <i class="fa-solid fa-location-dot text-slate-400 mr-1"></i> Business / Delivery Address <span class="text-rose-500">*</span>
+        </label>
+        <textarea name="address"
+                  rows="3"
+                  placeholder="Street address, locality, PIN code..."
+                  class="w-full border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
+                  required>{{ subdealer.address }}</textarea>
+      </div>
+
+      <!-- DAC Percentage -->
+      <div>
+        <label class="input-label flex items-center justify-between">
+          <span><i class="fa-solid fa-percent text-slate-400 mr-1"></i> DAC Allocation Rate (%)</span>
+          <span class="text-[11px] font-normal text-slate-400">Current: {{ subdealer.dac_percentage }}%</span>
+        </label>
+        <div class="relative">
+          <input type="number"
+                 name="dac_percentage"
+                 min="0"
+                 max="100"
+                 step="0.01"
+                 value="{{ subdealer.dac_percentage }}"
+                 class="custom-input font-bold text-slate-900 pr-10"
+                 required />
+          <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">%</span>
+        </div>
+      </div>
+
     </div>
 
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-medium">Subdealer Name</span>
-      </label>
-      <input type="text" name="name" value="{{ subdealer.name }}" placeholder="Subdealer name"
-        class="input input-bordered w-full focus:outline-none" required />
+    <!-- Action Buttons -->
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+      <a href="{% url 'view_subdealers' %}"
+         class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        Cancel
+      </a>
+      <button type="submit" class="btn-save-subdealer">
+        <i class="fa-solid fa-floppy-disk text-xs"></i> Save Changes
+      </button>
     </div>
 
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-medium">Phone Number</span>
-      </label>
-      <input type="text" name="phone_number" value="{{ subdealer.phone_number }}" placeholder="Phone number"
-        class="input input-bordered w-full focus:outline-none" required />
-    </div>
-
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-medium">Address</span>
-      </label>
-      <textarea name="address" placeholder="Address"
-        class="textarea textarea-bordered w-full h-28 focus:outline-none" required>{{ subdealer.address }}</textarea>
-    </div>
-
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-medium">DAC Percentage</span>
-      </label>
-      <input type="number" name="dac_percentage" value="{{ subdealer.dac_percentage }}" min="0" max="100" step="0.01"
-        class="input input-bordered w-full focus:outline-none" required />
-    </div>
-
-    <div class="flex flex-col gap-3 sm:flex-row sm:justify-between">
-      <a href="{% url 'view_subdealers' %}" class="btn btn-ghost w-full sm:w-auto">Cancel</a>
-      <button type="submit" class="btn btn-primary w-full sm:w-auto">Save Changes</button>
-    </div>
   </form>
+
 </div>
 {% endblock content %}

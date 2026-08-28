@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db import IntegrityError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.core.paginator import Paginator
 
 from SubDealers.models import PredefinedExpense
 
@@ -12,9 +13,9 @@ from .models import Employee
 
 def add_new_employees(request):
     if request.method == "POST":
-        employee_name = request.POST.get("employee_name")
-        employee_phone = request.POST.get("phone")
-        employee_address = request.POST.get("address")
+        employee_name = request.POST.get("employee_name", "").strip()
+        employee_phone = request.POST.get("phone", "").strip()
+        employee_address = request.POST.get("address", "").strip()
 
         # Validation
         if not employee_name or not employee_phone or not employee_address:
@@ -29,27 +30,47 @@ def add_new_employees(request):
         return redirect("add_new_employees")
 
     # GET request
-    employees = Employee.objects.all()  # Optional: list all employees below the form
-    context = {"employees": employees, "page_type": "add_new_employees"}
+    recent_employees = Employee.objects.all().order_by("-id")[:5]
+    total_employees = Employee.objects.count()
+    context = {
+        "recent_employees": recent_employees,
+        "total_employees": total_employees,
+        "page_type": "add_new_employees",
+    }
     return render(request, "employees/add_new_employees.html", context)
 
 
 def view_employees(request):
-
     search = request.GET.get("search", "").strip()
 
-    employees = Employee.objects.all().order_by("name")
+    all_employees = Employee.objects.all()
+    total_employees = all_employees.count()
+    active_employees = all_employees.filter(is_active=True).count()
+    inactive_employees = all_employees.filter(is_active=False).count()
+
+    employees = all_employees.order_by("name")
 
     if search:
         employees = employees.filter(
             Q(name__icontains=search)
             | Q(phone__icontains=search)
             | Q(address__icontains=search)
+            | Q(employeeCode__icontains=search)
         )
 
+    filtered_count = employees.count()
+
+    paginator = Paginator(employees, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        "employees": employees,
-        "total_employees": employees.count(),
+        "employees": page_obj,
+        "page_obj": page_obj,
+        "total_employees": total_employees,
+        "active_employees": active_employees,
+        "inactive_employees": inactive_employees,
+        "filtered_count": filtered_count,
         "search": search,
         "page_type": "view_employees",
     }

@@ -1,281 +1,421 @@
 {% extends "layout.html" %}
-{% load static %}
+{% load static humanize %}
 
-{% block title %}Cylinder Mismatch{% endblock %}
+{% block title %}Cylinder Mismatch Report | Maa Tara HP Gas{% endblock %}
 
 {% block content %}
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
 
-<div class="max-w-7xl mx-auto p-8">
+  /* Table styling */
+  .dash-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+  }
+  .dash-table th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #eef2f6;
+    white-space: nowrap;
+  }
+  .dash-table td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .dash-table tbody tr {
+    transition: background-color .15s ease;
+  }
+  .dash-table tbody tr:hover {
+    background-color: #f8faff;
+  }
 
-    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mb-8">
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+  .pill-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
 
-        <div>
-            <h1 class="text-3xl font-bold text-primary">
-                Cylinder Mismatch Report
-            </h1>
+  /* KPI Stat Cards */
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all .2s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
 
-            <p class="text-base-content/70 mt-2">
-                View invoice lines where billed quantity and submitted cylinders do not match.
-            </p>
-        </div>
+  /* Custom Input */
+  .filter-input {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #1e293b;
+    outline: none;
+    transition: all .15s ease;
+  }
+  .filter-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  }
 
+  /* Action Buttons */
+  .btn-action-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eef2ff;
+    color: #4f46e5;
+    border: 1px solid #e0e7ff;
+    transition: all .15s ease;
+  }
+  .btn-action-edit:hover {
+    background: #4f46e5;
+    color: #ffffff;
+  }
 
+  .btn-action-print {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    transition: all .15s ease;
+  }
+  .btn-action-print:hover {
+    background: #475569;
+    color: #ffffff;
+  }
+</style>
+
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <a href="{% url 'view_daily_sell_invoices' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          Billing
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Cylinder Mismatch</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Cylinder Mismatch Reconciliation</h1>
+        <span class="pill pill-rose">
+          <i class="fa-solid fa-triangle-exclamation text-[10px]"></i> {{ total_records|default:0|intcomma }} Discrepancies
+        </span>
+      </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="flex items-center gap-2.5">
+      <button id="copyInvoicesBtn" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-copy text-indigo-600"></i> Copy Invoice Numbers
+      </button>
+      <a href="{% url 'view_daily_sell_invoices' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-table-list text-slate-600"></i> View All Invoices
+      </a>
+    </div>
+  </div>
 
-        <div class="stats shadow bg-primary text-primary-content">
-            <div class="stat">
-                <div class="stat-title text-primary-content">Mismatch Records</div>
-                <div class="stat-value">{{ total_records }}</div>
-            </div>
-        </div>
+  <!-- ════════════════════════════════════════
+       KPI SUMMARY METRIC CARDS
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-        <div class="stats shadow bg-warning text-warning-content">
-            <div class="stat">
-                <div class="stat-title">Total Difference</div>
-                <div class="stat-value">{{ total_difference }}</div>
-            </div>
-        </div>
-
-        <div class="stats shadow">
-            <div class="stat">
-                <div class="stat-title">Subdealers</div>
-                <div class="stat-value">
-    {{ total_subdealers }}
-</div>
-            </div>
-        </div>
-
+    <!-- Total Incidents -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Mismatch Incidents</div>
+        <div class="text-2xl font-extrabold text-rose-600">{{ total_records|default:0|intcomma }}</div>
+        <div class="text-[11px] text-rose-500 mt-0.5 font-medium">Billed vs Submitted variance</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-rose-600 bg-rose-50 border border-rose-100">
+        <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+      </div>
     </div>
 
-    <div class="card bg-base-200 shadow-xl mb-8">
-        <div class="card-body">
+    <!-- Cylinder Shortage -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Empty Shortage</div>
+        <div class="text-2xl font-extrabold text-rose-700">-{{ total_shortage|default:0|intcomma }}</div>
+        <div class="text-[11px] text-rose-500 mt-0.5 font-medium">Blanks owed by subdealers</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-rose-600 bg-rose-50 border border-rose-100">
+        <i class="fa-solid fa-arrow-down-long text-lg"></i>
+      </div>
+    </div>
 
-            <form method="GET" class="grid lg:grid-cols-12 gap-4 items-end" onchange="this.submit()">
+    <!-- Cylinder Excess -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Empty Excess</div>
+        <div class="text-2xl font-extrabold text-emerald-700">+{{ total_excess|default:0|intcomma }}</div>
+        <div class="text-[11px] text-emerald-600 mt-0.5 font-medium">Extra blanks returned</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-emerald-600 bg-emerald-50 border border-emerald-100">
+        <i class="fa-solid fa-arrow-up-long text-lg"></i>
+      </div>
+    </div>
 
-                <div class="lg:col-span-5">
+    <!-- Affected Subdealers -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Partners Affected</div>
+        <div class="text-2xl font-extrabold text-slate-900">{{ total_subdealers|default:0 }}</div>
+        <div class="text-[11px] text-slate-500 mt-0.5 font-medium">Subdealers with variances</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-indigo-600 bg-indigo-50 border border-indigo-100">
+        <i class="fa-solid fa-users text-lg"></i>
+      </div>
+    </div>
 
-                    <label class="label">
-                        <span class="label-text font-semibold">
-                            Subdealer
-                        </span>
-                    </label>
+  </div>
 
-                    <select class="select select-bordered w-full"
-                            name="subdealer">
+  <!-- ════════════════════════════════════════
+       SEARCH & FILTER TOOLBAR
+  ════════════════════════════════════════ -->
+  <div class="billing-card p-4">
+    <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+      
+      <!-- Subdealer Filter -->
+      <div class="lg:col-span-6">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-solid fa-users text-slate-400 mr-1"></i> Filter by Subdealer
+        </label>
+        <select class="filter-input w-full" name="subdealer">
+          <option value="">All Subdealers</option>
+          {% for dealer in subdealers %}
+          <option value="{{ dealer.subdealerCode }}"
+                  {% if selected_subdealer == dealer.subdealerCode %}selected{% endif %}>
+            {{ dealer.name }} ({{ dealer.subdealerCode }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
 
-                        <option value="">
-                            All Subdealers
-                        </option>
+      <!-- Invoice Number Search -->
+      <div class="lg:col-span-4">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-solid fa-hashtag text-slate-400 mr-1"></i> Search Invoice Number
+        </label>
+        <input class="filter-input w-full"
+               type="text"
+               name="invoice"
+               list="invoiceList"
+               value="{% if invoice_search %}{{ invoice_search }}{% endif %}"
+               placeholder="e.g. INV-20260828-001">
+        <datalist id="invoiceList">
+          {% for item in mismatch_items %}
+          <option value="{{ item.invoice_number }}">
+          {% endfor %}
+        </datalist>
+      </div>
 
-                        {% for dealer in subdealers %}
+      <!-- Actions -->
+      <div class="lg:col-span-2 flex items-center gap-2">
+        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 px-3 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-filter text-[11px]"></i> Filter
+        </button>
+        {% if selected_subdealer or invoice_search %}
+        <a href="{% url 'Cylender_Mismatch' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center" title="Reset Filters">
+          <i class="fa-solid fa-xmark"></i>
+        </a>
+        {% endif %}
+      </div>
 
-                        <option value="{{ dealer.subdealerCode }}"
-                            {% if selected_subdealer == dealer.subdealerCode%}
-                            selected
-                            {% endif %}>
-                              {{ dealer.name }} ({{ dealer.subdealerCode }})
-                        </option>
+    </form>
+  </div>
 
-                        {% endfor %}
+  <!-- ════════════════════════════════════════
+       MISMATCH DATA TABLE
+  ════════════════════════════════════════ -->
+  <div class="billing-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th style="width: 120px;">Invoice Date</th>
+            <th style="width: 160px;">Invoice #</th>
+            <th style="min-width: 200px;">Subdealer</th>
+            <th style="min-width: 180px;">Product SKU</th>
+            <th style="width: 100px;" class="text-right">Billed Qty</th>
+            <th style="width: 110px;" class="text-right">Submitted</th>
+            <th style="width: 140px;" class="text-center">Variance</th>
+            <th style="width: 180px;" class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in mismatch_items %}
+          <tr>
+            <!-- Date -->
+            <td>
+              <div class="font-medium text-slate-800 text-xs">
+                <i class="fa-regular fa-calendar text-slate-400 mr-1 text-[11px]"></i>
+                {{ item.invoice_date|date:"d M Y" }}
+              </div>
+            </td>
 
-                    </select>
+            <!-- Invoice Number -->
+            <td>
+              <a href="{% url 'edit_daily_sell_invoice' item.invoice_id %}" class="font-mono font-bold text-indigo-600 hover:text-indigo-800 transition text-xs invoice-number" title="Open Invoice">
+                {{ item.invoice_number }}
+              </a>
+            </td>
 
+            <!-- Subdealer -->
+            <td>
+              <div class="font-bold text-slate-900 text-xs">{{ item.subdealer.name }}</div>
+              <div class="text-[11px] font-mono text-indigo-600">{{ item.subdealer.subdealerCode }}</div>
+            </td>
+
+            <!-- Product -->
+            <td>
+              <div class="font-semibold text-slate-800 text-xs">{{ item.product }}</div>
+            </td>
+
+            <!-- Quantity Billed -->
+            <td class="text-right font-mono font-bold text-slate-800 text-xs">
+              {{ item.quantity }}
+            </td>
+
+            <!-- Submitted Blanks -->
+            <td class="text-right font-mono font-bold text-slate-800 text-xs">
+              {{ item.submitted_blank }}
+            </td>
+
+            <!-- Variance Pill -->
+            <td class="text-center">
+              {% if item.difference > 0 %}
+                <span class="pill pill-rose text-[11px]">
+                  <i class="fa-solid fa-arrow-down-long text-[9px]"></i> -{{ item.difference }} Shortage
+                </span>
+              {% elif item.difference < 0 %}
+                <span class="pill pill-emerald text-[11px]">
+                  <i class="fa-solid fa-arrow-up-long text-[9px]"></i> +{{ item.difference|stringformat:"d"|slice:"1:" }} Excess
+                </span>
+              {% else %}
+                <span class="pill pill-indigo text-[11px]">0 Balanced</span>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="flex items-center justify-center gap-1.5">
+                <a href="{% url 'print_mismatch_record' item.invoice_id %}" target="_blank" class="btn-action-print" title="Print Mismatch Slip">
+                  <i class="fa-solid fa-print"></i> Slip
+                </a>
+                <a href="{% url 'edit_daily_sell_invoice' item.invoice_id %}" class="btn-action-edit" title="Edit / View Bill">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> Bill
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="text-center py-12">
+              <div class="max-w-sm mx-auto space-y-3">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto text-xl">
+                  <i class="fa-solid fa-circle-check"></i>
                 </div>
-
-                <div class="lg:col-span-4">
-
-                    <label class="label">
-                        <span class="label-text font-semibold">
-                            Invoice Number
-                        </span>
-                    </label>
-
-                    <input
-                        class="input input-bordered w-full"
-                        type="text"
-                        name="invoice"
-                        list="invoiceList"
-                        value="{% if invoice_search %}{{ invoice_search }}{% endif %}"
-                        placeholder="Search Invoice">
-
-                    <datalist id="invoiceList">
-
-                        {% for item in mismatch_items %}
-                        <option value="{{ item.invoice_number }}">
-                        {% endfor %}
-
-                    </datalist>
-
+                <div class="text-sm font-bold text-slate-700">Zero Cylinder Mismatches</div>
+                <p class="text-xs text-slate-500">
+                  {% if selected_subdealer or invoice_search %}
+                    No mismatch records found for active filter criteria. Try resetting the filter.
+                  {% else %}
+                    All dispatched cylinders match their submitted empty returns perfectly!
+                  {% endif %}
+                </p>
+                {% if selected_subdealer or invoice_search %}
+                <div>
+                  <a href="{% url 'Cylender_Mismatch' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                    <i class="fa-solid fa-rotate-left"></i> Reset filter criteria
+                  </a>
                 </div>
-
-                <div class="lg:col-span-3 flex gap-3">
-
-                    <button class="btn btn-primary flex-1">
-                        Apply
-                    </button>
-
-                    <a href="{% url 'Cylender_Mismatch' %}"
-                       class="btn btn-outline">
-                        Reset
-                    </a>
-
-                </div>
-
-            </form>
-
-        </div>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+  </div>
 
-    <div class="overflow-x-auto rounded-3xl shadow-xl bg-base-200">
-
-        <table class="table table-zebra">
-
-            <thead>
-
-                <tr>
-
-                    <th>Date</th>
-                    <th>Invoice</th>
-                    <th>Subdealer</th>
-                    <th>Product</th>
-                    <th class="text-center">Billed</th>
-                    <th class="text-center">Submitted</th>
-                    <th class="text-center">Difference</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                {% for item in mismatch_items %}
-
-                <tr>
-
-                    <td>{{ item.invoice_date|date:"j M Y" }}</td>
-
-                    <td class="font-bold invoice-number">
-                        {{ item.invoice_number }}
-                    </td>
-
-                    <td>{{ item.subdealer }}</td>
-
-                    <td>{{ item.product }}</td>
-
-                    <td class="text-center">{{ item.quantity }}</td>
-
-                    <td class="text-center">{{ item.submitted_blank }}</td>
-
-                    <td class="text-center">
-
-                        {% if item.difference < 0 %}
-
-                        <span class="badge badge-success">
-                            +{{ item.difference }}
-                        </span>
-
-                        {% elif item.difference > 0 %}
-
-                        <span class="badge badge-error">
-                            {{ item.difference }}
-                        </span>
-
-                        {% else %}
-
-                        <span class="badge">
-                            0
-                        </span>
-
-                        {% endif %}
-
-                    </td>
-
-                </tr>
-
-                {% empty %}
-
-                <tr>
-
-                    <td colspan="8"
-                        class="text-center py-10">
-
-                        No mismatch records found.
-
-                    </td>
-
-                </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-    {% include 'components/pagination.html' %}
+  <!-- ════════════════════════════════════════
+       PAGINATION
+  ════════════════════════════════════════ -->
+  {% include 'components/pagination.html' %}
 
 </div>
 
 <script>
+document.getElementById("copyInvoicesBtn")?.addEventListener("click", function() {
+  const invoices = [...document.querySelectorAll(".invoice-number")]
+    .map(x => x.innerText.trim())
+    .join("\n");
 
-document.querySelectorAll(".copy-btn").forEach(btn=>{
+  if (!invoices) {
+    alert("No invoice numbers to copy.");
+    return;
+  }
 
-    btn.onclick=function(){
-
-        navigator.clipboard.writeText(this.dataset.copy);
-
-        this.innerHTML="Copied";
-
-        setTimeout(()=>{
-
-            this.innerHTML="Copy";
-
-        },1500);
-
-    };
-
+  navigator.clipboard.writeText(invoices).then(() => {
+    const originalText = this.innerHTML;
+    this.innerHTML = '<i class="fa-solid fa-check text-emerald-600"></i> Copied!';
+    setTimeout(() => {
+      this.innerHTML = originalText;
+    }, 2000);
+  });
 });
-
-document.getElementById("copyInvoices").onclick=function(){
-
-    const invoices=[...document.querySelectorAll(".invoice-number")]
-
-        .map(x=>x.innerText.trim())
-
-        .join("\n");
-
-    navigator.clipboard.writeText(invoices);
-
-    this.innerHTML="Copied";
-
-    setTimeout(()=>{
-
-        this.innerHTML="Copy Invoice Numbers";
-
-    },2000);
-
-};
-
 </script>
-
-<style>
-
-@media print{
-
-.btn,
-.card form{
-display:none!important;
-}
-
-body{
-background:white!important;
-}
-
-}
-
-</style>
-
 {% endblock %}

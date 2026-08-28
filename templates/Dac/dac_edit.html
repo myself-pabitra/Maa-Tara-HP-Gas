@@ -1,243 +1,250 @@
 {% extends "layout.html" %}
-{% load static %}
+{% load static humanize %}
 
-{% block title %}Edit DAC Entry{% endblock %}
+{% block title %}Edit DAC Entry | Maa Tara HP Gas{% endblock %}
 
 {% block content %}
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
 
-<div class="max-w-5xl mx-auto p-8">
+  /* Custom input styling */
+  .custom-input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    outline: none;
+    transition: all .18s ease;
+  }
+  .custom-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3.5px rgba(99,102,241,.12);
+  }
 
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-primary">
-            Edit DAC Entry
-        </h1>
+  .custom-select {
+    height: 44px;
+    padding: 0 34px 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    outline: none;
+    transition: all .18s ease;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+  }
+  .custom-select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3.5px rgba(99,102,241,.12);
+  }
 
-        <p class="text-base-content/70 mt-1">
-            Update the DAC ledger transaction.
-        </p>
+  .input-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64748b;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+
+  /* Submit button gradient */
+  .btn-save-dac {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all .18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-save-dac:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
+</style>
+
+<div class="max-w-4xl mx-auto space-y-6 pb-12">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'view_dac' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-arrow-left mr-1"></i> Back to DAC Ledger
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Edit Transaction</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Edit DAC Entry</h1>
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-fingerprint text-[10px]"></i> Entry #{{ entry.id }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       MAIN EDIT FORM CARD
+  ════════════════════════════════════════ -->
+  <form method="POST" class="billing-card p-6 sm:p-8 space-y-6">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Subdealer Select -->
+      <div>
+        <label class="input-label">
+          <i class="fa-solid fa-users text-slate-400 mr-1"></i> Subdealer
+        </label>
+        <select name="subdealer_code" class="custom-select font-medium" required>
+          {% for subdealer in subdealers %}
+          <option value="{{ subdealer.subdealerCode }}"
+                  {% if entry.subdealer.id == subdealer.id %}selected{% endif %}>
+            {{ subdealer.name }} ({{ subdealer.subdealerCode }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Entry Date -->
+      <div>
+        <label class="input-label">
+          <i class="fa-regular fa-calendar text-slate-400 mr-1"></i> Entry Date
+        </label>
+        <input type="date"
+               name="dac_date"
+               value="{{ entry.entry_date|date:'Y-m-d' }}"
+               class="custom-input"
+               required>
+      </div>
+
+      <!-- Transaction Type -->
+      <div>
+        <label class="input-label">
+          <i class="fa-solid fa-arrow-right-arrow-left text-slate-400 mr-1"></i> Transaction Type
+        </label>
+        <select name="transaction_type" class="custom-select font-semibold" required>
+          <option value="CR" {% if entry.transaction_type == "CR" %}selected{% endif %}>
+            Credit (+) — Adding to Subdealer DAC
+          </option>
+          <option value="DR" {% if entry.transaction_type == "DR" %}selected{% endif %}>
+            Debit (-) — Deducting from Subdealer DAC
+          </option>
+        </select>
+      </div>
+
+      <!-- Transaction Quantity -->
+      <div>
+        <label class="input-label">
+          <i class="fa-solid fa-gas-pump text-slate-400 mr-1"></i> DAC Quantity (Units)
+        </label>
+        <input type="number"
+               step="1"
+               min="1"
+               name="transaction_quantity"
+               value="{{ entry.transaction_quantity }}"
+               class="custom-input font-bold text-slate-900"
+               placeholder="Enter quantity"
+               required>
+      </div>
+
     </div>
 
-    <form method="POST"
-          class="bg-base-200 rounded-3xl shadow-xl p-8">
+    <!-- Description -->
+    <div>
+      <label class="input-label">
+        <i class="fa-solid fa-note-sticky text-slate-400 mr-1"></i> Description / Remarks
+      </label>
+      <textarea name="description"
+                rows="3"
+                class="w-full border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
+                placeholder="Optional details or reason for modification...">{{ entry.description }}</textarea>
+    </div>
 
-        {% csrf_token %}
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            <!-- Subdealer -->
-
-            <div class="form-control">
-
-                <label class="label">
-                    <span class="label-text font-semibold">
-                        Subdealer
-                    </span>
-                </label>
-
-                <select
-                    name="subdealer_code"
-                    class="select select-bordered select-lg w-full"
-                    required>
-
-                    {% for subdealer in subdealers %}
-
-                    <option
-                        value="{{ subdealer.subdealerCode }}"
-                        {% if entry.subdealer.id == subdealer.id %}
-                        selected
-                        {% endif %}
-                    >
-
-                        {{ subdealer.name }}
-                        ({{ subdealer.subdealerCode }})
-
-                    </option>
-
-                    {% endfor %}
-
-                </select>
-
-            </div>
-
-            <!-- Entry Date -->
-
-            <div class="form-control">
-
-                <label class="label">
-                    <span class="label-text font-semibold">
-                        Entry Date
-                    </span>
-                </label>
-
-                <input
-                    type="date"
-                    name="dac_date"
-                    value="{{ entry.entry_date|date:'Y-m-d' }}"
-                    class="input input-bordered input-lg"
-                    required>
-
-            </div>
-
-            <!-- Transaction Type -->
-
-            <div class="form-control">
-
-                <label class="label">
-                    <span class="label-text font-semibold">
-                        Transaction Type
-                    </span>
-                </label>
-
-                <select
-                    name="transaction_type"
-                    class="select select-bordered select-lg"
-                    required>
-
-                    <option
-                        value="CR"
-                        {% if entry.transaction_type == "CR" %}
-                        selected
-                        {% endif %}
-                    >
-                        Credit (+)
-                    </option>
-
-                    <option
-                        value="DR"
-                        {% if entry.transaction_type == "DR" %}
-                        selected
-                        {% endif %}
-                    >
-                        Debit (-)
-                    </option>
-
-                </select>
-
-            </div>
-
-            <!-- Quantity -->
-
-            <div class="form-control">
-
-                <label class="label">
-                    <span class="label-text font-semibold">
-                        DAC Quantity
-                    </span>
-                </label>
-
-                <input
-                    type="number"
-                    step="1"
-                    min="0"
-                    name="transaction_quantity"
-                    value="{{ entry.transaction_quantity }}"
-                    class="input input-bordered input-lg"
-                    required>
-
-            </div>
-
+    <!-- Current Ledger Snapshot Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+      <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70 flex items-center justify-between">
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Recorded Opening Balance</div>
+          <div class="text-xl font-extrabold text-slate-800 font-mono">{{ entry.opening_balance }}</div>
         </div>
-
-        <!-- Description -->
-
-        <div class="form-control mt-6">
-
-            <label class="label">
-                <span class="label-text font-semibold">
-                    Description
-                </span>
-            </label>
-
-            <textarea
-                name="description"
-                rows="4"
-                class="textarea textarea-bordered"
-                placeholder="Optional description...">{{ entry.description }}</textarea>
-
+        <div class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-500 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-door-open"></i>
         </div>
+      </div>
 
-        <!-- Read Only Ledger Info -->
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8">
-
-            <div class="stats shadow bg-base-100">
-
-                <div class="stat">
-
-                    <div class="stat-title">
-                        Opening Balance
-                    </div>
-
-                    <div class="stat-value text-primary text-2xl">
-                        {{ entry.opening_balance }}
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="stats shadow bg-base-100">
-
-                <div class="stat">
-
-                    <div class="stat-title">
-                        Closing Balance
-                    </div>
-
-                    <div class="stat-value text-success text-2xl">
-                        {{ entry.closing_balance }}
-                    </div>
-
-                </div>
-
-            </div>
-
+      <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70 flex items-center justify-between">
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Recorded Closing Balance</div>
+          <div class="text-xl font-extrabold {% if entry.closing_balance >= 0 %}text-emerald-700{% else %}text-rose-600{% endif %} font-mono">
+            {{ entry.closing_balance }}
+          </div>
         </div>
-
-        <div class="alert alert-warning mt-6">
-
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 class="stroke-current shrink-0 h-6 w-6"
-                 fill="none"
-                 viewBox="0 0 24 24">
-
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 8v4m0 4h.01M21 12A9 9 0 1112 3a9 9 0 019 9z" />
-
-            </svg>
-
-            <span>
-
-                After saving, all subsequent ledger balances for this
-                subdealer will automatically be recalculated.
-
-            </span>
-
+        <div class="w-9 h-9 rounded-lg bg-white border border-slate-200 {% if entry.closing_balance >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %} flex items-center justify-center text-sm">
+          <i class="fa-solid fa-door-closed"></i>
         </div>
+      </div>
+    </div>
 
-        <div class="flex justify-end gap-4 mt-8">
+    <!-- Alert / Recalculation Notice -->
+    <div class="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed">
+      <i class="fa-solid fa-circle-info text-amber-600 text-sm mt-0.5 shrink-0"></i>
+      <div>
+        <span class="font-bold">Automatic Ledger Sync:</span> After updating this entry, all subsequent transactions and running balances for this subdealer will be automatically recalculated to preserve exact ledger integrity.
+      </div>
+    </div>
 
-            <a href="{% url 'view_dac' %}"
-               class="btn btn-outline btn-lg">
+    <!-- Action Buttons -->
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+      <a href="{% url 'view_dac' %}"
+         class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        Cancel
+      </a>
+      <button type="submit" class="btn-save-dac">
+        <i class="fa-solid fa-floppy-disk text-xs"></i> Save Changes
+      </button>
+    </div>
 
-                Cancel
-
-            </a>
-
-            <button
-                type="submit"
-                class="btn btn-primary btn-lg px-10">
-
-                Save Changes
-
-            </button>
-
-        </div>
-
-    </form>
+  </form>
 
 </div>
-
 {% endblock %}
