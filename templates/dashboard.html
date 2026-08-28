@@ -1,952 +1,874 @@
 {% extends "layout.html" %}
 {% load static %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard | Maa Tara HP Gas{% endblock %}
 
 {% block content %}
 
-<div class="space-y-8">
+<style>
+  * { font-family: 'Inter', sans-serif; }
 
-    <!-- ====================================================== -->
-    <!-- Header -->
-    <!-- ====================================================== -->
+  /* KPI Cards */
+  .kpi-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    padding: 20px 22px;
+    box-shadow: 0 1px 3px rgba(15,23,42,.03), 0 6px 20px rgba(15,23,42,.04);
+    transition: all .22s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(99,102,241,.1);
+    border-color: #e0e7ff;
+  }
+  .kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: transform .2s ease;
+  }
+  .kpi-card:hover .kpi-icon {
+    transform: scale(1.08);
+  }
+  .kpi-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+  }
+  .kpi-value {
+    font-size: 25px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.15;
+    margin-top: 4px;
+    letter-spacing: -0.02em;
+  }
+  .kpi-sub {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+    font-weight: 500;
+  }
 
-    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
+  /* Section cards */
+  .dash-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(15,23,42,.03), 0 6px 20px rgba(15,23,42,.04);
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .dash-card:hover {
+    border-color: #e2e8f0;
+  }
+  .dash-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .dash-card-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dash-card-body {
+    padding: 18px 22px;
+  }
 
-        <div>
+  /* Quick action buttons */
+  .qa-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 18px 14px;
+    border-radius: 14px;
+    border: 1.5px solid #f1f5f9;
+    background: #fafbfc;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all .2s ease;
+  }
+  .qa-btn:hover {
+    border-color: #818cf8;
+    background: #eef2ff;
+    color: #4338ca;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(99,102,241,.12);
+  }
+  .qa-btn .qa-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    color: #6366f1;
+    transition: all .2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,.03);
+  }
+  .qa-btn:hover .qa-icon {
+    background: #6366f1;
+    color: #ffffff;
+    border-color: #6366f1;
+    transform: scale(1.05);
+  }
 
-            <h1 class="text-4xl font-bold">
+  /* Stat mini row */
+  .stat-mini {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 22px;
+    border-bottom: 1px solid #f8fafc;
+    transition: background .15s;
+  }
+  .stat-mini:hover {
+    background: #f8fafc;
+  }
+  .stat-mini:last-child {
+    border-bottom: none;
+  }
+  .stat-mini-label {
+    font-size: 13px;
+    color: #475569;
+    font-weight: 500;
+  }
+  .stat-mini-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+  }
 
-                Dashboard
+  /* Tables */
+  .dash-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .dash-table th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #94a3b8;
+    padding: 10px 16px;
+    text-align: left;
+    background: #fafbfc;
+  }
+  .dash-table td {
+    font-size: 13px;
+    color: #334155;
+    padding: 12px 16px;
+    border-top: 1px solid #f1f5f9;
+  }
+  .dash-table tr:first-child td {
+    border-top: none;
+  }
+  .dash-table tbody tr {
+    transition: background .15s ease;
+  }
+  .dash-table tbody tr:hover {
+    background: #f8fafc;
+  }
 
-            </h1>
+  /* Badge pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .pill-warn { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+  .pill-err  { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+  .pill-ok   { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .pill-blue { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
 
-            <p class="text-gray-500 mt-2">
+  /* Marquee */
+  @keyframes marquee-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-33.333%); }
+  }
+  .marquee-track {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    animation: marquee-scroll 22s linear infinite;
+    cursor: default;
+  }
+  .marquee-container:hover .marquee-track {
+    animation-play-state: paused;
+  }
 
-                Welcome back 👋
+  /* Chart Card */
+  .chart-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(15,23,42,.03), 0 6px 20px rgba(15,23,42,.04);
+    padding: 20px 22px;
+    position: relative;
+  }
+  .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .chart-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+</style>
 
-                Today is
+<div style="font-family:'Inter',sans-serif;" class="space-y-6 pb-8">
 
-                <span class="font-semibold">
+  <!-- ════════════════════════════════════════
+       HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Dashboard Overview</h1>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>Live
+        </span>
+      </div>
+      <p class="text-sm text-slate-500 mt-1 flex items-center gap-2">
+        <span>Welcome back 👋</span>
+        <span>·</span>
+        <span class="font-medium text-slate-700"><i class="fa-regular fa-calendar mr-1 text-slate-400"></i>{{ today }}</span>
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="{% url 'create_daily_sell_invoice' %}" target="_blank"
+         style="background:linear-gradient(135deg,#6366f1,#4f46e5);box-shadow:0 4px 14px rgba(99,102,241,.35);"
+         class="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-95 hover:shadow-lg active:scale-95">
+        <i class="fa-solid fa-plus text-xs"></i> Create Invoice
+      </a>
+    </div>
+  </div>
 
-                    {{ today }}
+  <!-- ════════════════════════════════════════
+       MARQUEE
+  ════════════════════════════════════════ -->
+  <div class="marquee-container relative overflow-hidden rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50/60 via-slate-50 to-indigo-50/60 py-2.5 shadow-sm">
+    <div class="absolute left-0 top-0 h-full w-14 bg-gradient-to-r from-slate-50 to-transparent z-10 pointer-events-none"></div>
+    <div class="absolute right-0 top-0 h-full w-14 bg-gradient-to-l from-slate-50 to-transparent z-10 pointer-events-none"></div>
+    <div class="marquee-track">
+      {% with item="&nbsp;&nbsp;&nbsp;&nbsp;✦&nbsp;&nbsp;Designed &amp; Developed by&nbsp;<strong>Pabitra Pandit</strong>&nbsp;&nbsp;|&nbsp;&nbsp;Maa Tara HP Gas Management System&nbsp;&nbsp;|&nbsp;&nbsp;Built with ❤️ for seamless operations&nbsp;&nbsp;|&nbsp;&nbsp;© 2026 All rights reserved&nbsp;&nbsp;" %}
+      <span class="text-xs font-medium text-indigo-700 tracking-wide">{{ item|safe }}{{ item|safe }}{{ item|safe }}</span>
+      {% endwith %}
+    </div>
+  </div>
 
-                </span>
+  <!-- ════════════════════════════════════════
+       KPI ROW 1 — Financial
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
 
-            </p>
-
+    <!-- Today's Sales -->
+    <div class="kpi-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="kpi-icon" style="background:#eef2ff;color:#6366f1;">
+          <i class="fa-solid fa-indian-rupee-sign"></i>
         </div>
-
-        <div class="mt-5 lg:mt-0">
-
-            <a href="{% url 'create_daily_sell_invoice' %}"
-
-               class="btn btn-primary">
-
-                + Create Invoice
-
-            </a>
-
-        </div>
-
+        <span class="pill pill-indigo">Today</span>
+      </div>
+      <div class="kpi-label">Today's Sales</div>
+      <div class="kpi-value">₹{{ invoice_summary.total_sales }}</div>
+      <div class="kpi-sub"><i class="fa-solid fa-file-invoice mr-1 opacity-70"></i>Invoice Amount</div>
     </div>
 
-    <!-- ====================================================== -->
-    <!-- Developer Attribution Marquee                          -->
-    <!-- ====================================================== -->
-
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-base-200 to-primary/10 border border-primary/20 py-2.5">
-
-        <!-- Fade edges -->
-        <div class="absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-base-100 to-transparent z-10 pointer-events-none"></div>
-        <div class="absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-base-100 to-transparent z-10 pointer-events-none"></div>
-
-        <!-- Scrolling track -->
-        <div class="flex items-center whitespace-nowrap"
-             style="animation: marquee-scroll 15s linear infinite;">
-
-            {% with item="&nbsp;&nbsp;&nbsp;&nbsp;✦&nbsp;&nbsp;Designed &amp; Developed by&nbsp;<strong>Pabitra Pandit</strong>&nbsp;&nbsp;|&nbsp;&nbsp;Maa Tara HP Gas Management System&nbsp;&nbsp;|&nbsp;&nbsp;Built with ❤️ for seamless operations&nbsp;&nbsp;|&nbsp;&nbsp;© 2026 All rights reserved&nbsp;&nbsp;" %}
-            <span class="text-sm font-medium text-base-content/70 tracking-wide">
-                {{ item|safe }}{{ item|safe }}{{ item|safe }}
-            </span>
-            {% endwith %}
-
+    <!-- Gross Profit -->
+    <div class="kpi-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="kpi-icon" style="background:#dcfce7;color:#16a34a;">
+          <i class="fa-solid fa-arrow-trend-up"></i>
         </div>
+        <span class="pill pill-ok"><i class="fa-solid fa-circle-check text-[9px]"></i>Profit</span>
+      </div>
+      <div class="kpi-label">Gross Profit</div>
+      <div class="kpi-value text-emerald-700">₹{{ gross_profit }}</div>
+      <div class="kpi-sub">Before Expenses</div>
     </div>
 
-    <style>
-        @keyframes marquee-scroll {
-            0%   { transform: translateX(0); }
-            100% { transform: translateX(-33.333%); }
-        }
-    </style>
-
-
-    <!-- ====================================================== -->
-    <!-- KPI CARDS -->
-    <!-- ====================================================== -->
-
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-
-        <!-- Today's Sales -->
-
-        <div class="stats shadow bg-primary text-primary-content">
-
-            <div class="stat">
-
-                <div class="stat-title text-primary-content">
-
-                    Today's Sales
-
-                </div>
-
-                <div class="stat-value">
-
-                    ₹ {{ invoice_summary.total_sales }}
-
-                </div>
-
-                <div class="stat-desc text-primary-content">
-
-                    Invoice Amount
-
-                </div>
-
-            </div>
-
+    <!-- Cash Collection -->
+    <div class="kpi-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="kpi-icon" style="background:#dbeafe;color:#2563eb;">
+          <i class="fa-solid fa-wallet"></i>
         </div>
-
-        <!-- Gross Profit -->
-
-        <div class="stats shadow bg-success text-success-content">
-
-            <div class="stat">
-
-                <div class="stat-title">
-
-                    Gross Profit
-
-                </div>
-
-                <div class="stat-value">
-
-                    ₹ {{ gross_profit }}
-
-                </div>
-
-                <div class="stat-desc">
-
-                    Before Expenses
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- Cash -->
-
-        <div class="stats shadow bg-info text-info-content">
-
-            <div class="stat">
-
-                <div class="stat-title">
-
-                    Cash Collection
-
-                </div>
-
-                <div class="stat-value">
-
-                    ₹ {{ payment_summary.cash }}
-
-                </div>
-
-                <div class="stat-desc">
-
-                    Today's Collection
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- Due -->
-
-        <div class="stats shadow bg-error text-error-content">
-
-            <div class="stat">
-
-                <div class="stat-title">
-
-                    Outstanding Due
-
-                </div>
-
-                <div class="stat-value">
-
-                    ₹ {{ payment_summary.due }}
-
-                </div>
-
-                <div class="stat-desc">
-
-                    Amount due today
-
-                </div>
-
-            </div>
-
-        </div>
-
+        <span class="pill pill-blue">Cash</span>
+      </div>
+      <div class="kpi-label">Cash Collection</div>
+      <div class="kpi-value">₹{{ payment_summary.cash }}</div>
+      <div class="kpi-sub">Today's collection</div>
     </div>
 
-
-    <!-- ====================================================== -->
-    <!-- SECOND ROW -->
-    <!-- ====================================================== -->
-
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-
-        <!-- Bills -->
-
-        <div class="card bg-base-100 shadow">
-
-            <div class="card-body">
-
-                <h2 class="card-title">
-
-                    Today's Bills
-
-                </h2>
-
-                <div class="text-5xl font-bold text-primary">
-
-                    {{ invoice_summary.total_invoices }}
-
-                </div>
-
-            </div>
-
+    <!-- Outstanding Due -->
+    <div class="kpi-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="kpi-icon" style="background:#fee2e2;color:#dc2626;">
+          <i class="fa-solid fa-clock-rotate-left"></i>
         </div>
-
-        <!-- Cylinders -->
-
-        <div class="card bg-base-100 shadow">
-
-            <div class="card-body">
-
-                <h2 class="card-title">
-
-                    Cylinders Sold
-
-                </h2>
-
-                <div class="text-5xl font-bold text-success">
-
-                    {{ cylinder_summary.cylinders }}
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- Stock -->
-
-        <div class="card bg-base-100 shadow">
-
-            <div class="card-body">
-
-                <h2 class="card-title">
-
-                    Stock Value
-
-                </h2>
-
-                <div class="text-3xl font-bold text-info">
-
-                    ₹ {{ stock_value }}
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- Pending -->
-
-        <div class="card bg-base-100 shadow">
-
-            <div class="card-body">
-
-                <h2 class="card-title">
-
-                    Pending AC records
-
-                </h2>
-
-                <div class="text-5xl font-bold text-warning">
-
-                    {{ payment_summary.pending }}
-
-                </div>
-
-            </div>
-
-        </div>
-
+        <span class="pill pill-err">Pending</span>
+      </div>
+      <div class="kpi-label">Outstanding Due</div>
+      <div class="kpi-value text-rose-600">₹{{ payment_summary.due }}</div>
+      <div class="kpi-sub">Due from today's bills</div>
     </div>
 
+  </div>
 
-    <!-- ====================================================== -->
-    <!-- QUICK ACTIONS -->
-    <!-- ====================================================== -->
+  <!-- ════════════════════════════════════════
+       KPI ROW 2 — Operations
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
 
-    <div class="card bg-base-100 shadow">
-
-        <div class="card-body">
-
-            <h2 class="card-title mb-5">
-
-                Quick Actions
-
-            </h2>
-
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-
-                <a href="{% url 'create_daily_sell_invoice' %}"
-
-                   class="btn btn-primary h-24">
-
-                    Create Invoice
-
-                </a>
-
-                <a href="{% url 'Add_product' %}"
-
-                   class="btn btn-secondary h-24">
-
-                    Add Product
-
-                </a>
-
-                <a href="{% url 'CreateNewSubDealers' %}"
-
-                   class="btn btn-accent h-24">
-
-                    Add Subdealer
-
-                </a>
-
-                <a href="{% url 'dac_entry' %}"
-
-                   class="btn btn-info h-24">
-
-                    DAC Entry
-
-                </a>
-
-            </div>
-
+    <!-- Bills -->
+    <div class="kpi-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="kpi-icon" style="background:#f1f5f9;color:#475569;">
+          <i class="fa-solid fa-receipt"></i>
         </div>
-
+        <span class="pill pill-indigo">Invoices</span>
+      </div>
+      <div class="kpi-label">Today's Bills</div>
+      <div class="kpi-value">{{ invoice_summary.total_invoices }}</div>
+      <div class="kpi-sub">Invoices generated</div>
     </div>
 
-
-    <!-- ====================================================== -->
-    <!-- BUSINESS SUMMARY -->
-    <!-- ====================================================== -->
-
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-        <div class="card shadow">
-
-            <div class="card-body">
-
-                <h2 class="card-title">
-
-                    Products
-
-                </h2>
-
-                <div class="text-4xl font-bold">
-
-                    {{ active_products }}
-
-                </div>
-
-            </div>
-
+    <!-- Cylinders -->
+    <div class="kpi-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="kpi-icon" style="background:#f0fdf4;color:#15803d;">
+          <i class="fa-solid fa-gas-pump"></i>
         </div>
-
-        <div class="card shadow">
-
-            <div class="card-body">
-
-                <h2 class="card-title">
-
-                    Subdealers
-
-                </h2>
-
-                <div class="text-4xl font-bold">
-
-                    {{ active_subdealers }}
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="card shadow">
-
-            <div class="card-body">
-
-                <h2 class="card-title">
-
-                    Employees
-
-                </h2>
-
-                <div class="text-4xl font-bold">
-
-                    {{ active_employees }}
-
-                </div>
-
-            </div>
-
-        </div>
-
+        <span class="pill pill-ok">Units</span>
+      </div>
+      <div class="kpi-label">Cylinders Sold</div>
+      <div class="kpi-value text-emerald-800">{{ cylinder_summary.cylinders }}</div>
+      <div class="kpi-sub">Total cylinders dispatched</div>
     </div>
 
-</div>
-
-
-<!-- ====================================================== -->
-<!-- CHARTS -->
-<!-- ====================================================== -->
-
-<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-
-    <!-- Sales Trend -->
-
-    <div class="card bg-base-100 shadow">
-
-        <div class="card-body">
-
-            <h2 class="card-title">
-
-                Last 30 Days Sales
-
-            </h2>
-
-            <canvas id="salesChart" height="120"></canvas>
-
+    <!-- Stock Value -->
+    <div class="kpi-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="kpi-icon" style="background:#eff6ff;color:#1d4ed8;">
+          <i class="fa-solid fa-boxes-stacked"></i>
         </div>
-
+        <span class="pill pill-blue">Asset</span>
+      </div>
+      <div class="kpi-label">Stock Value</div>
+      <div class="kpi-value text-xl">₹{{ stock_value }}</div>
+      <div class="kpi-sub">Current inventory worth</div>
     </div>
 
-    <!-- Profit Trend -->
-
-    <div class="card bg-base-100 shadow">
-
-        <div class="card-body">
-
-            <h2 class="card-title">
-
-                Last 30 Days Profit
-
-            </h2>
-
-            <canvas id="profitChart" height="120"></canvas>
-
+    <!-- Pending -->
+    <div class="kpi-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="kpi-icon" style="background:#fffbeb;color:#b45309;">
+          <i class="fa-solid fa-hourglass-half"></i>
         </div>
-
+        <span class="pill pill-warn">Action</span>
+      </div>
+      <div class="kpi-label">Pending AC</div>
+      <div class="kpi-value text-amber-700">{{ payment_summary.pending }}</div>
+      <div class="kpi-sub">Awaiting verification</div>
     </div>
 
-</div>
+  </div>
 
+  <!-- ════════════════════════════════════════
+       QUICK ACTIONS + BUSINESS SUMMARY
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
 
-<!-- ====================================================== -->
-<!-- INVENTORY -->
-<!-- ====================================================== -->
+    <!-- Quick Actions (2/3 width) -->
+    <div class="xl:col-span-2 dash-card">
+      <div class="dash-card-header">
+        <span class="dash-card-title">
+          <i class="fa-solid fa-bolt text-indigo-500"></i> Quick Operations
+        </span>
+        <span class="text-xs text-slate-400 font-medium">Shortcuts</span>
+      </div>
+      <div class="dash-card-body">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <a href="{% url 'create_daily_sell_invoice' %}" target="_blank" class="qa-btn">
+            <div class="qa-icon"><i class="fa-solid fa-file-invoice"></i></div>
+            <span>Create Bill</span>
+          </a>
+          <a href="{% url 'Add_product' %}" class="qa-btn">
+            <div class="qa-icon"><i class="fa-solid fa-box-open"></i></div>
+            <span>Add Product</span>
+          </a>
+          <a href="{% url 'CreateNewSubDealers' %}" class="qa-btn">
+            <div class="qa-icon"><i class="fa-solid fa-user-plus"></i></div>
+            <span>Add Subdealer</span>
+          </a>
+          <a href="{% url 'dac_entry' %}" class="qa-btn">
+            <div class="qa-icon"><i class="fa-solid fa-pen-to-square"></i></div>
+            <span>DAC Entry</span>
+          </a>
+        </div>
+      </div>
+    </div>
 
-<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+    <!-- Business Summary (1/3 width) -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <span class="dash-card-title">
+          <i class="fa-solid fa-chart-pie text-indigo-500"></i> Entities Summary
+        </span>
+        <span class="text-xs text-slate-400 font-medium">Active</span>
+      </div>
+      <div class="stat-mini">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs" style="background:#eef2ff;color:#6366f1;">
+            <i class="fa-solid fa-box"></i>
+          </div>
+          <span class="stat-mini-label">Inventory Products</span>
+        </div>
+        <span class="stat-mini-value">{{ active_products }}</span>
+      </div>
+      <div class="stat-mini">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs" style="background:#dcfce7;color:#16a34a;">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <span class="stat-mini-label">Registered Subdealers</span>
+        </div>
+        <span class="stat-mini-value">{{ active_subdealers }}</span>
+      </div>
+      <div class="stat-mini">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs" style="background:#dbeafe;color:#2563eb;">
+            <i class="fa-solid fa-id-badge"></i>
+          </div>
+          <span class="stat-mini-label">Active Employees</span>
+        </div>
+        <span class="stat-mini-value">{{ active_employees }}</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       CHARTS (Interactive with smooth hover)
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+
+    <!-- Sales Trend Chart -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">
+          <i class="fa-solid fa-chart-line text-indigo-600"></i>
+          <span>Last 30 Days Sales Trend</span>
+        </div>
+        <span id="salesTotalBadge" class="pill pill-indigo">Loading...</span>
+      </div>
+      <div class="relative h-64 w-full">
+        <canvas id="salesChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Profit Trend Chart -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">
+          <i class="fa-solid fa-chart-simple text-emerald-600"></i>
+          <span>Last 30 Days Gross Profit</span>
+        </div>
+        <span id="profitTotalBadge" class="pill pill-ok">Loading...</span>
+      </div>
+      <div class="relative h-64 w-full">
+        <canvas id="profitChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       INVENTORY ALERTS
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
 
     <!-- Low Stock -->
-
-    <div class="card bg-base-100 shadow">
-
-        <div class="card-body">
-
-            <div class="flex justify-between items-center">
-
-                <h2 class="card-title">
-
-                    Low Stock Products
-
-                </h2>
-
-                <div class="badge badge-warning">
-
-                    {{ low_stock|length }}
-
-                </div>
-
-            </div>
-
-            <div class="overflow-x-auto">
-
-                <table class="table table-sm">
-
-                    <thead>
-
-                        <tr>
-
-                            <th>Code</th>
-
-                            <th>Product</th>
-
-                            <th>Qty</th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        {% for product in low_stock %}
-
-                        <tr>
-
-                            <td>
-
-                                {{ product.productCode }}
-
-                            </td>
-
-                            <td>
-
-                                {{ product.product_name }}
-
-                            </td>
-
-                            <td>
-
-                                <span class="badge badge-warning">
-
-                                    {{ product.product_quantity }}
-
-                                </span>
-
-                            </td>
-
-                        </tr>
-
-                        {% empty %}
-
-                        <tr>
-
-                            <td colspan="3">
-
-                                No Low Stock
-
-                            </td>
-
-                        </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <span class="dash-card-title">
+          <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Low Stock Alert
+        </span>
+        <span class="pill pill-warn">{{ low_stock|length }} item{{ low_stock|length|pluralize }}</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="dash-table w-full">
+          <thead><tr><th>Product Code</th><th>Item Name</th><th class="text-right">Qty in Stock</th></tr></thead>
+          <tbody>
+            {% for product in low_stock %}
+            <tr>
+              <td class="font-mono text-xs text-slate-500 font-semibold">{{ product.productCode }}</td>
+              <td class="font-medium text-slate-800">{{ product.product_name }}</td>
+              <td class="text-right"><span class="pill pill-warn">{{ product.product_quantity }} left</span></td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" class="py-8 text-center text-slate-400 text-sm">
+                <i class="fa-solid fa-circle-check text-emerald-500 text-lg mb-1 block"></i>
+                All inventory items have healthy stock levels
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
 
-
-    <!-- Out Of Stock -->
-
-    <div class="card bg-base-100 shadow">
-
-        <div class="card-body">
-
-            <div class="flex justify-between items-center">
-
-                <h2 class="card-title">
-
-                    Out Of Stock
-
-                </h2>
-
-                <div class="badge badge-error">
-
-                    {{ out_of_stock|length }}
-
-                </div>
-
-            </div>
-
-            <div class="overflow-x-auto">
-
-                <table class="table table-sm">
-
-                    <thead>
-
-                        <tr>
-
-                            <th>Code</th>
-
-                            <th>Product</th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        {% for product in out_of_stock %}
-
-                        <tr>
-
-                            <td>
-
-                                {{ product.productCode }}
-
-                            </td>
-
-                            <td>
-
-                                {{ product.product_name }}
-
-                            </td>
-
-                        </tr>
-
-                        {% empty %}
-
-                        <tr>
-
-                            <td colspan="2">
-
-                                Everything is in stock 🎉
-
-                            </td>
-
-                        </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
+    <!-- Out of Stock -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <span class="dash-card-title">
+          <i class="fa-solid fa-box-archive text-rose-500"></i> Out of Stock
+        </span>
+        <span class="pill pill-err">{{ out_of_stock|length }} item{{ out_of_stock|length|pluralize }}</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="dash-table w-full">
+          <thead><tr><th>Product Code</th><th>Item Name</th><th class="text-right">Status</th></tr></thead>
+          <tbody>
+            {% for product in out_of_stock %}
+            <tr>
+              <td class="font-mono text-xs text-slate-500 font-semibold">{{ product.productCode }}</td>
+              <td class="font-medium text-slate-800">{{ product.product_name }}</td>
+              <td class="text-right"><span class="pill pill-err">0 In Stock</span></td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" class="py-8 text-center text-slate-400 text-sm">
+                <i class="fa-solid fa-boxes-packing text-indigo-500 text-lg mb-1 block"></i>
+                No items are out of stock right now
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       ALERT TABLES (Payments & DAC)
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+
+    <!-- Pending AC Verification -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <span class="dash-card-title">
+          <i class="fa-solid fa-clock text-amber-500"></i> Pending AC Verifications
+        </span>
+        <a href="{% url 'CheckPendingVerification' %}" class="pill pill-warn hover:opacity-80 transition">
+          {{ payment_summary.pending }} Pending <i class="fa-solid fa-arrow-right text-[9px]"></i>
+        </a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="dash-table w-full">
+          <thead><tr><th>Invoice</th><th>Subdealer</th><th class="text-right">AC Amount</th></tr></thead>
+          <tbody>
+            {% for item in pending_verifications %}
+            <tr>
+              <td class="font-mono text-xs font-semibold text-slate-700">{{ item.invoice.invoice_number }}</td>
+              <td class="font-medium text-slate-800">{{ item.subdealer.name }}</td>
+              <td class="text-right font-bold text-amber-700">₹{{ item.ac_amount }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" class="py-8 text-center text-slate-400 text-sm">
+                <i class="fa-solid fa-shield-check text-emerald-500 text-lg mb-1 block"></i>
+                All AC payments are verified and clear
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Negative DAC Balance -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <span class="dash-card-title">
+          <i class="fa-solid fa-scale-unbalanced text-rose-500"></i> Negative DAC Balances
+        </span>
+        <a href="{% url 'view_dac' %}" class="pill pill-err hover:opacity-80 transition">
+          {{ negative_dac|length }} Negative <i class="fa-solid fa-arrow-right text-[9px]"></i>
+        </a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="dash-table w-full">
+          <thead><tr><th>Subdealer Name</th><th class="text-right">Closing Balance</th></tr></thead>
+          <tbody>
+            {% for entry in negative_dac %}
+            <tr>
+              <td class="font-medium text-slate-800">{{ entry.subdealer.name }}</td>
+              <td class="text-right"><span class="font-mono font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">{{ entry.closing_balance }}</span></td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="2" class="py-8 text-center text-slate-400 text-sm">
+                <i class="fa-solid fa-circle-check text-emerald-500 text-lg mb-1 block"></i>
+                No subdealers currently have negative DAC balance
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
 
 </div>
-
-
-
-<!-- ====================================================== -->
-<!-- ALERTS -->
-<!-- ====================================================== -->
-
-<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
-
-    <!-- Pending AC -->
-
-    <div class="card bg-base-100 shadow">
-
-        <div class="card-body">
-
-            <div class="flex justify-between items-center">
-
-                <h2 class="card-title">
-
-                    Pending AC Verification
-
-                </h2>
-
-                <span class="badge badge-warning">
-
-                    {{ payment_summary.pending }}
-
-                </span>
-
-            </div>
-
-            <div class="overflow-x-auto">
-
-                <table class="table table-sm">
-
-                    <thead>
-
-                        <tr>
-
-                            <th>Invoice</th>
-
-                            <th>Subdealer</th>
-
-                            <th>Amount</th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        {% for item in pending_verifications %}
-
-                        <tr>
-
-                            <td>
-
-                                {{ item.invoice.invoice_number }}
-
-                            </td>
-
-                            <td>
-
-                                {{ item.subdealer.name }}
-
-                            </td>
-
-                            <td>
-
-                                ₹ {{ item.ac_amount }}
-
-                            </td>
-
-                        </tr>
-
-                        {% empty %}
-
-                        <tr>
-
-                            <td colspan="3">
-
-                                No Pending Verification
-
-                            </td>
-
-                        </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-
-    <!-- Negative DAC -->
-
-    <div class="card bg-base-100 shadow">
-
-        <div class="card-body">
-
-            <div class="flex justify-between items-center">
-
-                <h2 class="card-title">
-
-                    Negative DAC Balance
-
-                </h2>
-
-                <span class="badge badge-error">
-
-                    {{ negative_dac|length }}
-
-                </span>
-
-            </div>
-
-            <div class="overflow-x-auto">
-
-                <table class="table table-sm">
-
-                    <thead>
-
-                        <tr>
-
-                            <th>Subdealer</th>
-
-                            <th>Balance</th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        {% for entry in negative_dac %}
-
-                        <tr>
-
-                            <td>
-
-                                {{ entry.subdealer.name }}
-
-                            </td>
-
-                            <td>
-
-                                <span class="text-error font-bold">
-
-                                    {{ entry.closing_balance }}
-
-                                </span>
-
-                            </td>
-
-                        </tr>
-
-                        {% empty %}
-
-                        <tr>
-
-                            <td colspan="2">
-
-                                No Negative DAC
-
-                            </td>
-
-                        </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-
-{% block js %}
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-
-const labels = {{ chart_labels|safe }};
-
-//
-// Sales Chart
-//
-
-new Chart(
-
-document.getElementById("salesChart"),
-
-{
-
-type:"line",
-
-data:{
-
-labels:labels,
-
-datasets:[{
-
-label:"Sales",
-
-data:{{ chart_sales|safe }},
-
-borderWidth:3,
-
-fill:true,
-
-tension:.35,
-
-}]
-
-},
-
-options:{
-
-responsive:true,
-
-plugins:{
-
-legend:{display:false}
-
-}
-
-}
-
-}
-
-);
-
-
-//
-// Profit Chart
-//
-
-new Chart(
-
-document.getElementById("profitChart"),
-
-{
-
-type:"bar",
-
-data:{
-
-labels:labels,
-
-datasets:[{
-
-label:"Profit",
-
-data:{{ chart_profit|safe }}
-
-}]
-
-},
-
-options:{
-
-responsive:true,
-
-plugins:{
-
-legend:{display:false}
-
-}
-
-}
-
-}
-
-);
-
-</script>
-
-{% endblock js %}
 
 {% endblock content %}
+
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const labels = {{ chart_labels|safe }};
+  const rawSales = {{ chart_sales|safe }};
+  const rawProfit = {{ chart_profit|safe }};
+
+  // Calculate 30-day totals for badges
+  const totalSalesVal = rawSales.reduce((acc, v) => acc + (Number(v) || 0), 0);
+  const totalProfitVal = rawProfit.reduce((acc, v) => acc + (Number(v) || 0), 0);
+
+  const salesBadge = document.getElementById('salesTotalBadge');
+  if (salesBadge) {
+    salesBadge.textContent = '30d Total: ₹' + totalSalesVal.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  }
+  const profitBadge = document.getElementById('profitTotalBadge');
+  if (profitBadge) {
+    profitBadge.textContent = '30d Total: ₹' + totalProfitVal.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  }
+
+  // Shared chart typography & defaults
+  Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = '#64748b';
+
+  // ──────────────────────────────────────────────
+  // 1. Sales Trend Line Chart
+  // ──────────────────────────────────────────────
+  const salesCanvas = document.getElementById('salesChart');
+  if (salesCanvas) {
+    const salesCtx = salesCanvas.getContext('2d');
+    const salesGradient = salesCtx.createLinearGradient(0, 0, 0, 240);
+    salesGradient.addColorStop(0, 'rgba(99, 102, 241, 0.25)');
+    salesGradient.addColorStop(1, 'rgba(99, 102, 241, 0.00)');
+
+    new Chart(salesCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Total Sales',
+          data: rawSales,
+          borderColor: '#6366f1',
+          backgroundColor: salesGradient,
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.36,
+          pointRadius: 0,
+          pointHitRadius: 28,
+          pointHoverRadius: 6.5,
+          pointHoverBackgroundColor: '#4f46e5',
+          pointHoverBorderColor: '#ffffff',
+          pointHoverBorderWidth: 3,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        hover: {
+          mode: 'index',
+          intersect: false,
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: true,
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            titleColor: '#94a3b8',
+            bodyColor: '#ffffff',
+            borderColor: 'rgba(255, 255, 255, 0.12)',
+            borderWidth: 1,
+            padding: { top: 10, right: 14, bottom: 10, left: 14 },
+            cornerRadius: 12,
+            titleFont: { size: 11.5, weight: '600' },
+            bodyFont: { size: 14, weight: '700' },
+            displayColors: false,
+            callbacks: {
+              title: function (items) {
+                return items[0].label;
+              },
+              label: function (context) {
+                const val = Number(context.parsed.y || 0);
+                return 'Sales: ₹ ' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              color: '#94a3b8',
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 7
+            }
+          },
+          y: {
+            grid: { color: '#f1f5f9' },
+            border: { dash: [4, 4], display: false },
+            ticks: {
+              color: '#94a3b8',
+              callback: function (val) {
+                if (val >= 100000) return '₹' + (val / 100000).toFixed(1) + 'L';
+                if (val >= 1000) return '₹' + (val / 1000).toFixed(0) + 'k';
+                return '₹' + val;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // ──────────────────────────────────────────────
+  // 2. Gross Profit Bar Chart
+  // ──────────────────────────────────────────────
+  const profitCanvas = document.getElementById('profitChart');
+  if (profitCanvas) {
+    const profitCtx = profitCanvas.getContext('2d');
+    const profitGradient = profitCtx.createLinearGradient(0, 0, 0, 240);
+    profitGradient.addColorStop(0, 'rgba(34, 197, 94, 0.85)');
+    profitGradient.addColorStop(1, 'rgba(34, 197, 94, 0.45)');
+
+    new Chart(profitCtx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Gross Profit',
+          data: rawProfit,
+          backgroundColor: profitGradient,
+          hoverBackgroundColor: '#16a34a',
+          borderRadius: 6,
+          borderSkipped: false,
+          maxBarThickness: 16,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        hover: {
+          mode: 'index',
+          intersect: false,
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: true,
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            titleColor: '#94a3b8',
+            bodyColor: '#ffffff',
+            borderColor: 'rgba(255, 255, 255, 0.12)',
+            borderWidth: 1,
+            padding: { top: 10, right: 14, bottom: 10, left: 14 },
+            cornerRadius: 12,
+            titleFont: { size: 11.5, weight: '600' },
+            bodyFont: { size: 14, weight: '700' },
+            displayColors: false,
+            callbacks: {
+              title: function (items) {
+                return items[0].label;
+              },
+              label: function (context) {
+                const val = Number(context.parsed.y || 0);
+                return 'Profit: ₹ ' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              color: '#94a3b8',
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 7
+            }
+          },
+          y: {
+            grid: { color: '#f1f5f9' },
+            border: { dash: [4, 4], display: false },
+            ticks: {
+              color: '#94a3b8',
+              callback: function (val) {
+                if (val >= 100000) return '₹' + (val / 100000).toFixed(1) + 'L';
+                if (val >= 1000) return '₹' + (val / 1000).toFixed(0) + 'k';
+                return '₹' + val;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+});
+</script>
+{% endblock js %}
