@@ -51,6 +51,36 @@
 
     </div>
 
+    <!-- ====================================================== -->
+    <!-- Developer Attribution Marquee                          -->
+    <!-- ====================================================== -->
+
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-base-200 to-primary/10 border border-primary/20 py-2.5">
+
+        <!-- Fade edges -->
+        <div class="absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-base-100 to-transparent z-10 pointer-events-none"></div>
+        <div class="absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-base-100 to-transparent z-10 pointer-events-none"></div>
+
+        <!-- Scrolling track -->
+        <div class="flex items-center whitespace-nowrap"
+             style="animation: marquee-scroll 15s linear infinite;">
+
+            {% with item="&nbsp;&nbsp;&nbsp;&nbsp;✦&nbsp;&nbsp;Designed &amp; Developed by&nbsp;<strong>Pabitra Pandit</strong>&nbsp;&nbsp;|&nbsp;&nbsp;Maa Tara HP Gas Management System&nbsp;&nbsp;|&nbsp;&nbsp;Built with ❤️ for seamless operations&nbsp;&nbsp;|&nbsp;&nbsp;© 2026 All rights reserved&nbsp;&nbsp;" %}
+            <span class="text-sm font-medium text-base-content/70 tracking-wide">
+                {{ item|safe }}{{ item|safe }}{{ item|safe }}
+            </span>
+            {% endwith %}
+
+        </div>
+    </div>
+
+    <style>
+        @keyframes marquee-scroll {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-33.333%); }
+        }
+    </style>
+
 
     <!-- ====================================================== -->
     <!-- KPI CARDS -->
