@@ -80,10 +80,10 @@
           <td>{{ subdealer.dac_percentage }}%</td>
           <td class="space-x-2 text-center">
             <a href="{% url 'edit_subdealer' subdealer.id %}" class="btn btn-sm btn-info">Edit</a>
-            <form method="post" action="{% url 'delete_subdealer' subdealer.id %}" class="inline-block">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-error" onclick="return confirm('Delete this subdealer?');">Delete</button>
-            </form>
+            <button type="button"
+                    class="btn btn-sm btn-error subdealer-delete-btn"
+                    data-url="{% url 'delete_subdealer' subdealer.id %}"
+                    data-name="{{ subdealer.name }}">Delete</button>
           </td>
         </tr>
         {% empty %}
@@ -114,4 +114,38 @@
     searchInput.setSelectionRange(len, len);
   }
 </script>
+
+<!-- Delete Subdealer Modal -->
+<dialog id="subdealerDeleteModal" class="modal">
+    <div class="modal-box">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="bg-error/10 text-error rounded-xl p-3">
+                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            </div>
+            <h3 class="font-bold text-lg">Delete Subdealer</h3>
+        </div>
+        <p class="text-base-content/70">Are you sure you want to delete subdealer:</p>
+        <p class="font-semibold bg-base-200 rounded-lg px-3 py-2 text-sm mt-2" id="subdealerDeleteName"></p>
+        <p class="text-sm text-error/80 mt-3">This will also delete all DAC entries linked to this subdealer.</p>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="subdealerDeleteModal.close()">Cancel</button>
+            <form id="subdealerDeleteForm" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-error">Yes, Delete</button>
+            </form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<script>
+document.querySelectorAll('.subdealer-delete-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.getElementById('subdealerDeleteName').textContent = this.dataset.name;
+        document.getElementById('subdealerDeleteForm').action = this.dataset.url;
+        document.getElementById('subdealerDeleteModal').showModal();
+    });
+});
+</script>
+
 {% endblock content %}

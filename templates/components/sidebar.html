@@ -1,13 +1,13 @@
 <nav id="sidebar" class="flex h-full flex-col bg-white text-gray-800">
   <ul class="menu flex-nowrap min-h-0 w-full flex-1 space-y-2 overflow-y-auto overscroll-contain p-4">
     <li>
-      <a href="{% url 'dashboard' %}">
+      <a href="{% url 'dashboard' %}" {% if page_type == 'dashboard' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>
         {% include "icons/home.svg" %}
         <span>Dashboard</span>
       </a>
     </li>
     <li>
-      <a href="{% url 'manage_products' %}">
+      <a href="{% url 'manage_products' %}" {% if page_type == 'manage_products' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>
         {% include "icons/inventory.svg" %}
         <span>Inventory</span>
       </a>
@@ -20,19 +20,19 @@
         </summary>
         <ul>
           <li>
-            <a href="{% url 'create_daily_sell_invoice' %}" target="_blank">Create Bill</a>
+            <a href="{% url 'create_daily_sell_invoice' %}" target="_blank" {% if page_type == 'create_invoice' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>Create Bill</a>
           </li>
           <li>
-            <a href="{% url 'view_daily_sell_invoices' %}">View Bills</a>
+            <a href="{% url 'view_daily_sell_invoices' %}" {% if page_type == 'view_invoices' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>View Bills</a>
           </li>
           <li>
-            <a href="{% url 'Cylender_Mismatch' %}">Cylinder Mismatch</a>
+            <a href="{% url 'Cylender_Mismatch' %}" {% if page_type == 'cylinder_mismatch' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>Cylinder Mismatch</a>
           </li>
           <li>
-            <a href="{% url 'CheckPendingVerification' %}">Pending Verification</a>
+            <a href="{% url 'CheckPendingVerification' %}" {% if page_type == 'payment_verification' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>Pending Verification</a>
           </li>
           <li>
-            <a href="{% url 'payment_due_list' %}">Due Payments</a>
+            <a href="{% url 'payment_due_list' %}" {% if page_type == 'payment_due_list' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>Due Payments</a>
           </li>
         </ul>
       </details>
@@ -45,16 +45,16 @@
         </summary>
         <ul>
           <li>
-            <a href="{% url 'CreateNewSubDealers' %}">Add Subdealer</a>
+            <a href="{% url 'CreateNewSubDealers' %}" {% if page_type == 'create_subdealer' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>Add Subdealer</a>
           </li>
           <li>
-            <a href="{% url 'view_subdealers' %}">View Subdealers</a>
+            <a href="{% url 'view_subdealers' %}" {% if page_type == 'view_subdealers' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>View Subdealers</a>
           </li>
           <li>
-            <a href="{% url 'addSubDealersProductDiscount' %}">Add Discount</a>
+            <a href="{% url 'addSubDealersProductDiscount' %}" {% if page_type == 'add_discount' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>Add Discount</a>
           </li>
           <li>
-            <a href="{% url 'view_subdealer_discounts' %}">View Discounts</a>
+            <a href="{% url 'view_subdealer_discounts' %}" {% if page_type == 'view_discount' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>View Discounts</a>
           </li>
         </ul>
       </details>
@@ -67,13 +67,13 @@
         </summary>
         <ul>
           <li>
-            <a href="{% url 'Add_product' %}">Add Product</a>
+            <a href="{% url 'Add_product' %}" {% if page_type == 'add_product' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>Add Product</a>
           </li>
           <li>
-            <a href="{% url 'manage_products' %}">View Products</a>
+            <a href="{% url 'manage_products' %}" {% if page_type == 'manage_products' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>View Products</a>
           </li>
           <li>
-            <a href="{% url 'topup_stock' %}">Top-Up Stock</a>
+            <a href="{% url 'topup_stock' %}" {% if page_type == 'topup_stock' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>Top-Up Stock</a>
           </li>
         </ul>
       </details>
@@ -86,16 +86,16 @@
         </summary>
         <ul>
           <li>
-            <a href="{% url 'add_new_employees' %}">Add Employee</a>
+            <a href="{% url 'add_new_employees' %}" {% if page_type == 'add_new_employees' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>Add Employee</a>
           </li>
           <li>
-            <a href="{% url 'view_employees' %}">View Employees</a>
+            <a href="{% url 'view_employees' %}" {% if page_type == 'view_employees' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>View Employees</a>
           </li>
           <li>
-            <a href="{% url 'add_Employee_Predefined_Expences' %}">Add Predefined Expenses</a>
+            <a href="{% url 'add_Employee_Predefined_Expences' %}" {% if page_type == 'add_Predefined_Expenses' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>Add Predefined Expenses</a>
           </li>
           <li>
-            <a href="{% url 'view_Predefined_Expences' %}">View Predefined Expenses</a>
+            <a href="{% url 'view_Predefined_Expences' %}" {% if page_type == 'view_Predefined_Expences' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>View Predefined Expenses</a>
           </li>
         </ul>
       </details>
@@ -108,19 +108,19 @@
         </summary>
         <ul>
           <li>
-            <a href="{% url 'dac_entry' %}">Entry DAC</a>
+            <a href="{% url 'dac_entry' %}" {% if page_type == 'entry_dac' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>Entry DAC</a>
           </li>
           <li>
-            <a href="{% url 'view_dac' %}">View DAC</a>
+            <a href="{% url 'view_dac' %}" {% if page_type == 'view_dac' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>View DAC</a>
           </li>
           <li>
-            <a href="{% url 'pending_dac_orders' %}">Pending DAC</a>
+            <a href="{% url 'pending_dac_orders' %}" {% if page_type == 'pending_dac_orders' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>Pending DAC</a>
           </li>
         </ul>
       </details>
     </li>
     <li>
-      <a href="{% url 'monthly_summary' %}">
+      <a href="{% url 'monthly_summary' %}" {% if page_type == 'monthly_summary' %}class="bg-primary/10 text-primary font-semibold border-l-2 border-primary rounded-lg"{% endif %}>
         {% include "icons/analytics.svg" %}
         <span>Analytics</span>
       </a>

@@ -170,9 +170,10 @@
                     <td>
                         <div class="flex justify-center gap-2">
                             <a href="{% url 'dac_edit' entry.id %}" class="btn btn-sm btn-primary">Edit</a>
-                            <a href="{% url 'dac_delete' entry.id %}"
-                               onclick="return confirm('Delete this transaction?')"
-                               class="btn btn-sm btn-error">Delete</a>
+                            <button type="button"
+                                    class="btn btn-sm btn-error dac-delete-btn"
+                                    data-url="{% url 'dac_delete' entry.id %}"
+                                    data-label="{{ entry.entry_date|date:'j M Y' }} — {{ entry.subdealer.name }} ({{ entry.transaction_type }})">Delete</button>
                         </div>
                     </td>
 
@@ -200,5 +201,35 @@
     {% include 'components/pagination.html' %}
 
 </div>
+
+<!-- Delete DAC Entry Modal -->
+<dialog id="dacDeleteModal" class="modal">
+    <div class="modal-box">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="bg-error/10 text-error rounded-xl p-3">
+                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            </div>
+            <h3 class="font-bold text-lg">Delete Transaction</h3>
+        </div>
+        <p class="text-base-content/70 mb-1">You are about to permanently delete:</p>
+        <p class="font-semibold bg-base-200 rounded-lg px-3 py-2 text-sm" id="dacDeleteLabel"></p>
+        <p class="text-sm text-error/80 mt-3">This action cannot be undone.</p>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="dacDeleteModal.close()">Cancel</button>
+            <a id="dacDeleteConfirmBtn" href="#" class="btn btn-error">Yes, Delete</a>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<script>
+document.querySelectorAll('.dac-delete-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.getElementById('dacDeleteLabel').textContent = this.dataset.label;
+        document.getElementById('dacDeleteConfirmBtn').href = this.dataset.url;
+        document.getElementById('dacDeleteModal').showModal();
+    });
+});
+</script>
 
 {% endblock %}

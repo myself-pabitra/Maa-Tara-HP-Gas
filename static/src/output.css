@@ -1964,6 +1964,18 @@
       cursor: not-allowed;
     }
   }
+  .modal-backdrop {
+    grid-column-start: 1;
+    grid-row-start: 1;
+    display: grid;
+    align-self: stretch;
+    justify-self: stretch;
+    color: transparent;
+    z-index: -1;
+    button {
+      cursor: pointer;
+    }
+  }
   .z-10 {
     z-index: 10;
   }
@@ -3054,6 +3066,10 @@
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 2px;
   }
+  .border-l-2 {
+    border-left-style: var(--tw-border-style);
+    border-left-width: 2px;
+  }
   .input-ghost {
     background-color: transparent;
     box-shadow: none;
@@ -3126,6 +3142,9 @@
   }
   .border-orange-200 {
     border-color: var(--color-orange-200);
+  }
+  .border-primary {
+    border-color: var(--color-primary);
   }
   .border-primary\/20 {
     border-color: var(--color-primary);
@@ -3273,6 +3292,12 @@
       background-color: color-mix(in oklab, var(--color-error) 5%, transparent);
     }
   }
+  .bg-error\/10 {
+    background-color: var(--color-error);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-error) 10%, transparent);
+    }
+  }
   .bg-gray-100 {
     background-color: var(--color-gray-100);
   }
@@ -3299,6 +3324,12 @@
   }
   .bg-primary {
     background-color: var(--color-primary);
+  }
+  .bg-primary\/10 {
+    background-color: var(--color-primary);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-primary) 10%, transparent);
+    }
   }
   .bg-red-100 {
     background-color: var(--color-red-100);
@@ -3811,6 +3842,12 @@
   }
   .text-error-content {
     color: var(--color-error-content);
+  }
+  .text-error\/80 {
+    color: var(--color-error);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-error) 80%, transparent);
+    }
   }
   .text-gray-400 {
     color: var(--color-gray-400);
