@@ -212,6 +212,107 @@
   .btn-save-invoice:active {
     transform: translateY(0);
   }
+
+  /* ── Searchable Subdealer Combobox ────────────── */
+  .sd-combobox {
+    position: relative;
+    width: 100%;
+  }
+  .sd-search-input {
+    height: 42px;
+    padding: 0 36px 0 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #1e293b;
+    background: #fafbfc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat right 10px center / 15px;
+    width: 100%;
+    outline: none;
+    cursor: text;
+    transition: border-color .18s, box-shadow .18s;
+    box-sizing: border-box;
+  }
+  .sd-search-input:focus {
+    border-color: #6366f1;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3.5px rgba(99,102,241,.1);
+  }
+  .sd-search-input.sd-has-value {
+    border-color: #a5b4fc;
+    background-color: #f5f3ff;
+    color: #3730a3;
+    font-weight: 600;
+  }
+  .sd-dropdown {
+    position: fixed;
+    background: #ffffff;
+    border: 1.5px solid #e0e7ff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(15,23,42,.15), 0 2px 8px rgba(99,102,241,.1);
+    z-index: 99999;
+    max-height: 240px;
+    overflow-y: auto;
+    display: none;
+    padding: 6px 0;
+    min-width: 220px;
+  }
+  .sd-dropdown.sd-open { display: block; }
+  .sd-dropdown::-webkit-scrollbar { width: 5px; }
+  .sd-dropdown::-webkit-scrollbar-track { background: #f8fafc; border-radius: 99px; }
+  .sd-dropdown::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 99px; }
+  .sd-option {
+    padding: 9px 14px;
+    font-size: 13px;
+    color: #1e293b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background .12s;
+  }
+  .sd-option:hover, .sd-option.sd-focused {
+    background: #eef2ff;
+    color: #3730a3;
+  }
+  .sd-option .sd-code-badge {
+    font-size: 10px;
+    font-weight: 700;
+    background: #e0e7ff;
+    color: #4338ca;
+    border-radius: 6px;
+    padding: 2px 7px;
+    flex-shrink: 0;
+    font-family: 'Courier New', monospace;
+  }
+  .sd-option .sd-name { flex: 1; }
+  .sd-no-result {
+    padding: 14px;
+    text-align: center;
+    font-size: 12.5px;
+    color: #94a3b8;
+    font-style: italic;
+  }
+  .sd-clear-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border-radius: 99px;
+    background: #e0e7ff;
+    color: #4338ca;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background .15s;
+    z-index: 2;
+  }
+  .sd-clear-btn:hover { background: #6366f1; color: #fff; }
 </style>
 
 <div class="w-full max-w-[1600px] mx-auto space-y-6 pb-12">
@@ -431,14 +532,24 @@
       <div class="index-badge row-index">1</div>
     </td>
 
-    <!-- Subdealer Select -->
+    <!-- Subdealer Searchable Combobox -->
     <td>
-      <select name="subdealer_code[]" class="custom-select subdealer-select" required>
+      <!-- Hidden real select for form POST -->
+      <select name="subdealer_code[]" class="subdealer-select" style="display:none;" required>
         <option value="">Select Subdealer</option>
         {% for sd in subdealers %}
           <option value="{{ sd.subdealerCode }}">{{ sd.name }} ({{ sd.subdealerCode }})</option>
         {% endfor %}
       </select>
+      <!-- Visible custom searchable combobox -->
+      <div class="sd-combobox">
+        <input type="text"
+               class="sd-search-input"
+               placeholder="🔍 Search subdealer…"
+               autocomplete="off"
+               spellcheck="false">
+        <button type="button" class="sd-clear-btn" title="Clear selection">✕</button>
+      </div>
     </td>
 
     <!-- Product Select & Other Fields -->
@@ -593,6 +704,166 @@ const rowTmpl = document.getElementById('rowTemplate');
 
 document.getElementById('addRowBtn').addEventListener('click', () => addRow());
 
+/* ── Subdealer Data for searchable combobox ──────────── */
+const ALL_SUBDEALERS = [
+  {% for sd in subdealers %}
+  { code: "{{ sd.subdealerCode }}", name: "{{ sd.name }}" },
+  {% endfor %}
+];
+
+/**
+ * Initialise a searchable combobox on a row's sd-combobox element.
+ * @param {HTMLElement} row - The item row element.
+ * @param {string} preSelectedCode - Optional pre-selected subdealer code (for edit mode).
+ */
+function initSearchableSubdealerSelect(row, preSelectedCode) {
+  const hiddenSel  = row.querySelector('.subdealer-select');
+  const searchInp  = row.querySelector('.sd-search-input');
+  const clearBtn   = row.querySelector('.sd-clear-btn');
+  let focusedIdx   = -1;
+  let isSelected   = false;
+
+  // Create dropdown as a body-level portal so overflow:hidden/auto never clips it
+  const dropdown = document.createElement('div');
+  dropdown.className = 'sd-dropdown';
+  document.body.appendChild(dropdown);
+
+  function positionDropdown() {
+    const rect = searchInp.getBoundingClientRect();
+    dropdown.style.top    = (rect.bottom + window.scrollY + 4) + 'px';
+    dropdown.style.left   = (rect.left + window.scrollX) + 'px';
+    dropdown.style.width  = rect.width + 'px';
+  }
+
+  function renderOptions(query) {
+    const q = (query || '').trim().toLowerCase();
+    const filtered = q
+      ? ALL_SUBDEALERS.filter(sd =>
+          sd.name.toLowerCase().includes(q) ||
+          sd.code.toLowerCase().includes(q)
+        )
+      : ALL_SUBDEALERS;
+
+    dropdown.innerHTML = '';
+    focusedIdx = -1;
+
+    if (filtered.length === 0) {
+      dropdown.innerHTML = '<div class="sd-no-result">No subdealer found for "' + query + '"</div>';
+      return;
+    }
+
+    filtered.forEach((sd) => {
+      const opt = document.createElement('div');
+      opt.className = 'sd-option';
+      opt.dataset.code = sd.code;
+      opt.dataset.name = sd.name;
+      opt.innerHTML = `<span class="sd-code-badge">${sd.code}</span><span class="sd-name">${sd.name}</span>`;
+      opt.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        selectSubdealer(sd.code, sd.name);
+      });
+      dropdown.appendChild(opt);
+    });
+  }
+
+  function selectSubdealer(code, name) {
+    hiddenSel.value = code;
+    searchInp.value = name + ' (' + code + ')';
+    searchInp.classList.add('sd-has-value');
+    clearBtn.style.display = 'flex';
+    searchInp.style.backgroundImage = 'none';
+    isSelected = true;
+    closeDropdown();
+    hiddenSel.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function openDropdown() {
+    renderOptions(isSelected ? '' : searchInp.value);
+    positionDropdown();
+    dropdown.style.display = 'block';
+    dropdown.classList.add('sd-open');
+    window.addEventListener('scroll', positionDropdown, true);
+    window.addEventListener('resize', positionDropdown);
+  }
+
+  function closeDropdown() {
+    dropdown.style.display = 'none';
+    dropdown.classList.remove('sd-open');
+    window.removeEventListener('scroll', positionDropdown, true);
+    window.removeEventListener('resize', positionDropdown);
+    if (!isSelected) searchInp.value = '';
+  }
+
+  searchInp.addEventListener('focus', () => {
+    if (isSelected) searchInp.select();
+    openDropdown();
+  });
+
+  searchInp.addEventListener('input', () => {
+    isSelected = false;
+    hiddenSel.value = '';
+    searchInp.classList.remove('sd-has-value');
+    clearBtn.style.display = 'none';
+    searchInp.style.backgroundImage = '';
+    renderOptions(searchInp.value);
+    if (dropdown.style.display === 'none') openDropdown();
+  });
+
+  searchInp.addEventListener('blur', () => {
+    setTimeout(() => closeDropdown(), 130);
+  });
+
+  searchInp.addEventListener('keydown', (e) => {
+    const opts = dropdown.querySelectorAll('.sd-option');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      focusedIdx = Math.min(focusedIdx + 1, opts.length - 1);
+      opts.forEach((o, i) => o.classList.toggle('sd-focused', i === focusedIdx));
+      opts[focusedIdx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      focusedIdx = Math.max(focusedIdx - 1, 0);
+      opts.forEach((o, i) => o.classList.toggle('sd-focused', i === focusedIdx));
+      opts[focusedIdx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (focusedIdx >= 0 && opts[focusedIdx]) {
+        const opt = opts[focusedIdx];
+        selectSubdealer(opt.dataset.code, opt.dataset.name);
+      }
+    } else if (e.key === 'Escape') {
+      closeDropdown();
+    }
+  });
+
+  clearBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    hiddenSel.value = '';
+    searchInp.value = '';
+    searchInp.classList.remove('sd-has-value');
+    clearBtn.style.display = 'none';
+    searchInp.style.backgroundImage = '';
+    isSelected = false;
+    hiddenSel.dispatchEvent(new Event('change', { bubbles: true }));
+    searchInp.focus();
+  });
+
+  // Remove portal dropdown when row is removed
+  const observer = new MutationObserver(() => {
+    if (!document.body.contains(row)) {
+      dropdown.remove();
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // Pre-populate if editing
+  if (preSelectedCode) {
+    const found = ALL_SUBDEALERS.find(sd => sd.code === preSelectedCode);
+    if (found) selectSubdealer(found.code, found.name);
+  }
+}
+
 function addRow(data = null) {
   const tpl = rowTmpl.content.cloneNode(true);
   const row = tpl.querySelector('.item-row');
@@ -608,6 +879,9 @@ function addRow(data = null) {
   const cashInput = row.querySelector('.cash-input');
   const acInput = row.querySelector('.ac-input');
   const removeBtn = row.querySelector('.remove-row-btn');
+
+  // Initialise the searchable subdealer combobox (no preselection for new rows)
+  initSearchableSubdealerSelect(row, null);
 
   qtyInput.addEventListener('input', () => {
     const q = qtyInput.value ? Number(qtyInput.value) : 0;
@@ -674,7 +948,19 @@ function addRow(data = null) {
   });
 
   if (data) {
-    if (data.subdealer_code) subdealerSel.value = data.subdealer_code;
+    // Pre-populate the searchable subdealer combobox for edit mode
+    if (data.subdealer_code) {
+      const found = ALL_SUBDEALERS.find(sd => sd.code === data.subdealer_code);
+      if (found) {
+        const si = row.querySelector('.sd-search-input');
+        const cb = row.querySelector('.sd-clear-btn');
+        subdealerSel.value = data.subdealer_code;
+        si.value = found.name + ' (' + found.code + ')';
+        si.classList.add('sd-has-value');
+        si.style.backgroundImage = 'none';
+        cb.style.display = 'flex';
+      }
+    }
     if (data.is_other) {
       productSel.value = '__other__';
       row.querySelector('.other-remarks').value = data.remarks || '';
