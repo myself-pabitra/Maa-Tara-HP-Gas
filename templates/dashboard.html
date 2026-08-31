@@ -296,39 +296,39 @@
        DASHBOARD PERIOD FILTER BAR
   ════════════════════════════════════════ -->
   <div class="dash-card p-4 sm:p-5">
-    <form method="get" id="dashboardFilterForm" class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <form method="get" action="{% url 'dashboard' %}" id="dashboardFilterForm" class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <!-- Left: Filter Type Selection & Inputs -->
       <div class="flex flex-wrap items-center gap-3">
         <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 mr-1">
           <i class="fa-solid fa-filter text-indigo-600"></i> Period Filter:
         </span>
 
-        <!-- Filter Mode Radios -->
+        <!-- Filter Mode Radios / Buttons -->
         <div class="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
           <label class="cursor-pointer">
-            <input type="radio" name="filter_type" value="today" class="sr-only filter-mode-radio" {% if filter_type == 'today' %}checked{% endif %} onchange="handleFilterModeChange('today')">
-            <span class="inline-block px-3 py-1.5 rounded-lg transition {% if filter_type == 'today' %}bg-white text-indigo-700 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+            <input type="radio" name="filter_type" value="today" class="sr-only filter-mode-radio" {% if filter_type == 'today' %}checked{% endif %}>
+            <span class="filter-tab-pill inline-block px-3 py-1.5 rounded-lg transition {% if filter_type == 'today' %}bg-white text-indigo-700 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
               Today
             </span>
           </label>
 
           <label class="cursor-pointer">
-            <input type="radio" name="filter_type" value="date" class="sr-only filter-mode-radio" {% if filter_type == 'date' %}checked{% endif %} onchange="handleFilterModeChange('date')">
-            <span class="inline-block px-3 py-1.5 rounded-lg transition {% if filter_type == 'date' %}bg-white text-indigo-700 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+            <input type="radio" name="filter_type" value="date" class="sr-only filter-mode-radio" {% if filter_type == 'date' %}checked{% endif %}>
+            <span class="filter-tab-pill inline-block px-3 py-1.5 rounded-lg transition {% if filter_type == 'date' %}bg-white text-indigo-700 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
               Specific Date
             </span>
           </label>
 
           <label class="cursor-pointer">
-            <input type="radio" name="filter_type" value="month" class="sr-only filter-mode-radio" {% if filter_type == 'month' %}checked{% endif %} onchange="handleFilterModeChange('month')">
-            <span class="inline-block px-3 py-1.5 rounded-lg transition {% if filter_type == 'month' %}bg-white text-indigo-700 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+            <input type="radio" name="filter_type" value="month" class="sr-only filter-mode-radio" {% if filter_type == 'month' %}checked{% endif %}>
+            <span class="filter-tab-pill inline-block px-3 py-1.5 rounded-lg transition {% if filter_type == 'month' %}bg-white text-indigo-700 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
               Specific Month
             </span>
           </label>
 
           <label class="cursor-pointer">
-            <input type="radio" name="filter_type" value="all" class="sr-only filter-mode-radio" {% if filter_type == 'all' %}checked{% endif %} onchange="handleFilterModeChange('all')">
-            <span class="inline-block px-3 py-1.5 rounded-lg transition {% if filter_type == 'all' %}bg-white text-indigo-700 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+            <input type="radio" name="filter_type" value="all" class="sr-only filter-mode-radio" {% if filter_type == 'all' %}checked{% endif %}>
+            <span class="filter-tab-pill inline-block px-3 py-1.5 rounded-lg transition {% if filter_type == 'all' %}bg-white text-indigo-700 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
               All Time
             </span>
           </label>
@@ -338,13 +338,14 @@
         <div id="dateInputWrap" class="{% if filter_type != 'date' %}hidden{% endif %} flex items-center gap-2">
           <input type="date" name="date" id="dateInput" value="{{ selected_date|default:today|date:'Y-m-d' }}"
                  class="h-9 px-3 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
-                 onchange="this.form.submit()">
+                 {% if filter_type != 'date' %}disabled{% endif %}>
         </div>
 
         <!-- Month Picker Input (Visible when filter_type == 'month') -->
         <div id="monthInputWrap" class="{% if filter_type != 'month' %}hidden{% endif %} flex items-center gap-2">
           {% if available_months %}
-            <select name="month" id="monthInput" class="h-9 px-3 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm cursor-pointer" onchange="this.form.submit()">
+            <select name="month" id="monthInput" class="h-9 px-3 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm cursor-pointer"
+                    {% if filter_type != 'month' %}disabled{% endif %}>
               {% for m in available_months %}
                 <option value="{{ m.value }}" {% if selected_month == m.value %}selected{% endif %}>{{ m.label }}</option>
               {% endfor %}
@@ -352,7 +353,7 @@
           {% else %}
             <input type="month" name="month" id="monthInput" value="{{ selected_month|default:today|date:'Y-m' }}"
                    class="h-9 px-3 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
-                   onchange="this.form.submit()">
+                   {% if filter_type != 'month' %}disabled{% endif %}>
           {% endif %}
         </div>
       </div>
@@ -761,29 +762,72 @@
 {% block js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-function handleFilterModeChange(mode) {
+function setupDashboardFilters() {
+  const form = document.getElementById('dashboardFilterForm');
+  if (!form) return;
+
+  const radios = form.querySelectorAll('input[name="filter_type"]');
   const dateWrap = document.getElementById('dateInputWrap');
   const monthWrap = document.getElementById('monthInputWrap');
-  const form = document.getElementById('dashboardFilterForm');
-  
-  if (mode === 'today' || mode === 'all') {
-    dateWrap.classList.add('hidden');
-    monthWrap.classList.add('hidden');
-    form.submit();
-  } else if (mode === 'date') {
-    dateWrap.classList.remove('hidden');
-    monthWrap.classList.add('hidden');
-    const dInput = document.getElementById('dateInput');
-    if (dInput) dInput.focus();
-  } else if (mode === 'month') {
-    monthWrap.classList.remove('hidden');
-    dateWrap.classList.add('hidden');
-    const mInput = document.getElementById('monthInput');
-    if (mInput) mInput.focus();
+  const dateInput = document.getElementById('dateInput');
+  const monthInput = document.getElementById('monthInput');
+
+  radios.forEach(radio => {
+    radio.addEventListener('change', function () {
+      const mode = this.value;
+      if (mode === 'today') {
+        if (dateInput) dateInput.disabled = true;
+        if (monthInput) monthInput.disabled = true;
+        window.location.href = "{% url 'dashboard' %}?filter_type=today";
+      } else if (mode === 'all') {
+        if (dateInput) dateInput.disabled = true;
+        if (monthInput) monthInput.disabled = true;
+        window.location.href = "{% url 'dashboard' %}?filter_type=all";
+      } else if (mode === 'date') {
+        if (monthWrap) monthWrap.classList.add('hidden');
+        if (monthInput) monthInput.disabled = true;
+        if (dateWrap) dateWrap.classList.remove('hidden');
+        if (dateInput) {
+          dateInput.disabled = false;
+          // Auto submit with current date
+          form.submit();
+        }
+      } else if (mode === 'month') {
+        if (dateWrap) dateWrap.classList.add('hidden');
+        if (dateInput) dateInput.disabled = true;
+        if (monthWrap) monthWrap.classList.remove('hidden');
+        if (monthInput) {
+          monthInput.disabled = false;
+          // Auto submit with current month
+          form.submit();
+        }
+      }
+    });
+  });
+
+  if (dateInput) {
+    dateInput.addEventListener('change', function () {
+      if (dateInput.value) {
+        if (monthInput) monthInput.disabled = true;
+        dateInput.disabled = false;
+        form.submit();
+      }
+    });
+  }
+
+  if (monthInput) {
+    monthInput.addEventListener('change', function () {
+      if (monthInput.value) {
+        if (dateInput) dateInput.disabled = true;
+        monthInput.disabled = false;
+        form.submit();
+      }
+    });
   }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+  setupDashboardFilters();
   const labels = {{ chart_labels|safe }};
   const rawSales = {{ chart_sales|safe }};
   const rawProfit = {{ chart_profit|safe }};

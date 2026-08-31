@@ -31,12 +31,13 @@ def dashboard(request):
     custom_date_str = request.GET.get("date", "").strip()
     custom_month_str = request.GET.get("month", "").strip()
 
-    if custom_date_str:
-        filter_type = "date"
-    elif custom_month_str:
-        filter_type = "month"
-    elif not filter_type:
-        filter_type = "today"
+    if filter_type not in ["today", "date", "month", "all"]:
+        if custom_date_str:
+            filter_type = "date"
+        elif custom_month_str:
+            filter_type = "month"
+        else:
+            filter_type = "today"
 
     selected_date = None
     selected_month = None
@@ -46,7 +47,9 @@ def dashboard(request):
     all_line_items = DailyInvoiceLineItem.objects.all()
 
     # 1. Filter by Specific Date
-    if filter_type == "date" and custom_date_str:
+    if filter_type == "date":
+        if not custom_date_str:
+            custom_date_str = today.strftime("%Y-%m-%d")
         try:
             selected_date = datetime.strptime(custom_date_str, "%Y-%m-%d").date()
             invoices = all_invoices.filter(invoice_date=selected_date)
@@ -55,12 +58,16 @@ def dashboard(request):
             chart_anchor = selected_date
         except ValueError:
             filter_type = "today"
+            selected_date = today
             invoices = all_invoices.filter(invoice_date=today)
             line_items = all_line_items.filter(invoice__invoice_date=today)
+            period_title = f"Today ({today.strftime('%d %b %Y')})"
             chart_anchor = today
 
     # 2. Filter by Specific Month (YYYY-MM)
-    elif filter_type == "month" and custom_month_str:
+    elif filter_type == "month":
+        if not custom_month_str:
+            custom_month_str = today.strftime("%Y-%m")
         try:
             parts = custom_month_str.split("-")
             year, month_num = int(parts[0]), int(parts[1])
@@ -74,6 +81,7 @@ def dashboard(request):
             filter_type = "today"
             invoices = all_invoices.filter(invoice_date=today)
             line_items = all_line_items.filter(invoice__invoice_date=today)
+            period_title = f"Today ({today.strftime('%d %b %Y')})"
             chart_anchor = today
 
     # 3. All-time summary
