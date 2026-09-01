@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, date
+import calendar
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
@@ -305,18 +306,21 @@ def Pending_DAC_Orders(request):
 
     for subdealer in subdealers:
         # =====================================
-        # Monthly DAC Credit
+        # Cumulative DAC Credits up to end of selected month
+        # (drives effective target — includes all prior months)
         # =====================================
 
-        total_credit = DACEntry.objects.filter(
+        last_day = calendar.monthrange(year, month)[1]
+        month_end = date(year, month, last_day)
+
+        all_time_credit = DACEntry.objects.filter(
             subdealer=subdealer,
             transaction_type="CR",
-            entry_date__year=year,
-            entry_date__month=month,
+            entry_date__lte=month_end,
         ).aggregate(total=Sum("transaction_quantity"))["total"] or Decimal("0")
 
         # =====================================
-        # Current Ledger Balance (Overall)
+        # Current Ledger Balance (Overall, all-time)
         # =====================================
 
         latest = (
@@ -328,7 +332,24 @@ def Pending_DAC_Orders(request):
         current_balance = latest.closing_balance if latest else Decimal("0")
 
         # =====================================
-        # Monthly DAC Applicable Refills Sold
+        # Refills dispatched BEFORE the selected month
+        # (these are already "consumed" from the target)
+        # =====================================
+
+        month_start = date(year, month, 1)
+
+        prev_refills = (
+            DailyInvoiceLineItem.objects.filter(
+                subdealer=subdealer,
+                product__dac_applicable=True,
+                invoice__invoice_date__lt=month_start,
+            ).aggregate(total=Sum("quantity"))["total"]
+            or 0
+        )
+
+        # =====================================
+        # Monthly DAC Applicable Refills Sold (selected month only)
+        # — resets each month
         # =====================================
 
         total_refills = (
@@ -342,13 +363,19 @@ def Pending_DAC_Orders(request):
         )
 
         # =====================================
-        # Effective DAC
+        # Effective DAC Target for selected month
+        # = (cumulative credits × DAC%) − refills already delivered in prior months
+        # Rolls over undelivered cylinders from previous months
         # =====================================
 
-        effective_dac = int(total_credit * subdealer.dac_percentage / Decimal("100"))
+        cumulative_effective = int(
+            all_time_credit * subdealer.dac_percentage / Decimal("100")
+        )
+        effective_dac = max(0, cumulative_effective - prev_refills)
 
         # =====================================
-        # Pending Order
+        # Pending Cylinder Status
+        # = this month's target − this month's dispatches
         # =====================================
 
         pending_order = effective_dac - total_refills
@@ -356,7 +383,7 @@ def Pending_DAC_Orders(request):
         rows.append(
             {
                 "subdealer": subdealer,
-                "total_credit": int(total_credit),
+                "total_credit": int(all_time_credit),
                 "current_dac": int(current_balance),
                 "total_refills": int(total_refills),
                 "dac_percentage": subdealer.dac_percentage,
