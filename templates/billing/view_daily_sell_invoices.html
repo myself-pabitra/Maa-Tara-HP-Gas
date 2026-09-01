@@ -192,6 +192,9 @@
       <div class="flex items-center gap-3">
         <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Daily Sell Invoices</h1>
         <span class="pill pill-indigo">
+          <i class="fa-regular fa-calendar text-[10px]"></i> {{ selected_month|default:"All Time" }}
+        </span>
+        <span class="pill pill-indigo">
           <i class="fa-solid fa-receipt text-[10px]"></i> {{ stats.total_invoices|default:0|intcomma }} Invoices
         </span>
       </div>
@@ -288,16 +291,24 @@
         </select>
       </div>
 
+      <!-- Month Selector -->
+      <div class="lg:col-span-2">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-regular fa-calendar mr-1 text-slate-400"></i> Month
+        </label>
+        <input type="month" name="month" value="{{ selected_month }}" class="filter-input w-full">
+      </div>
+
       <!-- Date From -->
       <div class="lg:col-span-2">
         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">From Date</label>
-        <input type="date" name="date_from" value="{{ date_from }}" class="filter-input w-full">
+        <input type="date" name="date_from" value="{{ date_from }}" class="filter-input w-full" placeholder="Override month">
       </div>
 
       <!-- Date To -->
       <div class="lg:col-span-2">
         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">To Date</label>
-        <input type="date" name="date_to" value="{{ date_to }}" class="filter-input w-full">
+        <input type="date" name="date_to" value="{{ date_to }}" class="filter-input w-full" placeholder="Override month">
       </div>
 
       <!-- Filter Actions -->
@@ -305,7 +316,7 @@
         <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 px-3 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
           <i class="fa-solid fa-filter text-[11px]"></i> Filter
         </button>
-        {% if q or payment_mode or date_from or date_to %}
+        {% if q or payment_mode or date_from or date_to or selected_month %}
         <a href="{% url 'view_daily_sell_invoices' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center" title="Reset Filters">
           <i class="fa-solid fa-xmark"></i>
         </a>
@@ -426,14 +437,14 @@
                 </div>
                 <div class="text-sm font-bold text-slate-700">No invoices found</div>
                 <p class="text-xs text-slate-500">
-                  {% if q or payment_mode or date_from or date_to %}
+                  {% if q or payment_mode or date_from or date_to or selected_month %}
                     No bills match your active search filters. Try clearing the filters to view all records.
                   {% else %}
                     No daily sell bills have been generated yet. Get started by creating your first daily bill!
                   {% endif %}
                 </p>
                 <div>
-                  {% if q or payment_mode or date_from or date_to %}
+                  {% if q or payment_mode or date_from or date_to or selected_month %}
                     <a href="{% url 'view_daily_sell_invoices' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
                       <i class="fa-solid fa-rotate-left"></i> Reset all filters
                     </a>

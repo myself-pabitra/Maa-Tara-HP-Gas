@@ -629,6 +629,8 @@ def create_invoice(request):
 
 
 def view_invoices(request):
+    import calendar as cal_mod
+
     invoices_qs = (
         DailyInvoice.objects.all()
         .prefetch_related("employees", "line_items__subdealer", "line_items__product", "expenses")
@@ -639,6 +641,12 @@ def view_invoices(request):
     payment_mode = request.GET.get("payment_mode", "").strip()
     date_from = request.GET.get("date_from", "").strip()
     date_to = request.GET.get("date_to", "").strip()
+    selected_month = request.GET.get("month", "").strip()
+
+    # Default to current month when no month or date range is specified
+    if not selected_month and not date_from and not date_to:
+        today = timezone.localdate()
+        selected_month = today.strftime("%Y-%m")
 
     if q:
         invoices_qs = invoices_qs.filter(
@@ -651,6 +659,7 @@ def view_invoices(request):
     if payment_mode:
         invoices_qs = invoices_qs.filter(payment_mode=payment_mode)
 
+    # If explicit date range is given, use that; otherwise use month filter
     if date_from:
         try:
             invoices_qs = invoices_qs.filter(invoice_date__gte=datetime.strptime(date_from, "%Y-%m-%d").date())
@@ -661,6 +670,18 @@ def view_invoices(request):
         try:
             invoices_qs = invoices_qs.filter(invoice_date__lte=datetime.strptime(date_to, "%Y-%m-%d").date())
         except ValueError:
+            pass
+
+    # Apply month filter when no explicit date range is set
+    if selected_month and not date_from and not date_to:
+        try:
+            year, month = map(int, selected_month.split("-"))
+            last_day = cal_mod.monthrange(year, month)[1]
+            invoices_qs = invoices_qs.filter(
+                invoice_date__gte=datetime(year, month, 1).date(),
+                invoice_date__lte=datetime(year, month, last_day).date(),
+            )
+        except (ValueError, TypeError):
             pass
 
     # Aggregate financial summary stats for the active filter set
@@ -687,6 +708,7 @@ def view_invoices(request):
             "payment_mode": payment_mode,
             "date_from": date_from,
             "date_to": date_to,
+            "selected_month": selected_month,
         },
     )
 
