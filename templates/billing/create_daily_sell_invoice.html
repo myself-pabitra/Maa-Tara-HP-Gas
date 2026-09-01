@@ -730,8 +730,9 @@ function initSearchableSubdealerSelect(row, preSelectedCode) {
 
   function positionDropdown() {
     const rect = searchInp.getBoundingClientRect();
-    dropdown.style.top    = (rect.bottom + window.scrollY + 4) + 'px';
-    dropdown.style.left   = (rect.left + window.scrollX) + 'px';
+    // position:fixed uses viewport coords — do NOT add scrollY/scrollX
+    dropdown.style.top    = (rect.bottom + 4) + 'px';
+    dropdown.style.left   = rect.left + 'px';
     dropdown.style.width  = rect.width + 'px';
   }
 
@@ -896,9 +897,6 @@ function addRow(data = null) {
   submitInput.addEventListener('input', () => {
     submitInput.dataset.userEdited = 'true';
     submitInput.dataset.autoFilled = 'false';
-    let s = submitInput.value ? Number(submitInput.value) : 0;
-    if (s < 0) s = 0;
-    submitInput.value = s;
     recalcRow(row);
   });
 
@@ -1102,8 +1100,8 @@ function recalcRow(row) {
   } else {
     submitInput.readOnly = false;
     submitInput.closest('td').style.opacity = '1';
-    // If not manually edited by user, auto-populate with qty!
-    if (!submitInput.dataset.userEdited || submitInput.dataset.autoFilled === 'true' || Number(submitInput.value) === 0) {
+    // Auto-populate with qty ONLY if user hasn't manually edited the field
+    if (!submitInput.dataset.userEdited || submitInput.dataset.autoFilled === 'true') {
       submitInput.value = qty;
       submitInput.dataset.autoFilled = 'true';
     }
