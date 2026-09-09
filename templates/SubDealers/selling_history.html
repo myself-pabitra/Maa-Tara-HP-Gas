@@ -1,0 +1,539 @@
+{% extends "layout.html" %}
+{% load static humanize %}
+
+{% block title %}Subdealer Selling History | Maa Tara HP Gas{% endblock %}
+
+{% block content %}
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
+
+  /* Table styling */
+  .dash-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+  }
+  .dash-table th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #eef2f6;
+    white-space: nowrap;
+  }
+  .dash-table td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .dash-table tbody tr {
+    transition: background-color .15s ease;
+  }
+  .dash-table tbody tr:hover {
+    background-color: #f8faff;
+  }
+
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .pill-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+  .pill-rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+  .pill-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+  /* KPI Stat Cards */
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all .2s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  /* Custom Input & Select */
+  .filter-input {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 13px;
+    color: #1e293b;
+    outline: none;
+    transition: all .15s ease;
+  }
+  .filter-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  }
+
+  /* Breakdown card */
+  .breakdown-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background .12s;
+  }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-row:hover { background: #f8faff; }
+</style>
+
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <a href="{% url 'view_subdealers' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          Subdealers
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Selling History</span>
+      </div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+          {% if selected_subdealer_obj %}
+            {{ selected_subdealer_obj.name }} — Selling History
+          {% else %}
+            Subdealer Selling History
+          {% endif %}
+        </h1>
+        <span class="pill pill-indigo">
+          <i class="fa-regular fa-calendar text-[10px]"></i> {{ selected_month }}
+        </span>
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-receipt text-[10px]"></i> {{ total_items_count|default:0|intcomma }} Line Items
+        </span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a href="{% url 'view_daily_sell_invoices' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-table-list text-indigo-600"></i> View All Bills
+      </a>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       KPI SUMMARY METRICS BAR
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+    <!-- Total Quantity Sold -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Qty Dispatched</div>
+        <div class="text-2xl font-extrabold text-slate-900">{{ stats.total_qty|default:0|intcomma }}</div>
+        <div class="text-[11px] text-slate-500 mt-0.5">Cylinders / Items</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-indigo-600 bg-indigo-50 border border-indigo-100">
+        <i class="fa-solid fa-gas-pump text-lg"></i>
+      </div>
+    </div>
+
+    <!-- Total Revenue -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Total Revenue</div>
+        <div class="text-2xl font-extrabold text-emerald-700">₹{{ stats.total_revenue|default:0|floatformat:2|intcomma }}</div>
+        <div class="text-[11px] text-emerald-600 mt-0.5">Billed Amount</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-emerald-600 bg-emerald-50 border border-emerald-100">
+        <i class="fa-solid fa-indian-rupee-sign text-lg"></i>
+      </div>
+    </div>
+
+    <!-- Cash Collected -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Cash Collected</div>
+        <div class="text-2xl font-extrabold text-slate-900">₹{{ stats.total_cash|default:0|floatformat:2|intcomma }}</div>
+        <div class="text-[11px] text-slate-500 mt-0.5">Cash Payments</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-amber-600 bg-amber-50 border border-amber-100">
+        <i class="fa-solid fa-money-bill-wave text-lg"></i>
+      </div>
+    </div>
+
+    <!-- AC Amount -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">AC / Credit</div>
+        <div class="text-2xl font-extrabold text-blue-700">₹{{ stats.total_ac|default:0|floatformat:2|intcomma }}</div>
+        <div class="text-[11px] text-blue-500 mt-0.5">Bank / Account</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-blue-600 bg-blue-50 border border-blue-100">
+        <i class="fa-solid fa-building-columns text-lg"></i>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SEARCH & FILTER TOOLBAR
+  ════════════════════════════════════════ -->
+  <div class="billing-card p-4">
+    <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+      
+      <!-- Subdealer Filter -->
+      <div class="lg:col-span-4">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-solid fa-users text-slate-400 mr-1"></i> Subdealer
+        </label>
+        <select name="subdealer" class="filter-input w-full">
+          <option value="">All Subdealers</option>
+          {% for subdealer in subdealers %}
+          <option value="{{ subdealer.id }}" {% if selected_subdealer == subdealer.id|stringformat:"s" %}selected{% endif %}>
+            {{ subdealer.name }} ({{ subdealer.subdealerCode }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Month Selector -->
+      <div class="lg:col-span-2">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-regular fa-calendar mr-1 text-slate-400"></i> Month
+        </label>
+        <input type="month" name="month" value="{{ selected_month }}" class="filter-input w-full">
+      </div>
+
+      <!-- Search -->
+      <div class="lg:col-span-4">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-solid fa-magnifying-glass text-slate-400 mr-1"></i> Search
+        </label>
+        <input type="text" name="q" value="{{ q }}" placeholder="Invoice #, Product name..."
+               class="filter-input w-full">
+      </div>
+
+      <!-- Actions -->
+      <div class="lg:col-span-2 flex items-center gap-2">
+        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 px-3 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-filter text-[11px]"></i> Apply
+        </button>
+        {% if selected_subdealer or q or selected_month %}
+        <a href="{% url 'subdealer_selling_history' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center" title="Reset Filters">
+          <i class="fa-solid fa-xmark"></i>
+        </a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SUBDEALER SUMMARY (when all subdealers)
+  ════════════════════════════════════════ -->
+  {% if subdealer_summary %}
+  <div class="billing-card overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/60">
+      <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+        <i class="fa-solid fa-users text-indigo-500"></i> Subdealer-wise Summary
+      </div>
+      <span class="pill pill-indigo">{{ selected_month }}</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th style="min-width: 200px;">Subdealer</th>
+            <th style="width: 100px;" class="text-right">Qty Sold</th>
+            <th style="width: 140px;" class="text-right">Revenue</th>
+            <th style="width: 130px;" class="text-right">Cash</th>
+            <th style="width: 130px;" class="text-right">AC</th>
+            <th style="width: 100px;" class="text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sd in subdealer_summary %}
+          <tr>
+            <td>
+              <div class="font-bold text-slate-800 text-sm">{{ sd.subdealer__name }}</div>
+              <div class="text-[11px] font-mono text-indigo-600">{{ sd.subdealer__subdealerCode }}</div>
+            </td>
+            <td class="text-right font-bold text-slate-900 font-mono">{{ sd.qty_sold|intcomma }}</td>
+            <td class="text-right font-semibold text-emerald-700">₹{{ sd.revenue|floatformat:2|intcomma }}</td>
+            <td class="text-right text-slate-700">₹{{ sd.cash_collected|floatformat:2|intcomma }}</td>
+            <td class="text-right text-blue-700">₹{{ sd.ac_amount|floatformat:2|intcomma }}</td>
+            <td class="text-center">
+              <a href="{% url 'subdealer_selling_history' %}?subdealer={{ sd.subdealer__id }}&month={{ selected_month }}"
+                 class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-600 hover:text-white transition">
+                <i class="fa-solid fa-eye text-[10px]"></i> View
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ════════════════════════════════════════
+       PRODUCT BREAKDOWN + SUBDEALER INFO
+  ════════════════════════════════════════ -->
+  {% if product_breakdown %}
+  <div class="grid grid-cols-1 {% if selected_subdealer_obj %}lg:grid-cols-2{% endif %} gap-4">
+
+    <!-- Product Breakdown -->
+    <div class="billing-card overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/60">
+        <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+          <i class="fa-solid fa-boxes-stacked text-indigo-500"></i> Product Breakdown
+        </div>
+        <span class="text-xs text-slate-400 font-medium">{{ selected_month }}</span>
+      </div>
+      <div>
+        {% for pb in product_breakdown %}
+        <div class="breakdown-row">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
+              {{ forloop.counter }}
+            </div>
+            <div>
+              <div class="font-semibold text-slate-800 text-sm">{{ pb.product__product_name }}</div>
+              <div class="text-[11px] text-slate-500">₹{{ pb.revenue|floatformat:2|intcomma }} revenue</div>
+            </div>
+          </div>
+          <span class="pill pill-indigo font-mono">{{ pb.qty_sold|intcomma }} units</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Subdealer Info Card (when specific subdealer is selected) -->
+    {% if selected_subdealer_obj %}
+    <div class="billing-card p-6 space-y-4">
+      <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center text-xl font-extrabold shadow-sm">
+          {{ selected_subdealer_obj.name|truncatechars:1 }}
+        </div>
+        <div>
+          <div class="font-extrabold text-slate-900 text-lg">{{ selected_subdealer_obj.name }}</div>
+          <div class="text-xs font-mono text-indigo-600 font-bold">{{ selected_subdealer_obj.subdealerCode }}</div>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-slate-500 flex items-center gap-1.5"><i class="fa-solid fa-phone text-[10px] text-slate-400"></i> Phone</span>
+          <span class="font-semibold text-slate-900 font-mono">{{ selected_subdealer_obj.phone_number }}</span>
+        </div>
+        {% if selected_subdealer_obj.address %}
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-slate-500 flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-[10px] text-slate-400"></i> Address</span>
+          <span class="font-medium text-slate-800 text-right max-w-[200px] truncate">{{ selected_subdealer_obj.address }}</span>
+        </div>
+        {% endif %}
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-slate-500 flex items-center gap-1.5"><i class="fa-solid fa-percent text-[10px] text-slate-400"></i> DAC Rate</span>
+          <span class="pill pill-indigo text-xs">{{ selected_subdealer_obj.dac_percentage }}%</span>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 space-y-2.5">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Month Summary</div>
+        <div class="flex justify-between items-center text-sm bg-emerald-50/70 px-3 py-2 rounded-lg border border-emerald-100">
+          <span class="text-emerald-800 font-medium flex items-center gap-1.5"><i class="fa-solid fa-gas-pump text-xs"></i> Total Dispatched</span>
+          <span class="font-extrabold text-emerald-800 font-mono">{{ stats.total_qty|intcomma }}</span>
+        </div>
+        <div class="flex justify-between items-center text-sm bg-indigo-50/70 px-3 py-2 rounded-lg border border-indigo-100">
+          <span class="text-indigo-800 font-medium flex items-center gap-1.5"><i class="fa-solid fa-indian-rupee-sign text-xs"></i> Total Billed</span>
+          <span class="font-extrabold text-indigo-800 font-mono">₹{{ stats.total_revenue|floatformat:2|intcomma }}</span>
+        </div>
+        {% if stats.total_due > 0 %}
+        <div class="flex justify-between items-center text-sm bg-rose-50/70 px-3 py-2 rounded-lg border border-rose-100">
+          <span class="text-rose-800 font-medium flex items-center gap-1.5"><i class="fa-solid fa-clock text-xs"></i> Due Amount</span>
+          <span class="font-extrabold text-rose-800 font-mono">₹{{ stats.total_due|floatformat:2|intcomma }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+  <!-- ════════════════════════════════════════
+       DETAILED LINE ITEMS TABLE
+  ════════════════════════════════════════ -->
+  <div class="billing-card overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/60">
+      <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+        <i class="fa-solid fa-list text-indigo-500"></i> Transaction Details
+      </div>
+      <span class="text-xs text-slate-400 font-medium">{{ total_items_count|intcomma }} records</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th style="width: 44px;" class="text-center">#</th>
+            <th style="width: 130px;">Date</th>
+            <th style="width: 160px;">Invoice</th>
+            {% if not selected_subdealer %}
+            <th style="min-width: 170px;">Subdealer</th>
+            {% endif %}
+            <th style="min-width: 180px;">Product</th>
+            <th style="width: 70px;" class="text-center">Qty</th>
+            <th style="width: 80px;" class="text-center">Cyl. Ret.</th>
+            <th style="width: 110px;" class="text-right">Unit Price</th>
+            <th style="width: 120px;" class="text-right">Line Total</th>
+            <th style="width: 100px;" class="text-center">Payment</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in line_items %}
+          <tr>
+            <!-- Index -->
+            <td class="text-center text-xs font-bold text-slate-400">
+              {{ forloop.counter }}
+            </td>
+
+            <!-- Date -->
+            <td>
+              <div class="font-medium text-slate-800 text-xs">
+                <i class="fa-regular fa-calendar text-slate-400 mr-1 text-[11px]"></i>
+                {{ item.invoice.invoice_date|date:"d M Y" }}
+              </div>
+            </td>
+
+            <!-- Invoice Number -->
+            <td>
+              <span class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-lg">
+                {{ item.invoice.invoice_number }}
+              </span>
+            </td>
+
+            <!-- Subdealer (only when all subdealers) -->
+            {% if not selected_subdealer %}
+            <td>
+              <div class="font-bold text-slate-800 text-sm">{{ item.subdealer.name }}</div>
+              <div class="text-[11px] font-mono text-indigo-600">{{ item.subdealer.subdealerCode }}</div>
+            </td>
+            {% endif %}
+
+            <!-- Product -->
+            <td>
+              {% if item.is_other %}
+                <div class="font-medium text-slate-800 text-sm">{{ item.remarks|default:"Other" }}</div>
+                <div class="text-[11px] text-slate-500">Manual Entry</div>
+              {% elif item.product %}
+                <div class="font-medium text-slate-800 text-sm">{{ item.product.product_name }}</div>
+                <div class="text-[11px] font-mono text-slate-500">{{ item.product.productCode }}</div>
+              {% else %}
+                <span class="text-xs text-slate-400">—</span>
+              {% endif %}
+            </td>
+
+            <!-- Quantity -->
+            <td class="text-center font-bold text-slate-900 font-mono">
+              {{ item.quantity }}
+            </td>
+
+            <!-- Cyl. Returned -->
+            <td class="text-center">
+              {% if item.submitted_blank > 0 %}
+                <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg">{{ item.submitted_blank }}</span>
+              {% else %}
+                <span class="text-xs text-slate-400">—</span>
+              {% endif %}
+            </td>
+
+            <!-- Unit Price -->
+            <td class="text-right text-xs font-mono text-slate-600">
+              ₹{{ item.discounted_price|floatformat:2|intcomma }}
+            </td>
+
+            <!-- Line Total -->
+            <td class="text-right font-semibold text-slate-900">
+              ₹{{ item.line_total|floatformat:2|intcomma }}
+            </td>
+
+            <!-- Payment Mode -->
+            <td class="text-center">
+              {% if item.payment_mode == 'Cash' %}
+                <span class="pill pill-emerald"><i class="fa-solid fa-money-bill-wave text-[10px]"></i> Cash</span>
+              {% elif item.payment_mode == 'AC' %}
+                <span class="pill pill-blue"><i class="fa-solid fa-building-columns text-[10px]"></i> AC</span>
+              {% elif item.payment_mode == 'Mixed' %}
+                <span class="pill pill-amber"><i class="fa-solid fa-layer-group text-[10px]"></i> Mixed</span>
+              {% else %}
+                <span class="pill pill-slate">{{ item.payment_mode|default:"—" }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{% if selected_subdealer %}9{% else %}10{% endif %}" class="text-center py-12">
+              <div class="max-w-sm mx-auto space-y-3">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mx-auto text-xl">
+                  <i class="fa-solid fa-chart-bar"></i>
+                </div>
+                <div class="text-sm font-bold text-slate-700">No Sales Records Found</div>
+                <p class="text-xs text-slate-500">
+                  {% if selected_subdealer or q %}
+                    No selling records match your active filter criteria for {{ selected_month }}. Try changing the subdealer, month, or clearing filters.
+                  {% else %}
+                    No invoices have been generated for {{ selected_month }} yet.
+                  {% endif %}
+                </p>
+                <div>
+                  {% if selected_subdealer or q %}
+                    <a href="{% url 'subdealer_selling_history' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                      <i class="fa-solid fa-rotate-left"></i> Reset all filters
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PAGINATION
+  ════════════════════════════════════════ -->
+  {% include 'components/pagination.html' %}
+
+</div>
+{% endblock %}

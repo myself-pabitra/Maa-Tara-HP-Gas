@@ -247,7 +247,7 @@
             <th style="width: 150px;">Phone Number</th>
             <th style="min-width: 220px;">Business Address</th>
             <th style="width: 130px;" class="text-center">DAC Rate</th>
-            <th style="width: 150px;" class="text-center">Actions</th>
+            <th style="width: 200px;" class="text-center">Actions</th>
           </tr>
         </thead>
         <tbody id="subdealersBody">
@@ -310,6 +310,9 @@
             <!-- Action Buttons -->
             <td>
               <div class="flex items-center justify-center gap-1.5">
+                <a href="{% url 'subdealer_selling_history' %}?subdealer={{ subdealer.id }}" class="btn-action-edit !bg-indigo-50 !text-indigo-700 !border-indigo-200 hover:!bg-indigo-600 hover:!text-white" title="View Selling History">
+                  <i class="fa-solid fa-chart-line"></i> Sales
+                </a>
                 <a href="{% url 'edit_subdealer' subdealer.id %}" class="btn-action-edit" title="Edit Subdealer">
                   <i class="fa-solid fa-pen-to-square"></i> Edit
                 </a>

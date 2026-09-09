@@ -1789,3 +1789,143 @@ def edit_invoice(request, invoice_id):
         "page_type": "edit_invoice",
     }
     return render(request, "billing/create_daily_sell_invoice.html", context)
+
+
+###############################################################
+# SUBDEALER SELLING HISTORY
+###############################################################
+
+
+def subdealer_selling_history(request):
+    import calendar as cal_mod
+
+    subdealers = Subdealer.objects.all().order_by("name")
+    subdealer_filter = request.GET.get("subdealer", "").strip()
+    selected_month = request.GET.get("month", "").strip()
+    q = request.GET.get("q", "").strip()
+
+    # Default to current month
+    if not selected_month:
+        today = timezone.localdate()
+        selected_month = today.strftime("%Y-%m")
+
+    # Parse month
+    try:
+        year, month = map(int, selected_month.split("-"))
+        last_day = cal_mod.monthrange(year, month)[1]
+        month_start = datetime(year, month, 1).date()
+        month_end = datetime(year, month, last_day).date()
+    except (ValueError, TypeError):
+        today = timezone.localdate()
+        year, month = today.year, today.month
+        last_day = cal_mod.monthrange(year, month)[1]
+        month_start = datetime(year, month, 1).date()
+        month_end = datetime(year, month, last_day).date()
+        selected_month = today.strftime("%Y-%m")
+
+    # Base queryset: line items within the selected month
+    line_items_qs = (
+        DailyInvoiceLineItem.objects
+        .filter(
+            invoice__invoice_date__gte=month_start,
+            invoice__invoice_date__lte=month_end,
+        )
+        .select_related("invoice", "subdealer", "product")
+        .order_by("-invoice__invoice_date", "-invoice__invoice_number")
+    )
+
+    # Apply subdealer filter
+    selected_subdealer_obj = None
+    if subdealer_filter:
+        line_items_qs = line_items_qs.filter(subdealer_id=subdealer_filter)
+        try:
+            selected_subdealer_obj = Subdealer.objects.get(id=subdealer_filter)
+        except Subdealer.DoesNotExist:
+            pass
+
+    # Apply search filter
+    if q:
+        line_items_qs = line_items_qs.filter(
+            Q(invoice__invoice_number__icontains=q)
+            | Q(product__product_name__icontains=q)
+            | Q(remarks__icontains=q)
+        )
+
+    total_items_count = line_items_qs.count()
+
+    # ────────────────────────────────
+    # KPI Stats
+    # ────────────────────────────────
+    agg = line_items_qs.aggregate(
+        total_qty=Sum("quantity"),
+        total_revenue=Sum("line_total"),
+        total_cash=Sum("cash_amount"),
+        total_ac=Sum("ac_amount"),
+        total_due=Sum("due_amount"),
+    )
+
+    stats = {
+        "total_items": total_items_count,
+        "total_qty": agg["total_qty"] or 0,
+        "total_revenue": agg["total_revenue"] or Decimal("0.00"),
+        "total_cash": agg["total_cash"] or Decimal("0.00"),
+        "total_ac": agg["total_ac"] or Decimal("0.00"),
+        "total_due": agg["total_due"] or Decimal("0.00"),
+    }
+
+    # ────────────────────────────────
+    # Product-wise breakdown
+    # ────────────────────────────────
+    product_breakdown = (
+        line_items_qs
+        .filter(is_other=False, product__isnull=False)
+        .values("product__product_name")
+        .annotate(
+            qty_sold=Sum("quantity"),
+            revenue=Sum("line_total"),
+        )
+        .order_by("-qty_sold")
+    )
+
+    # ────────────────────────────────
+    # Subdealer-wise summary (when showing all subdealers)
+    # ────────────────────────────────
+    subdealer_summary = []
+    if not subdealer_filter:
+        subdealer_summary = (
+            line_items_qs
+            .values("subdealer__id", "subdealer__name", "subdealer__subdealerCode")
+            .annotate(
+                qty_sold=Sum("quantity"),
+                revenue=Sum("line_total"),
+                cash_collected=Sum("cash_amount"),
+                ac_amount=Sum("ac_amount"),
+            )
+            .order_by("-revenue")
+        )
+
+    # ────────────────────────────────
+    # Paginate line items
+    # ────────────────────────────────
+    paginator = Paginator(line_items_qs, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "SubDealers/selling_history.html",
+        {
+            "line_items": page_obj,
+            "page_obj": page_obj,
+            "subdealers": subdealers,
+            "selected_subdealer": subdealer_filter,
+            "selected_subdealer_obj": selected_subdealer_obj,
+            "selected_month": selected_month,
+            "q": q,
+            "stats": stats,
+            "product_breakdown": product_breakdown,
+            "subdealer_summary": subdealer_summary,
+            "total_items_count": total_items_count,
+            "page_type": "selling_history",
+        },
+    )

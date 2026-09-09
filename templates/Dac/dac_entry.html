@@ -545,8 +545,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function positionDropdown() {
       const rect = searchInp.getBoundingClientRect();
-      dropdown.style.top   = (rect.bottom + window.scrollY + 4) + 'px';
-      dropdown.style.left  = (rect.left + window.scrollX) + 'px';
+      // position:fixed uses viewport coords — do NOT add scrollY/scrollX
+      dropdown.style.top   = (rect.bottom + 4) + 'px';
+      dropdown.style.left  = rect.left + 'px';
       dropdown.style.width = rect.width + 'px';
     }
 
