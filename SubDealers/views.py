@@ -642,6 +642,24 @@ def view_invoices(request):
     date_from = request.GET.get("date_from", "").strip()
     date_to = request.GET.get("date_to", "").strip()
     selected_month = request.GET.get("month", "").strip()
+    subdealer_filter = request.GET.get("subdealer", "").strip()
+
+    # Subdealers list for filter dropdown
+    subdealers = Subdealer.objects.all().order_by("name")
+    selected_subdealer_obj = None
+    if subdealer_filter:
+        selected_subdealer_obj = Subdealer.objects.filter(
+            Q(subdealerCode__iexact=subdealer_filter)
+            | (Q(id=int(subdealer_filter)) if subdealer_filter.isdigit() else Q())
+        ).first()
+
+        if selected_subdealer_obj:
+            invoices_qs = invoices_qs.filter(line_items__subdealer=selected_subdealer_obj).distinct()
+            subdealer_filter = selected_subdealer_obj.subdealerCode
+        else:
+            invoices_qs = invoices_qs.filter(
+                line_items__subdealer__subdealerCode__iexact=subdealer_filter
+            ).distinct()
 
     # Default to current month when no month or date range is specified
     if not selected_month and not date_from and not date_to:
@@ -709,6 +727,9 @@ def view_invoices(request):
             "date_from": date_from,
             "date_to": date_to,
             "selected_month": selected_month,
+            "subdealers": subdealers,
+            "selected_subdealer": subdealer_filter,
+            "selected_subdealer_obj": selected_subdealer_obj,
         },
     )
 
@@ -1834,14 +1855,21 @@ def subdealer_selling_history(request):
         .order_by("-invoice__invoice_date", "-invoice__invoice_number")
     )
 
-    # Apply subdealer filter
+    # Apply subdealer filter by subdealerCode (or ID fallback)
     selected_subdealer_obj = None
     if subdealer_filter:
-        line_items_qs = line_items_qs.filter(subdealer_id=subdealer_filter)
-        try:
-            selected_subdealer_obj = Subdealer.objects.get(id=subdealer_filter)
-        except Subdealer.DoesNotExist:
-            pass
+        selected_subdealer_obj = Subdealer.objects.filter(
+            Q(subdealerCode__iexact=subdealer_filter)
+            | (Q(id=int(subdealer_filter)) if subdealer_filter.isdigit() else Q())
+        ).first()
+
+        if selected_subdealer_obj:
+            line_items_qs = line_items_qs.filter(subdealer=selected_subdealer_obj)
+            subdealer_filter = selected_subdealer_obj.subdealerCode
+        else:
+            line_items_qs = line_items_qs.filter(
+                subdealer__subdealerCode__iexact=subdealer_filter
+            )
 
     # Apply search filter
     if q:

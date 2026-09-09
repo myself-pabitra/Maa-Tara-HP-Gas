@@ -143,9 +143,20 @@
     </div>
 
     <div class="flex items-center gap-3">
-      <a href="{% url 'view_daily_sell_invoices' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+      {% if selected_subdealer %}
+      <a href="{% url 'view_daily_sell_invoices' %}?subdealer={{ selected_subdealer }}{% if selected_month %}&month={{ selected_month }}{% endif %}"
+         id="viewBillsBtn"
+         class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm"
+         title="View bills for {{ selected_subdealer_obj.name|default:selected_subdealer }}">
         <i class="fa-solid fa-table-list text-indigo-600"></i> View All Bills
       </a>
+      {% else %}
+      <a href="{% url 'view_daily_sell_invoices' %}{% if selected_month %}?month={{ selected_month }}{% endif %}"
+         id="viewBillsBtn"
+         class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-table-list text-indigo-600"></i> View All Bills
+      </a>
+      {% endif %}
     </div>
   </div>
 
@@ -215,10 +226,10 @@
         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
           <i class="fa-solid fa-users text-slate-400 mr-1"></i> Subdealer
         </label>
-        <select name="subdealer" class="filter-input w-full">
+        <select name="subdealer" id="subdealerSelect" class="filter-input w-full">
           <option value="">All Subdealers</option>
           {% for subdealer in subdealers %}
-          <option value="{{ subdealer.id }}" {% if selected_subdealer == subdealer.id|stringformat:"s" %}selected{% endif %}>
+          <option value="{{ subdealer.subdealerCode }}" {% if selected_subdealer == subdealer.subdealerCode %}selected{% endif %}>
             {{ subdealer.name }} ({{ subdealer.subdealerCode }})
           </option>
           {% endfor %}
@@ -536,4 +547,30 @@
   {% include 'components/pagination.html' %}
 
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const viewBillsBtn = document.getElementById('viewBillsBtn');
+    const sdSelect = document.getElementById('subdealerSelect');
+    const monthInp = document.querySelector('input[name="month"]');
+
+    function updateBillsLink() {
+      if (!viewBillsBtn) return;
+      const sdVal = sdSelect ? sdSelect.value.trim() : '';
+      const mVal = monthInp ? monthInp.value.trim() : '';
+      const params = new URLSearchParams();
+      if (sdVal) params.set('subdealer', sdVal);
+      if (mVal) params.set('month', mVal);
+      const qs = params.toString();
+      viewBillsBtn.href = "{% url 'view_daily_sell_invoices' %}" + (qs ? '?' + qs : '');
+    }
+
+    if (sdSelect) {
+      sdSelect.addEventListener('change', updateBillsLink);
+    }
+    if (monthInp) {
+      monthInp.addEventListener('change', updateBillsLink);
+    }
+  });
+</script>
 {% endblock %}

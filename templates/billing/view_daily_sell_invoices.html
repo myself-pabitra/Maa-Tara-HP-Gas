@@ -189,11 +189,25 @@
         <span class="text-xs text-slate-300">/</span>
         <span class="text-xs font-medium text-slate-500">Billing &amp; Invoices</span>
       </div>
-      <div class="flex items-center gap-3">
-        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Daily Sell Invoices</h1>
+      <div class="flex items-center gap-3 flex-wrap">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+          {% if selected_subdealer_obj %}
+            {{ selected_subdealer_obj.name }} — Bills
+          {% else %}
+            Daily Sell Invoices
+          {% endif %}
+        </h1>
         <span class="pill pill-indigo">
           <i class="fa-regular fa-calendar text-[10px]"></i> {{ selected_month|default:"All Time" }}
         </span>
+        {% if selected_subdealer_obj %}
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-handshake text-[10px]"></i> {{ selected_subdealer_obj.subdealerCode }}
+        </span>
+        <a href="{% url 'subdealer_selling_history' %}?subdealer={{ selected_subdealer }}{% if selected_month %}&month={{ selected_month }}{% endif %}" class="pill pill-indigo hover:bg-indigo-100 transition" title="View detailed selling history">
+          <i class="fa-solid fa-chart-line text-[10px]"></i> Sales History
+        </a>
+        {% endif %}
         <span class="pill pill-indigo">
           <i class="fa-solid fa-receipt text-[10px]"></i> {{ stats.total_invoices|default:0|intcomma }} Invoices
         </span>
@@ -268,8 +282,23 @@
   <div class="billing-card p-4">
     <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
       
+      <!-- Subdealer Filter -->
+      <div class="lg:col-span-3">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-solid fa-users text-slate-400 mr-1"></i> Subdealer
+        </label>
+        <select name="subdealer" class="filter-input w-full">
+          <option value="">All Subdealers</option>
+          {% for sd in subdealers %}
+          <option value="{{ sd.subdealerCode }}" {% if selected_subdealer == sd.subdealerCode %}selected{% endif %}>
+            {{ sd.name }} ({{ sd.subdealerCode }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
       <!-- Search Box -->
-      <div class="lg:col-span-4">
+      <div class="lg:col-span-3">
         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
           <i class="fa-solid fa-magnifying-glass text-slate-400 mr-1"></i> Search Invoices
         </label>
@@ -316,7 +345,7 @@
         <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 px-3 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
           <i class="fa-solid fa-filter text-[11px]"></i> Filter
         </button>
-        {% if q or payment_mode or date_from or date_to or selected_month %}
+        {% if q or payment_mode or date_from or date_to or selected_month or selected_subdealer %}
         <a href="{% url 'view_daily_sell_invoices' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center" title="Reset Filters">
           <i class="fa-solid fa-xmark"></i>
         </a>
@@ -437,14 +466,14 @@
                 </div>
                 <div class="text-sm font-bold text-slate-700">No invoices found</div>
                 <p class="text-xs text-slate-500">
-                  {% if q or payment_mode or date_from or date_to or selected_month %}
+                  {% if q or payment_mode or date_from or date_to or selected_month or selected_subdealer %}
                     No bills match your active search filters. Try clearing the filters to view all records.
                   {% else %}
                     No daily sell bills have been generated yet. Get started by creating your first daily bill!
                   {% endif %}
                 </p>
                 <div>
-                  {% if q or payment_mode or date_from or date_to or selected_month %}
+                  {% if q or payment_mode or date_from or date_to or selected_month or selected_subdealer %}
                     <a href="{% url 'view_daily_sell_invoices' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
                       <i class="fa-solid fa-rotate-left"></i> Reset all filters
                     </a>
