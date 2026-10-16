@@ -65,4 +65,9 @@ urlpatterns = [
         views.subdealer_selling_history,
         name="subdealer_selling_history",
     ),
+    path(
+        "product-selling-history/",
+        views.product_selling_history,
+        name="product_selling_history",
+    ),
 ]

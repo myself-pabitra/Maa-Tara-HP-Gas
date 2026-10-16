@@ -1957,3 +1957,171 @@ def subdealer_selling_history(request):
             "page_type": "selling_history",
         },
     )
+
+
+def product_selling_history(request):
+    """
+    Product-wise selling history.
+    Shows overall product summary table when no product is selected,
+    and detailed line items + subdealer breakdown when a specific product is chosen.
+    """
+    import calendar as cal_mod
+
+    # ── Filters from GET params ───────────────────────────────────────────────
+    product_filter   = request.GET.get("product",   "").strip()  # product ID or productCode
+    selected_month   = request.GET.get("month",     "").strip()
+    subdealer_filter = request.GET.get("subdealer", "").strip()
+    q                = request.GET.get("q",         "").strip()
+
+    # Default to current month
+    if not selected_month:
+        today = timezone.localdate()
+        selected_month = today.strftime("%Y-%m")
+
+    # Parse month
+    try:
+        year, month = map(int, selected_month.split("-"))
+        last_day    = cal_mod.monthrange(year, month)[1]
+        month_start = datetime(year, month, 1).date()
+        month_end   = datetime(year, month, last_day).date()
+    except (ValueError, TypeError):
+        today = timezone.localdate()
+        year, month = today.year, today.month
+        last_day    = cal_mod.monthrange(year, month)[1]
+        month_start = datetime(year, month, 1).date()
+        month_end   = datetime(year, month, last_day).date()
+        selected_month = today.strftime("%Y-%m")
+
+    # All products and all subdealers (for filter dropdowns)
+    all_products   = ProductInventory.objects.all().order_by("product_name")
+    all_subdealers = Subdealer.objects.all().order_by("name")
+
+    # ── Base queryset ─────────────────────────────────────────────────────────
+    line_items_qs = (
+        DailyInvoiceLineItem.objects
+        .filter(
+            invoice__invoice_date__gte=month_start,
+            invoice__invoice_date__lte=month_end,
+            is_other=False,
+            product__isnull=False,
+        )
+        .select_related("invoice", "subdealer", "product")
+        .order_by("-invoice__invoice_date", "-invoice__invoice_number")
+    )
+
+    # ── Apply product filter ──────────────────────────────────────────────────
+    selected_product_obj = None
+    if product_filter:
+        if product_filter.isdigit():
+            selected_product_obj = ProductInventory.objects.filter(
+                id=int(product_filter)
+            ).first()
+        if not selected_product_obj:
+            selected_product_obj = ProductInventory.objects.filter(
+                productCode__iexact=product_filter
+            ).first()
+
+        if selected_product_obj:
+            line_items_qs = line_items_qs.filter(product=selected_product_obj)
+            product_filter = str(selected_product_obj.id)
+
+    # ── Apply subdealer filter ────────────────────────────────────────────────
+    selected_subdealer_obj = None
+    if subdealer_filter:
+        selected_subdealer_obj = Subdealer.objects.filter(
+            Q(subdealerCode__iexact=subdealer_filter)
+            | (Q(id=int(subdealer_filter)) if subdealer_filter.isdigit() else Q())
+        ).first()
+
+        if selected_subdealer_obj:
+            line_items_qs = line_items_qs.filter(subdealer=selected_subdealer_obj)
+            subdealer_filter = selected_subdealer_obj.subdealerCode
+        else:
+            line_items_qs = line_items_qs.filter(
+                subdealer__subdealerCode__iexact=subdealer_filter
+            )
+
+    # ── Apply search filter ───────────────────────────────────────────────────
+    if q:
+        line_items_qs = line_items_qs.filter(
+            Q(invoice__invoice_number__icontains=q)
+            | Q(product__product_name__icontains=q)
+            | Q(subdealer__name__icontains=q)
+        )
+
+    total_items_count = line_items_qs.count()
+
+    # ── KPI Aggregates ────────────────────────────────────────────────────────
+    agg = line_items_qs.aggregate(
+        total_qty=Sum("quantity"),
+        total_revenue=Sum("line_total"),
+        total_cash=Sum("cash_amount"),
+        total_ac=Sum("ac_amount"),
+        total_due=Sum("due_amount"),
+    )
+
+    stats = {
+        "total_items":   total_items_count,
+        "total_qty":     agg["total_qty"]     or 0,
+        "total_revenue": agg["total_revenue"] or Decimal("0.00"),
+        "total_cash":    agg["total_cash"]    or Decimal("0.00"),
+        "total_ac":      agg["total_ac"]      or Decimal("0.00"),
+        "total_due":     agg["total_due"]     or Decimal("0.00"),
+    }
+
+    # ── Product-wise summary table (when NO specific product is selected) ─────
+    product_summary = []
+    if not selected_product_obj:
+        product_summary = (
+            line_items_qs
+            .values("product__id", "product__product_name", "product__productCode")
+            .annotate(
+                qty_sold=Sum("quantity"),
+                revenue=Sum("line_total"),
+                cash_collected=Sum("cash_amount"),
+                ac_amount=Sum("ac_amount"),
+            )
+            .order_by("-qty_sold")
+        )
+
+    # ── Subdealer breakdown (when a specific product IS selected) ─────────────
+    subdealer_breakdown = []
+    if selected_product_obj:
+        subdealer_breakdown = (
+            line_items_qs
+            .values("subdealer__id", "subdealer__name", "subdealer__subdealerCode")
+            .annotate(
+                qty_sold=Sum("quantity"),
+                revenue=Sum("line_total"),
+                cash_collected=Sum("cash_amount"),
+                ac_amount=Sum("ac_amount"),
+            )
+            .order_by("-qty_sold")
+        )
+
+    # ── Paginate line items ───────────────────────────────────────────────────
+    paginator   = Paginator(line_items_qs, 25)
+    page_number = request.GET.get("page")
+    page_obj    = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "SubDealers/product_selling_history.html",
+        {
+            "line_items":             page_obj,
+            "page_obj":               page_obj,
+            "all_products":           all_products,
+            "all_subdealers":         all_subdealers,
+            "selected_product":       product_filter,
+            "selected_product_obj":   selected_product_obj,
+            "selected_subdealer":     subdealer_filter,
+            "selected_subdealer_obj": selected_subdealer_obj,
+            "selected_month":         selected_month,
+            "q":                      q,
+            "stats":                  stats,
+            "product_summary":        product_summary,
+            "subdealer_breakdown":    subdealer_breakdown,
+            "total_items_count":      total_items_count,
+            "page_type":              "product_selling_history",
+        },
+    )
