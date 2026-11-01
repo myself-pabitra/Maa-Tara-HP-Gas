@@ -388,7 +388,7 @@
         <span class="pill pill-indigo">{% if filter_type == 'month' %}Month{% elif filter_type == 'date' %}Day{% elif filter_type == 'all' %}All{% else %}Today{% endif %}</span>
       </div>
       <div class="kpi-label">Sales Amount</div>
-      <div class="kpi-value">₹{{ invoice_summary.total_sales|floatformat:2|intcomma }}</div>
+      <div class="kpi-value inr-amt" data-amount="{{ invoice_summary.total_sales|floatformat:2 }}">₹{{ invoice_summary.total_sales|floatformat:2|intcomma }}</div>
       <div class="kpi-sub"><i class="fa-solid fa-file-invoice mr-1 opacity-70"></i>Total Invoiced</div>
     </div>
 
@@ -401,7 +401,7 @@
         <span class="pill pill-ok"><i class="fa-solid fa-circle-check text-[9px]"></i>Profit</span>
       </div>
       <div class="kpi-label">Gross Profit</div>
-      <div class="kpi-value text-emerald-700">₹{{ gross_profit|floatformat:2|intcomma }}</div>
+      <div class="kpi-value text-emerald-700 inr-amt" data-amount="{{ gross_profit|floatformat:2 }}">₹{{ gross_profit|floatformat:2|intcomma }}</div>
       <div class="kpi-sub">Before Operating Exp.</div>
     </div>
 
@@ -414,7 +414,7 @@
         <span class="pill pill-blue">Cash</span>
       </div>
       <div class="kpi-label">Cash Collected</div>
-      <div class="kpi-value">₹{{ payment_summary.cash|floatformat:2|intcomma }}</div>
+      <div class="kpi-value inr-amt" data-amount="{{ payment_summary.cash|floatformat:2 }}">₹{{ payment_summary.cash|floatformat:2|intcomma }}</div>
       <div class="kpi-sub">Period cash intake</div>
     </div>
 
@@ -427,7 +427,7 @@
         <span class="pill pill-err">Pending</span>
       </div>
       <div class="kpi-label">Outstanding Due</div>
-      <div class="kpi-value text-rose-600">₹{{ payment_summary.due|floatformat:2|intcomma }}</div>
+      <div class="kpi-value text-rose-600 inr-amt" data-amount="{{ payment_summary.due|floatformat:2 }}">₹{{ payment_summary.due|floatformat:2|intcomma }}</div>
       <div class="kpi-sub">Uncollected in period</div>
     </div>
 
@@ -473,7 +473,7 @@
         <span class="pill pill-blue">Asset</span>
       </div>
       <div class="kpi-label">Stock Value</div>
-      <div class="kpi-value text-xl">₹{{ stock_value|floatformat:2|intcomma }}</div>
+      <div class="kpi-value text-xl inr-amt" data-amount="{{ stock_value|floatformat:2 }}">₹{{ stock_value|floatformat:2|intcomma }}</div>
       <div class="kpi-sub">Current inventory worth</div>
     </div>
 
@@ -696,7 +696,7 @@
             <tr>
               <td class="font-mono text-xs font-semibold text-slate-700">{{ item.invoice.invoice_number }}</td>
               <td class="font-medium text-slate-800">{{ item.subdealer.name }}</td>
-              <td class="text-right font-bold text-amber-700">₹{{ item.ac_amount|floatformat:2|intcomma }}</td>
+              <td class="text-right font-bold text-amber-700 inr-amt" data-amount="{{ item.ac_amount|floatformat:2 }}">₹{{ item.ac_amount|floatformat:2|intcomma }}</td>
             </tr>
             {% empty %}
             <tr>
@@ -828,6 +828,27 @@ function setupDashboardFilters() {
 
 document.addEventListener('DOMContentLoaded', function () {
   setupDashboardFilters();
+
+  // ── Indian-numeral abbreviation helper ──────────────────────────────────
+  function formatINR(value) {
+    const v = Math.abs(parseFloat(value) || 0);
+    const sign = parseFloat(value) < 0 ? '-' : '';
+    if (v >= 1e7) return sign + '₹' + (v / 1e7).toFixed(2).replace(/\.?0+$/, '') + ' Cr';
+    if (v >= 1e5) return sign + '₹' + (v / 1e5).toFixed(2).replace(/\.?0+$/, '') + ' Lac';
+    if (v >= 1e3) return sign + '₹' + (v / 1e3).toFixed(1).replace(/\.?0+$/, '') + 'K';
+    return sign + '₹' + v.toFixed(2);
+  }
+
+  // ── Apply abbreviations to all .inr-amt elements ────────────────────────
+  document.querySelectorAll('.inr-amt').forEach(el => {
+    const raw = el.dataset.amount;
+    if (raw === undefined) return;
+    const full = el.textContent.trim();
+    el.textContent = formatINR(raw);
+    el.title = full;       // hover tooltip shows full value
+    el.style.cursor = 'help';
+  });
+
   const labels = {{ chart_labels|safe }};
   const rawSales = {{ chart_sales|safe }};
   const rawProfit = {{ chart_profit|safe }};
@@ -838,11 +859,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const salesBadge = document.getElementById('salesTotalBadge');
   if (salesBadge) {
-    salesBadge.textContent = 'Total: ₹' + totalSalesVal.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    salesBadge.textContent = 'Total: ' + formatINR(totalSalesVal);
   }
   const profitBadge = document.getElementById('profitTotalBadge');
   if (profitBadge) {
-    profitBadge.textContent = 'Total: ₹' + totalProfitVal.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    profitBadge.textContent = 'Total: ' + formatINR(totalProfitVal);
   }
 
   // Shared chart typography & defaults
@@ -911,7 +932,7 @@ document.addEventListener('DOMContentLoaded', function () {
               },
               label: function (context) {
                 const val = Number(context.parsed.y || 0);
-                return 'Sales: ₹ ' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return 'Sales: ' + formatINR(val);
               }
             }
           }
@@ -998,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', function () {
               },
               label: function (context) {
                 const val = Number(context.parsed.y || 0);
-                return 'Profit: ₹ ' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return 'Profit: ' + formatINR(val);
               }
             }
           }

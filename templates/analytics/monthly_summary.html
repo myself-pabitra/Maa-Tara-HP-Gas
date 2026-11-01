@@ -250,7 +250,7 @@
     <div class="stat-card">
       <div>
         <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Realized Revenue</div>
-        <div class="text-2xl font-extrabold text-indigo-700">₹{{ invoice_summary.total_revenue|floatformat:2|intcomma }}</div>
+        <div class="text-2xl font-extrabold text-indigo-700 inr-amt" data-amount="{{ invoice_summary.total_revenue|floatformat:2 }}">₹{{ invoice_summary.total_revenue|floatformat:2|intcomma }}</div>
         <div class="text-[11px] text-slate-500 mt-0.5 font-medium">After expense deductions</div>
       </div>
       <div class="w-11 h-11 rounded-xl flex items-center justify-center text-indigo-600 bg-indigo-50 border border-indigo-100">
@@ -262,7 +262,7 @@
     <div class="stat-card">
       <div>
         <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Billed Gross Sales</div>
-        <div class="text-2xl font-extrabold text-emerald-700">₹{{ invoice_summary.total_sales|floatformat:2|intcomma }}</div>
+        <div class="text-2xl font-extrabold text-emerald-700 inr-amt" data-amount="{{ invoice_summary.total_sales|floatformat:2 }}">₹{{ invoice_summary.total_sales|floatformat:2|intcomma }}</div>
         <div class="text-[11px] text-emerald-600 mt-0.5 font-medium">Across {{ invoice_summary.total_invoices|intcomma }} invoices</div>
       </div>
       <div class="w-11 h-11 rounded-xl flex items-center justify-center text-emerald-600 bg-emerald-50 border border-emerald-100">
@@ -274,7 +274,7 @@
     <div class="stat-card">
       <div>
         <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Total Deductions</div>
-        <div class="text-2xl font-extrabold text-rose-600">₹{{ invoice_summary.total_expenses|floatformat:2|intcomma }}</div>
+        <div class="text-2xl font-extrabold text-rose-600 inr-amt" data-amount="{{ invoice_summary.total_expenses|floatformat:2 }}">₹{{ invoice_summary.total_expenses|floatformat:2|intcomma }}</div>
         <div class="text-[11px] text-rose-500 mt-0.5 font-medium">Trip &amp; operating costs</div>
       </div>
       <div class="w-11 h-11 rounded-xl flex items-center justify-center text-rose-600 bg-rose-50 border border-rose-100">
@@ -286,7 +286,7 @@
     <div class="stat-card">
       <div>
         <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Estimated Net Profit</div>
-        <div class="text-2xl font-extrabold text-emerald-700">₹{{ dashboard_highlights.net_profit|floatformat:2|intcomma }}</div>
+        <div class="text-2xl font-extrabold text-emerald-700 inr-amt" data-amount="{{ dashboard_highlights.net_profit|floatformat:2 }}">₹{{ dashboard_highlights.net_profit|floatformat:2|intcomma }}</div>
         <div class="text-[11px] text-emerald-600 mt-0.5 font-medium">Gross profit minus expenses</div>
       </div>
       <div class="w-11 h-11 rounded-xl flex items-center justify-center text-emerald-600 bg-emerald-50 border border-emerald-100">
@@ -317,7 +317,7 @@
     <div class="stat-card">
       <div>
         <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Outstanding Due</div>
-        <div class="text-2xl font-extrabold text-rose-600">₹{{ due_summary.total_due|floatformat:2|intcomma }}</div>
+        <div class="text-2xl font-extrabold text-rose-600 inr-amt" data-amount="{{ due_summary.total_due|floatformat:2 }}">₹{{ due_summary.total_due|floatformat:2|intcomma }}</div>
         <div class="text-[11px] text-rose-500 mt-0.5">{{ due_summary.pending_verification }} pending payments</div>
       </div>
       <div class="w-11 h-11 rounded-xl flex items-center justify-center text-rose-600 bg-rose-50 border border-rose-100">
@@ -329,7 +329,7 @@
     <div class="stat-card">
       <div>
         <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Avg Invoice Value</div>
-        <div class="text-2xl font-extrabold text-slate-900">₹{{ dashboard_highlights.average_invoice_value|floatformat:2|intcomma }}</div>
+        <div class="text-2xl font-extrabold text-slate-900 inr-amt" data-amount="{{ dashboard_highlights.average_invoice_value|floatformat:2 }}">₹{{ dashboard_highlights.average_invoice_value|floatformat:2|intcomma }}</div>
         <div class="text-[11px] text-slate-500 mt-0.5">~{{ dashboard_highlights.average_cylinder_invoice|floatformat:1 }} cyl / bill</div>
       </div>
       <div class="w-11 h-11 rounded-xl flex items-center justify-center text-blue-600 bg-blue-50 border border-blue-100">
@@ -360,7 +360,7 @@
     <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-100 flex items-center justify-between">
       <div>
         <div class="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-0.5">Cash Collection</div>
-        <div class="text-xl font-extrabold text-emerald-950">₹{{ payment_mode_summary.cash_sales|floatformat:2|intcomma }}</div>
+        <div class="text-xl font-extrabold text-emerald-950 inr-amt" data-amount="{{ payment_mode_summary.cash_sales|floatformat:2 }}">₹{{ payment_mode_summary.cash_sales|floatformat:2|intcomma }}</div>
       </div>
       <span class="pill pill-emerald"><i class="fa-solid fa-money-bill-wave text-xs"></i> Cash</span>
     </div>
@@ -368,7 +368,7 @@
     <div class="p-4 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-center justify-between">
       <div>
         <div class="text-xs font-bold text-blue-800 uppercase tracking-wider mb-0.5">AC / Bank Collection</div>
-        <div class="text-xl font-extrabold text-blue-950">₹{{ payment_mode_summary.ac_sales|floatformat:2|intcomma }}</div>
+        <div class="text-xl font-extrabold text-blue-950 inr-amt" data-amount="{{ payment_mode_summary.ac_sales|floatformat:2 }}">₹{{ payment_mode_summary.ac_sales|floatformat:2|intcomma }}</div>
       </div>
       <span class="pill pill-blue"><i class="fa-solid fa-building-columns text-xs"></i> AC</span>
     </div>
@@ -376,7 +376,7 @@
     <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-100 flex items-center justify-between">
       <div>
         <div class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-0.5">Mixed Payments</div>
-        <div class="text-xl font-extrabold text-amber-950">₹{{ payment_mode_summary.mixed_total|floatformat:2|intcomma }}</div>
+        <div class="text-xl font-extrabold text-amber-950 inr-amt" data-amount="{{ payment_mode_summary.mixed_total|floatformat:2 }}">₹{{ payment_mode_summary.mixed_total|floatformat:2|intcomma }}</div>
       </div>
       <span class="pill pill-amber"><i class="fa-solid fa-layer-group text-xs"></i> Mixed</span>
     </div>
@@ -480,8 +480,8 @@
               </td>
               <td class="text-right font-mono text-xs">{{ dealer.invoice_count }}</td>
               <td class="text-right font-bold text-slate-800">{{ dealer.cylinders|intcomma }}</td>
-              <td class="text-right font-bold text-emerald-700">₹{{ dealer.sales|floatformat:2|intcomma }}</td>
-              <td class="text-right font-bold text-rose-600">₹{{ dealer.due_amount|floatformat:2|intcomma }}</td>
+              <td class="text-right font-bold text-emerald-700 inr-amt" data-amount="{{ dealer.sales|floatformat:2 }}">₹{{ dealer.sales|floatformat:2|intcomma }}</td>
+              <td class="text-right font-bold text-rose-600 inr-amt" data-amount="{{ dealer.due_amount|floatformat:2 }}">₹{{ dealer.due_amount|floatformat:2|intcomma }}</td>
             </tr>
             {% empty %}
             <tr><td colspan="6" class="text-center py-6 text-slate-400 text-xs">No Subdealer records found</td></tr>
@@ -521,7 +521,7 @@
               <td class="font-bold text-slate-800 text-xs">{{ product.product__product_name }}</td>
               <td class="font-mono text-xs text-indigo-600">{{ product.product__productCode }}</td>
               <td class="text-right font-bold text-slate-900 font-mono">{{ product.quantity_sold|intcomma }}</td>
-              <td class="text-right font-extrabold text-indigo-700">₹{{ product.sales|floatformat:2|intcomma }}</td>
+              <td class="text-right font-extrabold text-indigo-700 inr-amt" data-amount="{{ product.sales|floatformat:2 }}">₹{{ product.sales|floatformat:2|intcomma }}</td>
             </tr>
             {% empty %}
             <tr><td colspan="5" class="text-center py-6 text-slate-400 text-xs">No Product records found</td></tr>
@@ -568,8 +568,8 @@
             </td>
             <td class="font-mono text-xs text-indigo-600">{{ employee.employees__employeeCode }}</td>
             <td class="text-right font-mono font-semibold">{{ employee.invoice_count }}</td>
-            <td class="text-right font-bold text-emerald-700">₹{{ employee.subtotal|floatformat:2|intcomma }}</td>
-            <td class="text-right font-extrabold text-indigo-700">₹{{ employee.sales|floatformat:2|intcomma }}</td>
+            <td class="text-right font-bold text-emerald-700 inr-amt" data-amount="{{ employee.subtotal|floatformat:2 }}">₹{{ employee.subtotal|floatformat:2|intcomma }}</td>
+            <td class="text-right font-extrabold text-indigo-700 inr-amt" data-amount="{{ employee.sales|floatformat:2 }}">₹{{ employee.sales|floatformat:2|intcomma }}</td>
           </tr>
           {% empty %}
           <tr><td colspan="6" class="text-center py-6 text-slate-400 text-xs">No Employee records found</td></tr>
@@ -614,10 +614,10 @@
             </td>
             <td class="text-right font-mono">{{ row.invoice_count }}</td>
             <td class="text-right font-bold text-slate-800 font-mono">{{ row.cylinders|intcomma }}</td>
-            <td class="text-right font-bold text-emerald-700 font-mono">₹{{ row.subtotal|floatformat:2|intcomma }}</td>
-            <td class="text-right font-semibold text-rose-600 font-mono">₹{{ row.expenses|floatformat:2|intcomma }}</td>
-            <td class="text-right font-extrabold text-indigo-700 font-mono">₹{{ row.revenue|floatformat:2|intcomma }}</td>
-            <td class="text-right font-bold text-amber-700 font-mono">₹{{ row.due_amount|floatformat:2|intcomma }}</td>
+            <td class="text-right font-bold text-emerald-700 font-mono inr-amt" data-amount="{{ row.subtotal|floatformat:2 }}">₹{{ row.subtotal|floatformat:2|intcomma }}</td>
+            <td class="text-right font-semibold text-rose-600 font-mono inr-amt" data-amount="{{ row.expenses|floatformat:2 }}">₹{{ row.expenses|floatformat:2|intcomma }}</td>
+            <td class="text-right font-extrabold text-indigo-700 font-mono inr-amt" data-amount="{{ row.revenue|floatformat:2 }}">₹{{ row.revenue|floatformat:2|intcomma }}</td>
+            <td class="text-right font-bold text-amber-700 font-mono inr-amt" data-amount="{{ row.due_amount|floatformat:2 }}">₹{{ row.due_amount|floatformat:2|intcomma }}</td>
             <td class="text-right font-mono">
               {% if row.pending > 0 %}
                 <span class="text-rose-600 font-bold">{{ row.pending }}</span>
@@ -660,6 +660,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const chartFont = { family: "'Inter', sans-serif", size: 11, weight: '500' };
 
+  // ── Indian-numeral abbreviation helper ──────────────────────────────────
+  function formatINR(value) {
+    const v = Math.abs(parseFloat(value) || 0);
+    const sign = parseFloat(value) < 0 ? '-' : '';
+    if (v >= 1e7)       return sign + '₹' + (v / 1e7).toFixed(2).replace(/\.?0+$/, '') + ' Cr';
+    if (v >= 1e5)       return sign + '₹' + (v / 1e5).toFixed(2).replace(/\.?0+$/, '') + ' Lac';
+    if (v >= 1e3)       return sign + '₹' + (v / 1e3).toFixed(1).replace(/\.?0+$/, '') + 'K';
+    return sign + '₹' + v.toFixed(2);
+  }
+
+  // ── Apply abbreviations to all .inr-amt elements ────────────────────────
+  document.querySelectorAll('.inr-amt').forEach(el => {
+    const raw = el.dataset.amount;
+    if (raw === undefined) return;
+    const full = el.textContent.trim(); // keep original as tooltip
+    el.textContent = formatINR(raw);
+    el.title = full;                   // hover shows full number
+    el.style.cursor = 'help';
+  });
+
+  // ── Chart axis abbreviation helper ──────────────────────────────────────
+  function chartTickINR(v) {
+    const abs = Math.abs(v);
+    if (abs >= 1e7) return '₹' + (v / 1e7).toFixed(1) + 'Cr';
+    if (abs >= 1e5) return '₹' + (v / 1e5).toFixed(1) + 'L';
+    if (abs >= 1e3) return '₹' + (v / 1e3).toFixed(1) + 'K';
+    return '₹' + v;
+  }
+
   // Common Tooltip options
   const tooltipOptions = {
     backgroundColor: '#0f172a',
@@ -675,7 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
       label: (ctx) => {
         let label = ctx.dataset.label || '';
         let val = ctx.parsed.y !== null ? ctx.parsed.y : 0;
-        return `${label}: ₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        return `${label}: ${formatINR(val)}`;
       }
     }
   };
@@ -720,7 +749,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         scales: {
           x: { grid: { display: false }, ticks: { font: chartFont, color: '#64748b' } },
-          y: { grid: { color: '#f1f5f9' }, ticks: { font: chartFont, color: '#64748b', callback: v => '₹' + v.toLocaleString('en-IN') } }
+          y: { grid: { color: '#f1f5f9' }, ticks: { font: chartFont, color: '#64748b', callback: chartTickINR } }
         }
       }
     });
@@ -758,7 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         scales: {
           x: { grid: { display: false }, ticks: { font: chartFont, color: '#64748b' } },
-          y: { grid: { color: '#f1f5f9' }, ticks: { font: chartFont, color: '#64748b', callback: v => '₹' + v.toLocaleString('en-IN') } }
+          y: { grid: { color: '#f1f5f9' }, ticks: { font: chartFont, color: '#64748b', callback: chartTickINR } }
         }
       }
     });
