@@ -20,4 +20,6 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     # analytics Application URLs
     path("analytics/", include("analytics.urls")),
+    # License Renewal URLs
+    path("license-renewal/", include("license_renewal.urls")),
 ]

@@ -21,6 +21,7 @@ from UserDAC.models import DACEntry
 from employees.models import Employee
 from inventory.models import ProductInventory
 from SubDealers.models import Subdealer
+from license_renewal.models import LicenseRenewal
 
 
 def dashboard(request):
@@ -315,6 +316,10 @@ def dashboard(request):
 
     active_employees = Employee.objects.filter(is_active=True).count()
 
+    active_licenses = LicenseRenewal.objects.filter(status="Active").count()
+    expiring_licenses = LicenseRenewal.objects.filter(status__in=["Expiring Soon", "Expired"]).order_by("expire_date")[:5]
+    total_expiring_licenses_count = LicenseRenewal.objects.filter(status__in=["Expiring Soon", "Expired"]).count()
+
     pending_verifications = (
         DailyInvoiceLineItem.objects.filter(payment_status="PENDING")
         .select_related("invoice", "subdealer")
@@ -346,6 +351,9 @@ def dashboard(request):
         "active_products": active_products,
         "active_subdealers": active_subdealers,
         "active_employees": active_employees,
+        "active_licenses": active_licenses,
+        "expiring_licenses": expiring_licenses,
+        "total_expiring_licenses_count": total_expiring_licenses_count,
         "pending_verifications": pending_verifications,
         "chart_labels": json.dumps(chart_labels),
         "chart_sales": json.dumps(chart_sales),

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "UserDAC",
     "Payments",
     "analytics",
+    "license_renewal",
 ]
 
 MIDDLEWARE = [

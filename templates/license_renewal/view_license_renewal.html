@@ -1,0 +1,559 @@
+{% extends "layout.html" %}
+{% load static humanize %}
+
+{% block title %}Vehicle Licenses &amp; Renewals | Maa Tara HP Gas{% endblock %}
+
+{% block content %}
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
+
+  /* Table styling */
+  .dash-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+  }
+  .dash-table th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #eef2f6;
+    white-space: nowrap;
+  }
+  .dash-table td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .dash-table tbody tr {
+    transition: background-color .15s ease;
+  }
+  .dash-table tbody tr:hover {
+    background-color: #f8faff;
+  }
+
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .pill-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+  .pill-rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+  .pill-purple { background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+  .pill-teal { background: #f0fdfa; color: #0f766e; border: 1px solid #99f6e4; }
+  .pill-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+  /* KPI Stat Cards */
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all .2s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  /* Custom Input */
+  .filter-input {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #1e293b;
+    outline: none;
+    transition: all .15s ease;
+  }
+  .filter-input.pl-9,
+  .filter-input.pl-10 {
+    padding-left: 38px !important;
+  }
+  .filter-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  }
+
+  /* Action Buttons */
+  .btn-action-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eef2ff;
+    color: #4f46e5;
+    border: 1px solid #e0e7ff;
+    transition: all .15s ease;
+  }
+  .btn-action-edit:hover {
+    background: #4f46e5;
+    color: #ffffff;
+  }
+
+  .btn-action-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #fff1f2;
+    color: #be123c;
+    border: 1px solid #fecdd3;
+    transition: all .15s ease;
+    cursor: pointer;
+  }
+  .btn-action-delete:hover {
+    background: #be123c;
+    color: #ffffff;
+  }
+
+  /* Create Button */
+  .btn-create-item {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13.5px;
+    border-radius: 12px;
+    padding: 10px 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all .18s ease;
+  }
+  .btn-create-item:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
+</style>
+
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Vehicle Licenses &amp; Renewals</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Vehicle Licenses &amp; Compliance</h1>
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-truck-front text-[10px]"></i> {{ total_count }} Tracked
+        </span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <a href="{% url 'license_renewal_update' %}" class="btn-create-item">
+        <i class="fa-solid fa-plus text-xs"></i> Add / Renew License
+      </a>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       CRITICAL EXPIRY ALERT BANNER (If any <= 5 days or expired)
+  ════════════════════════════════════════ -->
+  {% if expired_count > 0 or critical_count > 0 %}
+  <div class="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-start sm:items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 text-lg">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-amber-950">Immediate Compliance Action Required</h4>
+        <p class="text-xs text-amber-800 mt-0.5">
+          {% if expired_count > 0 %}<strong class="font-bold text-rose-700">{{ expired_count }}</strong> document{{ expired_count|pluralize }} expired{% endif %}
+          {% if expired_count > 0 and critical_count > 0 %} and {% endif %}
+          {% if critical_count > 0 %}<strong class="font-bold text-amber-700">{{ critical_count }}</strong> expiring within 5 days{% endif %}.
+          Ensure delivery vehicles remain legally compliant for distribution.
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      {% if expired_count > 0 %}
+      <a href="{% url 'license_renewal_view' %}?status=Expired" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition shadow-xs inline-flex items-center gap-1.5">
+        <i class="fa-solid fa-triangle-exclamation text-[10px]"></i> View Expired
+      </a>
+      {% endif %}
+      {% if critical_count > 0 %}
+      <a href="{% url 'license_renewal_view' %}?status=Expiring+Soon" class="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition shadow-xs inline-flex items-center gap-1.5">
+        <i class="fa-solid fa-clock text-[10px]"></i> View Expiring Soon
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ════════════════════════════════════════
+       KPI STAT CARDS ROW
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+    <!-- Total Tracked -->
+    <a href="{% url 'license_renewal_view' %}" class="stat-card group">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-indigo-600 transition">Total Papers</div>
+        <div class="text-2xl font-black text-slate-900 mt-1">{{ total_count }}</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">All registered documents</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg group-hover:scale-110 transition shrink-0">
+        <i class="fa-solid fa-folder-open"></i>
+      </div>
+    </a>
+
+    <!-- Active Valid -->
+    <a href="{% url 'license_renewal_view' %}?status=Active" class="stat-card group">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-600 transition">Active &amp; Valid</div>
+        <div class="text-2xl font-black text-emerald-600 mt-1">{{ active_count }}</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">&gt; 30 days validity</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg group-hover:scale-110 transition shrink-0">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+    </a>
+
+    <!-- Expiring Soon -->
+    <a href="{% url 'license_renewal_view' %}?status=Expiring+Soon" class="stat-card group">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-amber-600 transition">Expiring Soon</div>
+        <div class="text-2xl font-black text-amber-600 mt-1">{{ expiring_count }}</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">&le; 30 days remaining</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg group-hover:scale-110 transition shrink-0">
+        <i class="fa-solid fa-clock"></i>
+      </div>
+    </a>
+
+    <!-- Expired -->
+    <a href="{% url 'license_renewal_view' %}?status=Expired" class="stat-card group">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-rose-600 transition">Expired</div>
+        <div class="text-2xl font-black text-rose-600 mt-1">{{ expired_count }}</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">Action overdue</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg group-hover:scale-110 transition shrink-0">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SEARCH & FILTERS BAR
+  ════════════════════════════════════════ -->
+  <div class="billing-card p-4 sm:p-5">
+    <form method="get" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-wrap">
+
+      <div class="flex flex-1 items-center gap-3 min-w-[260px]">
+        <!-- Search Query Input -->
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+          <input type="text"
+                 name="q"
+                 value="{{ q }}"
+                 placeholder="Search vehicle number, name, paper category..."
+                 class="filter-input pl-10 w-full" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <!-- Status Filter -->
+        <select name="status" class="filter-input font-medium text-xs py-2">
+          <option value="">All Statuses</option>
+          {% for st_val, st_lbl in status_choices %}
+            <option value="{{ st_val }}" {% if selected_status == st_val %}selected{% endif %}>{{ st_lbl }}</option>
+          {% endfor %}
+        </select>
+
+        <!-- Paper Filter -->
+        <select name="paper" class="filter-input font-medium text-xs py-2">
+          <option value="">All Document Types</option>
+          {% for p_val, p_lbl in paper_choices %}
+            <option value="{{ p_val }}" {% if selected_paper == p_val %}selected{% endif %}>{{ p_lbl }}</option>
+          {% endfor %}
+        </select>
+
+        <!-- Submit Button -->
+        <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition shadow-xs inline-flex items-center gap-1.5">
+          <i class="fa-solid fa-filter text-[10px]"></i> Filter
+        </button>
+
+        {% if q or selected_status or selected_paper %}
+        <!-- Reset Link -->
+        <a href="{% url 'license_renewal_view' %}" class="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-semibold text-xs transition inline-flex items-center gap-1">
+          <i class="fa-solid fa-xmark text-[11px]"></i> Clear
+        </a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       DATA TABLE
+  ════════════════════════════════════════ -->
+  <div class="billing-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="dash-table w-full">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Vehicle Details</th>
+            <th>Document Category</th>
+            <th>Expiry Date</th>
+            <th>Days Remaining</th>
+            <th>Status</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in records %}
+          <tr>
+            <!-- Index -->
+            <td class="font-mono text-xs text-slate-400 font-semibold w-12">
+              {{ forloop.counter }}
+            </td>
+
+            <!-- Vehicle Details -->
+            <td>
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
+                  <i class="fa-solid fa-truck"></i>
+                </div>
+                <div>
+                  <div class="font-extrabold text-slate-900 tracking-tight font-mono text-sm">
+                    {{ record.vehicle_no }}
+                  </div>
+                  <div class="text-xs text-slate-500 font-medium">
+                    {{ record.vehicle_name }}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Document Category -->
+            <td>
+              {% if record.paper == 'RC' %}
+                <span class="pill pill-indigo">
+                  <i class="fa-solid fa-id-card text-[10px]"></i> RC
+                </span>
+              {% elif record.paper == 'Insurance' %}
+                <span class="pill pill-emerald">
+                  <i class="fa-solid fa-shield-halved text-[10px]"></i> Insurance
+                </span>
+              {% elif record.paper == 'Permit' %}
+                <span class="pill pill-blue">
+                  <i class="fa-solid fa-route text-[10px]"></i> Permit
+                </span>
+              {% elif record.paper == 'Fitness' %}
+                <span class="pill pill-teal">
+                  <i class="fa-solid fa-wrench text-[10px]"></i> Fitness
+                </span>
+              {% elif record.paper == 'Pollution' %}
+                <span class="pill pill-purple">
+                  <i class="fa-solid fa-smog text-[10px]"></i> Pollution (PUC)
+                </span>
+              {% else %}
+                <span class="pill pill-slate">
+                  <i class="fa-solid fa-file-lines text-[10px]"></i> {{ record.paper_display }}
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Expiry Date -->
+            <td>
+              <div class="font-semibold text-slate-800 text-xs">
+                {{ record.expire_date|date:"d M Y" }}
+              </div>
+              <div class="text-[11px] text-slate-400">
+                {{ record.expire_date|date:"l" }}
+              </div>
+            </td>
+
+            <!-- Days Remaining -->
+            <td>
+              {% if record.remaining_days < 0 %}
+                <span class="pill pill-rose">
+                  <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                  Overdue by {{ record.remaining_days|stringformat:"d"|slice:"1:" }} day{{ record.remaining_days|stringformat:"d"|slice:"1:"|pluralize }}
+                </span>
+              {% elif record.remaining_days == 0 %}
+                <span class="pill pill-rose font-black animate-pulse">
+                  <i class="fa-solid fa-bell text-[10px]"></i> Expires Today!
+                </span>
+              {% elif record.remaining_days <= 5 %}
+                <span class="pill pill-amber font-bold">
+                  <i class="fa-solid fa-clock text-[10px]"></i> {{ record.remaining_days }} day{{ record.remaining_days|pluralize }} left
+                </span>
+              {% elif record.remaining_days <= 30 %}
+                <span class="pill pill-amber">
+                  <i class="fa-solid fa-hourglass-half text-[10px]"></i> {{ record.remaining_days }} days left
+                </span>
+              {% else %}
+                <span class="pill pill-emerald">
+                  <i class="fa-solid fa-circle-check text-[10px]"></i> {{ record.remaining_days }} days left
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Status Pill -->
+            <td>
+              {% if record.status == 'Active' %}
+                <span class="pill pill-emerald">
+                  <i class="fa-solid fa-circle-check text-[10px]"></i> Active
+                </span>
+              {% elif record.status == 'Expiring Soon' %}
+                <span class="pill pill-amber">
+                  <i class="fa-solid fa-triangle-exclamation text-[10px]"></i> Expiring Soon
+                </span>
+              {% else %}
+                <span class="pill pill-rose">
+                  <i class="fa-solid fa-circle-xmark text-[10px]"></i> Expired
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Action Buttons -->
+            <td class="text-right">
+              <div class="inline-flex items-center gap-1.5">
+                <a href="{% url 'license_renewal_update_record' record.id %}" class="btn-action-edit" title="Edit License Details">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                  <span>Edit</span>
+                </a>
+                <button type="button"
+                        class="btn-action-delete lic-delete-btn"
+                        data-id="{{ record.id }}"
+                        data-info="{{ record.vehicle_no }} ({{ record.paper_display }})"
+                        data-url="{% url 'license_renewal_delete' record.id %}"
+                        title="Delete License Record">
+                  <i class="fa-solid fa-trash-can"></i>
+                  <span>Delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="py-14 text-center">
+              <div class="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-500 flex items-center justify-center mx-auto mb-3 text-2xl">
+                <i class="fa-solid fa-id-card"></i>
+              </div>
+              <h3 class="text-sm font-bold text-slate-800">No Vehicle Licenses Found</h3>
+              <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                {% if q or selected_status or selected_paper %}
+                  No records match your active search filters. Try adjusting your search term or clearing the filters.
+                {% else %}
+                  Track RC, Insurance, Permits, Fitness, and Pollution certificates for all delivery vehicles in one unified place.
+                {% endif %}
+              </p>
+              <div class="mt-4">
+                {% if q or selected_status or selected_paper %}
+                  <a href="{% url 'license_renewal_view' %}" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition inline-flex items-center gap-1.5 shadow-xs">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> Reset Filters
+                  </a>
+                {% else %}
+                  <a href="{% url 'license_renewal_update' %}" class="btn-create-item">
+                    <i class="fa-solid fa-plus text-xs"></i> Add Your First License
+                  </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PAGINATION
+  ════════════════════════════════════════ -->
+  {% include 'components/pagination.html' %}
+
+</div>
+
+<!-- ════════════════════════════════════════
+     DELETE CONFIRMATION MODAL
+════════════════════════════════════════ -->
+<dialog id="licDeleteModal" class="modal">
+  <div class="modal-box bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 max-w-md">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-11 h-11 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center text-lg shrink-0">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h3 class="font-extrabold text-slate-900 text-base">Delete License Record</h3>
+        <p class="text-xs text-slate-500">Warning: This will permanently remove this compliance document.</p>
+      </div>
+    </div>
+
+    <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl mb-4">
+      <div class="text-[11px] font-bold uppercase text-slate-400 mb-1">Target Document</div>
+      <div class="font-bold text-slate-800 text-sm break-words" id="licDeleteName"></div>
+    </div>
+
+    <div class="flex items-center justify-end gap-2.5">
+      <button type="button" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition" onclick="licDeleteModal.close()">
+        Cancel
+      </button>
+      <form id="licDeleteForm" method="post" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition shadow-sm">
+          <i class="fa-solid fa-trash-can mr-1"></i> Yes, Delete Record
+        </button>
+      </form>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop bg-slate-900/40 backdrop-blur-sm"><button>close</button></form>
+</dialog>
+
+<script>
+document.querySelectorAll('.lic-delete-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.getElementById('licDeleteName').textContent = this.dataset.info;
+    document.getElementById('licDeleteForm').action = this.dataset.url;
+    document.getElementById('licDeleteModal').showModal();
+  });
+});
+</script>
+{% endblock %}
+

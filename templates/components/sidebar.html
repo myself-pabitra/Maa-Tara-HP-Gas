@@ -174,6 +174,27 @@
       </div>
     </details>
 
+    <!-- Vehicle Compliance & License Renewal Accordion -->
+    <details class="group" {% if page_type == "license_renewal_view" or page_type == "license_renewal_update" %}open{% endif %}>
+      <summary onclick="handleDetailsToggle(event)" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold cursor-pointer text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all list-none">
+        <div class="flex items-center gap-3">
+          <i class="fa-solid fa-truck-front w-4 text-center text-slate-400 group-open:text-indigo-600"></i>
+          <span>Vehicle Licenses</span>
+        </div>
+        <i class="fa-solid fa-chevron-right text-[10px] text-slate-400 transition-transform duration-200 group-open:rotate-90"></i>
+      </summary>
+      <div class="pl-7 pr-1 pt-1 pb-1 space-y-1">
+        <a href="{% url 'license_renewal_view' %}"
+           class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition {% if page_type == 'license_renewal_view' %}bg-indigo-50 text-indigo-700 font-bold{% else %}text-slate-600 hover:text-indigo-600 hover:bg-slate-50{% endif %}">
+          <i class="fa-solid fa-id-card text-[9px]"></i> All Vehicle Papers
+        </a>
+        <a href="{% url 'license_renewal_update' %}"
+           class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition {% if page_type == 'license_renewal_update' %}bg-indigo-50 text-indigo-700 font-bold{% else %}text-slate-600 hover:text-indigo-600 hover:bg-slate-50{% endif %}">
+          <i class="fa-solid fa-plus text-[9px]"></i> Add / Renew License
+        </a>
+      </div>
+    </details>
+
     <!-- Section: Analytics -->
     <div class="px-3 pt-4 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
       Intelligence

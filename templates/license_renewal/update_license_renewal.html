@@ -1,0 +1,396 @@
+{% extends "layout.html" %}
+{% load static humanize %}
+
+{% block title %}
+  {% if record %}Edit License: {{ record.vehicle_no }} ({{ record.paper_display }}){% else %}Add Vehicle License | Maa Tara HP Gas{% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
+
+  /* Custom input styling */
+  .custom-input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    outline: none;
+    transition: all .18s ease;
+  }
+  .custom-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3.5px rgba(99,102,241,.12);
+  }
+
+  .input-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64748b;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+  .pill-rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+  .pill-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .pill-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+  /* Submit button gradient */
+  .btn-submit-lic {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all .18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-submit-lic:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
+</style>
+
+<div class="max-w-6xl mx-auto space-y-6 pb-12">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER & BREADCRUMBS
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <a href="{% url 'license_renewal_view' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          Vehicle Licenses
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">
+          {% if record %}Edit {{ record.vehicle_no }}{% else %}New License Entry{% endif %}
+        </span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+          {% if record %}Edit Vehicle License{% else %}Register Vehicle License{% endif %}
+        </h1>
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-shield-halved text-[10px]"></i>
+          {% if record %}Editing Record{% else %}Compliance Registration{% endif %}
+        </span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <a href="{% url 'license_renewal_view' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-xs">
+        <i class="fa-solid fa-arrow-left text-indigo-600"></i> Back to Directory
+      </a>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       2-COLUMN FORM & GUIDE GRID
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- LEFT COLUMN: LICENSE REGISTRATION / EDIT FORM (7 COLS) -->
+    <div class="lg:col-span-7">
+      <form method="post"
+            action="{% if record %}{% url 'license_renewal_update_record' record.id %}{% else %}{% url 'license_renewal_update' %}{% endif %}"
+            class="billing-card p-6 sm:p-8 space-y-6">
+        {% csrf_token %}
+
+        <div class="border-b border-slate-100 pb-4">
+          <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-truck-front text-indigo-600"></i> Document Information
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Enter or update the vehicle identification and license expiration details.
+          </p>
+        </div>
+
+        <div class="space-y-5">
+
+          <!-- Vehicle Number -->
+          <div>
+            <label class="input-label" for="vehicle_no">
+              <i class="fa-solid fa-hashtag text-slate-400 mr-1"></i> Vehicle Registration Number <span class="text-rose-500">*</span>
+            </label>
+            <input type="text"
+                   id="vehicle_no"
+                   name="vehicle_no"
+                   value="{% if record %}{{ record.vehicle_no }}{% else %}{{ vehicle_no|default:'' }}{% endif %}"
+                   placeholder="e.g. WB 58 AB 1234"
+                   class="custom-input font-mono font-bold uppercase tracking-wider"
+                   required
+                   autocomplete="off" />
+            <p class="text-[11px] text-slate-400 mt-1">Official vehicle registration plate number.</p>
+          </div>
+
+          <!-- Vehicle Name / Model -->
+          <div>
+            <label class="input-label" for="vehicle_name">
+              <i class="fa-solid fa-truck text-slate-400 mr-1"></i> Vehicle Name / Identifier <span class="text-rose-500">*</span>
+            </label>
+            <input type="text"
+                   id="vehicle_name"
+                   name="vehicle_name"
+                   value="{% if record %}{{ record.vehicle_name }}{% else %}{{ vehicle_name|default:'' }}{% endif %}"
+                   placeholder="e.g. Delivery Truck 1 (Tata 407) or E-Rickshaw 3"
+                   class="custom-input font-medium"
+                   required />
+            <p class="text-[11px] text-slate-400 mt-1">Friendly label to easily recognize this vehicle in your fleet.</p>
+          </div>
+
+          <!-- Paper / Document Category -->
+          <div>
+            <label class="input-label" for="paper">
+              <i class="fa-solid fa-file-contract text-slate-400 mr-1"></i> Document Category <span class="text-rose-500">*</span>
+            </label>
+            <select id="paper"
+                    name="paper"
+                    class="custom-input font-medium"
+                    required
+                    onchange="toggleCustomPaperField()">
+              {% for p_val, p_lbl in paper_choices %}
+                <option value="{{ p_val }}" {% if paper == p_val %}selected{% elif record and record.paper == p_val %}selected{% elif not paper and not record and p_val == 'RC' %}selected{% endif %}>
+                  {{ p_lbl }} {% if p_val == 'RC' %}(Registration Certificate){% elif p_val == 'Insurance' %}(Vehicle Insurance Policy){% elif p_val == 'Permit' %}(Commercial Route Permit){% elif p_val == 'Fitness' %}(Fitness Certificate){% elif p_val == 'Pollution' %}(PUC Certificate){% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Custom Paper Name (Conditionally Shown for 'Other') -->
+          <div id="customPaperGroup" class="transition-all duration-200 {% if paper == 'Other' %}{% elif record and record.paper == 'Other' %}{% else %}hidden{% endif %}">
+            <label class="input-label" for="custom_paper_name">
+              <i class="fa-solid fa-pen-fancy text-slate-400 mr-1"></i> Custom Document Name <span class="text-rose-500">*</span>
+            </label>
+            <input type="text"
+                   id="custom_paper_name"
+                   name="custom_paper_name"
+                   value="{% if record %}{{ record.custom_paper_name|default:'' }}{% else %}{{ custom_paper_name|default:'' }}{% endif %}"
+                   placeholder="e.g. Road Tax, Speed Governor, State Entry Tax..."
+                   class="custom-input font-medium" />
+            <p class="text-[11px] text-slate-400 mt-1">Specify the exact name for this custom document category.</p>
+          </div>
+
+          <!-- Expiry Date -->
+          <div>
+            <label class="input-label" for="expire_date">
+              <i class="fa-solid fa-calendar-day text-slate-400 mr-1"></i> Expiration Date <span class="text-rose-500">*</span>
+            </label>
+            <input type="date"
+                   id="expire_date"
+                   name="expire_date"
+                   value="{% if expire_date %}{{ expire_date }}{% elif record and record.expire_date %}{{ record.expire_date|date:'Y-m-d' }}{% endif %}"
+                   class="custom-input font-medium"
+                   required
+                   oninput="updateDatePreview()" />
+            <div id="datePreviewContainer" class="mt-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
+              <span class="text-slate-500 font-medium">Projected Expiry Status:</span>
+              <span id="datePreviewBadge" class="font-bold">Select a date above</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Buttons -->
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+          <a href="{% url 'license_renewal_view' %}" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-semibold text-xs transition">
+            Cancel
+          </a>
+          <button type="submit" class="btn-submit-lic">
+            <i class="fa-solid fa-floppy-disk text-xs"></i>
+            {% if record %}Update License Record{% else %}Save License Record{% endif %}
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- RIGHT COLUMN: COMPLIANCE GUIDE & STATUS CARD (5 COLS) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      {% if record %}
+      <!-- Current Record Status Overview (Edit Mode) -->
+      <div class="billing-card p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Current Status</h3>
+          {% if record.status == 'Active' %}
+            <span class="pill pill-emerald"><i class="fa-solid fa-circle-check text-[10px]"></i> Active</span>
+          {% elif record.status == 'Expiring Soon' %}
+            <span class="pill pill-amber"><i class="fa-solid fa-triangle-exclamation text-[10px]"></i> Expiring Soon</span>
+          {% else %}
+            <span class="pill pill-rose"><i class="fa-solid fa-circle-xmark text-[10px]"></i> Expired</span>
+          {% endif %}
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-500">Vehicle:</span>
+            <span class="font-bold font-mono text-slate-800">{{ record.vehicle_no }}</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-500">Document:</span>
+            <span class="font-bold text-slate-800">{{ record.paper_display }}</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-500">Current Expiry:</span>
+            <span class="font-bold text-slate-800">{{ record.expire_date|date:"d M Y" }}</span>
+          </div>
+          <div class="flex justify-between text-xs pt-1 border-t border-slate-200">
+            <span class="text-slate-500">Remaining Days:</span>
+            <span class="font-bold {% if record.remaining_days < 0 %}text-rose-600{% elif record.remaining_days <= 30 %}text-amber-600{% else %}text-emerald-600{% endif %}">
+              {{ record.remaining_days }} day{{ record.remaining_days|pluralize }}
+            </span>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Compliance Checklist & Rules -->
+      <div class="billing-card p-6 space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm font-bold shrink-0">
+            <i class="fa-solid fa-scale-balanced"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-sm">Fleet Compliance Guide</h3>
+            <p class="text-[11px] text-slate-400">Rules &amp; renewal thresholds</p>
+          </div>
+        </div>
+
+        <div class="space-y-3 pt-2 text-xs text-slate-600">
+          <div class="flex items-start gap-2.5">
+            <span class="pill pill-emerald shrink-0 text-[10px] mt-0.5">&gt; 30 Days</span>
+            <p><strong>Active:</strong> Document is legally valid with comfortable lead time.</p>
+          </div>
+
+          <div class="flex items-start gap-2.5">
+            <span class="pill pill-amber shrink-0 text-[10px] mt-0.5">&le; 30 Days</span>
+            <p><strong>Expiring Soon:</strong> Renewal application should be initiated with local RTO or insurance company.</p>
+          </div>
+
+          <div class="flex items-start gap-2.5">
+            <span class="pill pill-rose shrink-0 text-[10px] mt-0.5">&le; 5 Days</span>
+            <p><strong>Urgent Alert:</strong> Automatic system warnings appear on dashboard to prevent operational disruption.</p>
+          </div>
+
+          <div class="flex items-start gap-2.5">
+            <span class="pill pill-rose shrink-0 text-[10px] mt-0.5">&lt; 0 Days</span>
+            <p><strong>Expired:</strong> Driving without a valid paper violates Indian Motor Vehicle rules.</p>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100 pt-3">
+          <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Essential Delivery Fleet Papers</h4>
+          <ul class="space-y-1.5 text-xs text-slate-600">
+            <li class="flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-500 text-[11px]"></i> RC - Registration Certificate
+            </li>
+            <li class="flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-500 text-[11px]"></i> Commercial Comprehensive Insurance
+            </li>
+            <li class="flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-500 text-[11px]"></i> Road Permit (State / All India)
+            </li>
+            <li class="flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-500 text-[11px]"></i> Vehicle Fitness Certificate
+            </li>
+            <li class="flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-500 text-[11px]"></i> PUC - Pollution Under Control
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+function toggleCustomPaperField() {
+  const paperSelect = document.getElementById('paper');
+  const customGroup = document.getElementById('customPaperGroup');
+  const customInput = document.getElementById('custom_paper_name');
+  if (paperSelect.value === 'Other') {
+    customGroup.classList.remove('hidden');
+    customInput.setAttribute('required', 'required');
+    customInput.focus();
+  } else {
+    customGroup.classList.add('hidden');
+    customInput.removeAttribute('required');
+  }
+}
+
+function updateDatePreview() {
+  const dateInput = document.getElementById('expire_date');
+  const previewBadge = document.getElementById('datePreviewBadge');
+
+  if (!dateInput.value) {
+    previewBadge.innerHTML = '<span class="text-slate-400">Select a date above</span>';
+    return;
+  }
+
+  const selectedDate = new Date(dateInput.value + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffTime = selectedDate - today;
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    previewBadge.innerHTML = `<span class="pill pill-rose"><i class="fa-solid fa-circle-xmark text-[10px]"></i> Expired (${Math.abs(diffDays)} days overdue)</span>`;
+  } else if (diffDays === 0) {
+    previewBadge.innerHTML = `<span class="pill pill-rose"><i class="fa-solid fa-bell text-[10px]"></i> Expires Today!</span>`;
+  } else if (diffDays <= 5) {
+    previewBadge.innerHTML = `<span class="pill pill-amber"><i class="fa-solid fa-clock text-[10px]"></i> Expiring Soon (${diffDays} days left - Critical)</span>`;
+  } else if (diffDays <= 30) {
+    previewBadge.innerHTML = `<span class="pill pill-amber"><i class="fa-solid fa-hourglass-half text-[10px]"></i> Expiring Soon (${diffDays} days left)</span>`;
+  } else {
+    previewBadge.innerHTML = `<span class="pill pill-emerald"><i class="fa-solid fa-circle-check text-[10px]"></i> Active (${diffDays} days remaining)</span>`;
+  }
+}
+
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', function() {
+  toggleCustomPaperField();
+  updateDatePreview();
+});
+</script>
+{% endblock %}
