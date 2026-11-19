@@ -44,6 +44,16 @@ class DACEntry(models.Model):
         editable=False
     )
 
+    # Snapshot of the subdealer's DAC % at the time this entry was created.
+    # Stored only for CR entries so that changing the subdealer's DAC %
+    # later never retroactively changes credited amounts on past entries.
+    dac_percentage_at_entry = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
     description = models.TextField(
         blank=True,
         null=True
@@ -52,6 +62,21 @@ class DACEntry(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def effective_quantity(self):
+        """
+        For CR entries, returns the actual credited quantity after applying snapshot DAC percentage.
+        For DR entries, returns transaction_quantity.
+        """
+        if self.transaction_type == "CR":
+            pct = (
+                self.dac_percentage_at_entry
+                if self.dac_percentage_at_entry is not None
+                else (self.subdealer.dac_percentage or Decimal("100"))
+            )
+            return (self.transaction_quantity * pct / Decimal("100")).quantize(Decimal("0.01"))
+        return self.transaction_quantity
 
     class Meta:
         db_table = "DACEntry"

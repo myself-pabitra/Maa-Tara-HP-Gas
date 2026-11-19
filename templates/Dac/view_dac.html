@@ -151,6 +151,72 @@
     transform: translateY(-1px);
     color: #ffffff;
   }
+
+  /* ── Searchable Subdealer Combobox ────────────── */
+  .sd-combobox { position: relative; width: 100%; }
+  .sd-search-input {
+    height: 38px;
+    padding: 0 36px 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #1e293b;
+    background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat right 10px center / 15px;
+    width: 100%;
+    outline: none;
+    cursor: text;
+    transition: border-color .18s, box-shadow .18s;
+    box-sizing: border-box;
+  }
+  .sd-search-input:focus {
+    border-color: #6366f1;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+  }
+  .sd-search-input.sd-has-value {
+    border-color: #a5b4fc;
+    background-color: #f5f3ff;
+    color: #3730a3;
+    font-weight: 600;
+  }
+  .sd-dropdown {
+    position: fixed;
+    background: #ffffff;
+    border: 1.5px solid #e0e7ff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(15,23,42,.15), 0 2px 8px rgba(99,102,241,.1);
+    z-index: 99999;
+    max-height: 240px;
+    overflow-y: auto;
+    display: none;
+    padding: 6px 0;
+    min-width: 240px;
+  }
+  .sd-dropdown.sd-open { display: block; }
+  .sd-dropdown::-webkit-scrollbar { width: 5px; }
+  .sd-dropdown::-webkit-scrollbar-track { background: #f8fafc; border-radius: 99px; }
+  .sd-dropdown::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 99px; }
+  .sd-option {
+    padding: 8px 12px; font-size: 12.5px; color: #1e293b;
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+    transition: background .12s;
+  }
+  .sd-option:hover, .sd-option.sd-focused { background: #eef2ff; color: #3730a3; }
+  .sd-option .sd-code-badge {
+    font-size: 10px; font-weight: 700; background: #e0e7ff; color: #4338ca;
+    border-radius: 5px; padding: 2px 6px; flex-shrink: 0;
+    font-family: monospace;
+  }
+  .sd-option .sd-name { flex: 1; font-weight: 600; }
+  .sd-no-result { padding: 12px; text-align: center; font-size: 12px; color: #94a3b8; font-style: italic; }
+  .sd-clear-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    width: 18px; height: 18px; border-radius: 99px; background: #e0e7ff; color: #4338ca;
+    border: none; cursor: pointer; font-size: 11px; display: none;
+    align-items: center; justify-content: center; line-height: 1;
+    transition: background .15s; z-index: 2;
+  }
+  .sd-clear-btn:hover { background: #6366f1; color: #fff; }
 </style>
 
 <div class="max-w-7xl mx-auto space-y-6 pb-12">
@@ -170,6 +236,9 @@
       <div class="flex items-center gap-3">
         <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">DAC Ledger &amp; Transactions</h1>
         <span class="pill pill-indigo">
+          <i class="fa-regular fa-calendar text-[10px]"></i> {{ period_label }}
+        </span>
+        <span class="pill pill-slate">
           <i class="fa-solid fa-fingerprint text-[10px]"></i> {{ total_entries_count|default:entries.paginator.count|default:0|intcomma }} Records
         </span>
       </div>
@@ -193,9 +262,9 @@
     <!-- Total Credit (CR) -->
     <div class="stat-card">
       <div>
-        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Total Credit (CR)</div>
-        <div class="text-2xl font-extrabold text-emerald-700">+{{ total_credit|floatformat:0|intcomma }}</div>
-        <div class="text-[11px] text-emerald-600 mt-0.5 font-medium">Cylinders Credited</div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Actual DAC Credited</div>
+        <div class="text-2xl font-extrabold text-emerald-700">+{{ total_actual_cr|floatformat:2|intcomma }}</div>
+        <div class="text-[11px] text-slate-500 mt-0.5 font-medium">Punched: {{ total_punched_cr|floatformat:2|intcomma }} cyl</div>
       </div>
       <div class="w-11 h-11 rounded-xl flex items-center justify-center text-emerald-600 bg-emerald-50 border border-emerald-100">
         <i class="fa-solid fa-arrow-down-left text-lg"></i>
@@ -205,9 +274,9 @@
     <!-- Total Debit (DR) -->
     <div class="stat-card">
       <div>
-        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Total Debit (DR)</div>
-        <div class="text-2xl font-extrabold text-rose-600">-{{ total_debit|floatformat:0|intcomma }}</div>
-        <div class="text-[11px] text-rose-500 mt-0.5 font-medium">Cylinders Debited</div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Refills Dispatched (DR)</div>
+        <div class="text-2xl font-extrabold text-rose-600">-{{ total_debit|floatformat:2|intcomma }}</div>
+        <div class="text-[11px] text-rose-500 mt-0.5 font-medium">Cylinders Delivered</div>
       </div>
       <div class="w-11 h-11 rounded-xl flex items-center justify-center text-rose-600 bg-rose-50 border border-rose-100">
         <i class="fa-solid fa-arrow-up-right text-lg"></i>
@@ -217,15 +286,15 @@
     <!-- Current Net Balance -->
     <div class="stat-card">
       <div>
-        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Net Balance (Filtered)</div>
-        <div class="text-2xl font-extrabold {% if current_balance >= 0 %}text-indigo-700{% else %}text-rose-600{% endif %}">
-          {{ current_balance|floatformat:0|intcomma }}
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Net Month Balance</div>
+        <div class="text-2xl font-extrabold {% if month_net_balance >= 0 %}text-indigo-700{% else %}text-rose-600{% endif %}">
+          {{ month_net_balance|floatformat:2|intcomma }}
         </div>
-        <div class="text-[11px] mt-0.5 font-medium {% if current_balance >= 0 %}text-indigo-500{% else %}text-rose-500{% endif %}">
-          {% if current_balance >= 0 %}Credit Surplus{% else %}Negative Balance{% endif %}
+        <div class="text-[11px] mt-0.5 font-medium {% if month_net_balance >= 0 %}text-indigo-500{% else %}text-rose-500{% endif %}">
+          {% if month_net_balance >= 0 %}Credit Surplus{% else %}Negative Balance{% endif %}
         </div>
       </div>
-      <div class="w-11 h-11 rounded-xl flex items-center justify-center {% if current_balance >= 0 %}text-indigo-600 bg-indigo-50 border border-indigo-100{% else %}text-rose-600 bg-rose-50 border border-rose-100{% endif %}">
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center {% if month_net_balance >= 0 %}text-indigo-600 bg-indigo-50 border border-indigo-100{% else %}text-rose-600 bg-rose-50 border border-rose-100{% endif %}">
         <i class="fa-solid fa-scale-balanced text-lg"></i>
       </div>
     </div>
@@ -238,31 +307,56 @@
   <div class="billing-card p-4">
     <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
       
-      <!-- Subdealer Filter -->
-      <div class="lg:col-span-4">
+      <!-- Subdealer Filter (Searchable Combobox) -->
+      <div class="lg:col-span-5">
         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-          <i class="fa-solid fa-users text-slate-400 mr-1"></i> Filter by Subdealer
+          <i class="fa-solid fa-users text-slate-400 mr-1"></i> Subdealer Partner
         </label>
-        <select name="subdealer" class="filter-input w-full">
-          <option value="">All Subdealers</option>
-          {% for subdealer in subdealers %}
-          <option value="{{ subdealer.id }}" {% if selected_subdealer == subdealer.id|stringformat:"s" %}selected{% endif %}>
-            {{ subdealer.name }} ({{ subdealer.subdealerCode }})
-          </option>
+        <div class="sd-combobox">
+          <select id="subdealerSelect" name="subdealer" style="display:none;">
+            <option value="">All Subdealers</option>
+            {% for s in subdealers %}
+            <option value="{{ s.id }}"
+                    data-name="{{ s.name }}"
+                    data-code="{{ s.subdealerCode }}"
+                    {% if selected_subdealer == s.id|stringformat:"s" %}selected{% endif %}>
+              {{ s.name }} ({{ s.subdealerCode }})
+            </option>
+            {% endfor %}
+          </select>
+          <input type="text"
+                 id="subdealerSearchInput"
+                 class="sd-search-input"
+                 placeholder="🔍 Search subdealer by name or code…"
+                 autocomplete="off"
+                 spellcheck="false">
+          <button type="button" id="subdealerClearBtn" class="sd-clear-btn" title="Clear selection">✕</button>
+        </div>
+      </div>
+
+      <!-- Year Filter -->
+      <div class="lg:col-span-2">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-regular fa-calendar-days mr-1 text-slate-400"></i> Year
+        </label>
+        <select name="year" class="filter-input w-full font-semibold">
+          {% for y in available_years %}
+          <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
           {% endfor %}
         </select>
       </div>
 
-      <!-- From Date -->
+      <!-- Month Filter -->
       <div class="lg:col-span-3">
-        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">From Date</label>
-        <input type="date" name="from_date" value="{{ from_date }}" class="filter-input w-full">
-      </div>
-
-      <!-- To Date -->
-      <div class="lg:col-span-3">
-        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">To Date</label>
-        <input type="date" name="to_date" value="{{ to_date }}" class="filter-input w-full">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-regular fa-calendar mr-1 text-slate-400"></i> Month
+        </label>
+        <select name="month" class="filter-input w-full font-semibold">
+          <option value="" {% if not selected_month %}selected{% endif %}>All Months</option>
+          {% for m_val, m_name in month_choices %}
+          <option value="{{ m_val }}" {% if selected_month == m_val %}selected{% endif %}>{{ m_name }}</option>
+          {% endfor %}
+        </select>
       </div>
 
       <!-- Actions -->
@@ -270,7 +364,7 @@
         <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 px-3 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
           <i class="fa-solid fa-filter text-[11px]"></i> Apply
         </button>
-        {% if selected_subdealer or from_date or to_date %}
+        {% if selected_subdealer or selected_month or selected_year != today.year %}
         <a href="{% url 'view_dac' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center" title="Reset Filters">
           <i class="fa-solid fa-xmark"></i>
         </a>
@@ -285,74 +379,100 @@
   ════════════════════════════════════════ -->
   <div class="billing-card overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="dash-table">
+      <table class="dash-table w-full">
         <thead>
           <tr>
             <th style="width: 44px;" class="text-center">#</th>
-            <th style="width: 130px;">Date</th>
+            <th style="width: 120px;">Date</th>
             <th style="min-width: 200px;">Subdealer</th>
-            <th style="width: 100px;">Type</th>
-            <th style="width: 95px;" class="text-right">Qty</th>
-            <th style="width: 105px;" class="text-right">Opening</th>
-            <th style="width: 110px;" class="text-right">Closing</th>
-            <th style="min-width: 180px;">Description</th>
-            <th style="width: 150px;" class="text-center">Actions</th>
+            <th style="width: 130px;">Type &amp; DAC Rate</th>
+            <th style="width: 110px;" class="text-right">Punched Qty</th>
+            <th style="width: 125px;" class="text-right">Actual Credit / Debit</th>
+            <th style="width: 115px;" class="text-right">Opening Balance</th>
+            <th style="width: 115px;" class="text-right">Closing Balance</th>
+            <th style="min-width: 160px;">Description</th>
+            <th style="width: 130px;" class="text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for entry in entries %}
           <tr>
-            <!-- Index -->
+            <!-- Index (Page-aware) -->
             <td class="text-center text-xs font-bold text-slate-400">
-              {{ forloop.counter }}
+              {{ page_obj.start_index|add:forloop.counter0 }}
             </td>
 
             <!-- Date -->
             <td>
-              <div class="font-medium text-slate-800 text-xs">
+              <div class="font-semibold text-slate-800 text-xs whitespace-nowrap">
                 <i class="fa-regular fa-calendar text-slate-400 mr-1 text-[11px]"></i>
                 {{ entry.entry_date|date:"d M Y" }}
               </div>
             </td>
 
-            <!-- Subdealer -->
+            <!-- Subdealer details -->
             <td>
-              <div class="font-bold text-slate-800 text-sm">{{ entry.subdealer.name }}</div>
-              <div class="text-[11px] font-mono text-indigo-600">{{ entry.subdealer.subdealerCode }}</div>
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-black shrink-0">
+                  {{ entry.subdealer.name|slice:":1"|upper }}
+                </div>
+                <div class="min-w-0">
+                  <div class="font-bold text-slate-900 text-xs sm:text-sm truncate">{{ entry.subdealer.name }}</div>
+                  <div class="flex items-center gap-1.5 mt-0.5">
+                    <span class="font-mono text-[10.5px] font-semibold text-indigo-600 bg-indigo-50/60 px-1.5 py-0.2 rounded">{{ entry.subdealer.subdealerCode }}</span>
+                  </div>
+                </div>
+              </div>
             </td>
 
-            <!-- Type -->
+            <!-- Type & DAC Rate -->
             <td>
-              {% if entry.transaction_type == "CR" %}
-                <span class="pill pill-emerald"><i class="fa-solid fa-circle-plus text-[10px]"></i> Credit</span>
-              {% else %}
-                <span class="pill pill-rose"><i class="fa-solid fa-circle-minus text-[10px]"></i> Debit</span>
-              {% endif %}
+              <div class="flex items-center gap-1.5 flex-wrap">
+                {% if entry.transaction_type == "CR" %}
+                  <span class="pill pill-emerald"><i class="fa-solid fa-circle-plus text-[10px]"></i> Credit</span>
+                  {% if entry.dac_percentage_at_entry %}
+                    <span class="text-[10px] font-bold text-teal-800 bg-teal-50 border border-teal-200/80 px-1.5 py-0.2 rounded" title="Snapshot DAC percentage applied for this credit">
+                      {{ entry.dac_percentage_at_entry }}% DAC
+                    </span>
+                  {% elif entry.subdealer.dac_percentage %}
+                    <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">
+                      {{ entry.subdealer.dac_percentage }}% DAC
+                    </span>
+                  {% endif %}
+                {% else %}
+                  <span class="pill pill-rose"><i class="fa-solid fa-circle-minus text-[10px]"></i> Debit</span>
+                {% endif %}
+              </div>
             </td>
 
-            <!-- Quantity -->
-            <td class="text-right font-extrabold text-sm">
+            <!-- Punched Quantity -->
+            <td class="text-right font-mono text-xs sm:text-sm font-semibold text-slate-700">
+              {{ entry.transaction_quantity|floatformat:2|intcomma }}
+            </td>
+
+            <!-- Actual Credit / Debit Amount -->
+            <td class="text-right font-mono font-extrabold text-xs sm:text-sm">
               {% if entry.transaction_type == "CR" %}
-                <span class="text-emerald-700">+{{ entry.transaction_quantity }}</span>
+                <span class="text-emerald-700">+{{ entry.effective_quantity|floatformat:2|intcomma }}</span>
               {% else %}
-                <span class="text-rose-600">-{{ entry.transaction_quantity }}</span>
+                <span class="text-rose-600">-{{ entry.transaction_quantity|floatformat:2|intcomma }}</span>
               {% endif %}
             </td>
 
             <!-- Opening Balance -->
-            <td class="text-right font-mono text-xs text-slate-600">
-              {{ entry.opening_balance }}
+            <td class="text-right font-mono text-xs font-semibold text-slate-600">
+              {{ entry.opening_balance|floatformat:2|intcomma }}
             </td>
 
             <!-- Closing Balance -->
             <td class="text-right">
               {% if entry.closing_balance >= 0 %}
-                <span class="font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 text-xs">
-                  {{ entry.closing_balance }}
+                <span class="font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 text-xs inline-block">
+                  {{ entry.closing_balance|floatformat:2|intcomma }}
                 </span>
               {% else %}
-                <span class="font-mono font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200 text-xs">
-                  {{ entry.closing_balance }}
+                <span class="font-mono font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-200 text-xs inline-block">
+                  {{ entry.closing_balance|floatformat:2|intcomma }}
                 </span>
               {% endif %}
             </td>
@@ -371,7 +491,7 @@
                 <button type="button"
                         class="btn-action-delete dac-delete-btn"
                         data-url="{% url 'dac_delete' entry.id %}"
-                        data-label="{{ entry.entry_date|date:'d M Y' }} — {{ entry.subdealer.name }} ({{ entry.transaction_type }}: {{ entry.transaction_quantity }})"
+                        data-label="{{ entry.entry_date|date:'d M Y' }} — {{ entry.subdealer.name }} ({{ entry.transaction_type }}: {{ entry.transaction_quantity|floatformat:2 }})"
                         title="Delete Entry">
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -380,29 +500,19 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="9" class="text-center py-12">
+            <td colspan="10" class="text-center py-12">
               <div class="max-w-sm mx-auto space-y-3">
                 <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mx-auto text-xl">
                   <i class="fa-solid fa-fingerprint"></i>
                 </div>
-                <div class="text-sm font-bold text-slate-700">No DAC Transactions Found</div>
+                <div class="text-sm font-bold text-slate-700">No DAC Transactions for {{ selected_month }}</div>
                 <p class="text-xs text-slate-500">
-                  {% if selected_subdealer or from_date or to_date %}
-                    No records match the active filter criteria. Try clearing the filters to view all entries.
-                  {% else %}
-                    No DAC entries have been recorded yet. Click "New DAC Entry" to start recording credit and debit ledger entries.
-                  {% endif %}
+                  No credit or debit entries found for this month. Try changing the target month or clearing the filters.
                 </p>
                 <div>
-                  {% if selected_subdealer or from_date or to_date %}
-                    <a href="{% url 'view_dac' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
-                      <i class="fa-solid fa-rotate-left"></i> Reset all filters
-                    </a>
-                  {% else %}
-                    <a href="{% url 'dac_entry' %}" class="btn-create-dac text-xs py-2 px-3.5">
-                      <i class="fa-solid fa-plus text-xs"></i> Record First DAC Entry
-                    </a>
-                  {% endif %}
+                  <a href="{% url 'view_dac' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                    <i class="fa-solid fa-rotate-left"></i> Reset to current month
+                  </a>
                 </div>
               </div>
             </td>
@@ -460,6 +570,147 @@ document.querySelectorAll('.dac-delete-btn').forEach(btn => {
     document.getElementById('dacDeleteModal').showModal();
   });
 });
+
+/* ── Searchable Subdealer Combobox ────────────────── */
+(function initLedgerSubdealerSearch() {
+  const selectElem = document.getElementById('subdealerSelect');
+  const searchInp  = document.getElementById('subdealerSearchInput');
+  const clearBtn   = document.getElementById('subdealerClearBtn');
+  if (!selectElem || !searchInp || !clearBtn) return;
+
+  let focusedIdx = -1;
+  let isSelected = false;
+
+  const allOptions = Array.from(selectElem.options)
+    .filter(o => o.value)
+    .map(o => ({
+      id: o.value,
+      name: o.dataset.name,
+      code: o.dataset.code
+    }));
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'sd-dropdown';
+  document.body.appendChild(dropdown);
+
+  function positionDropdown() {
+    const rect = searchInp.getBoundingClientRect();
+    dropdown.style.top   = (rect.bottom + 4) + 'px';
+    dropdown.style.left  = rect.left + 'px';
+    dropdown.style.width = rect.width + 'px';
+  }
+
+  function renderOptions(query) {
+    const q = (query || '').trim().toLowerCase();
+    const filtered = q
+      ? allOptions.filter(sd =>
+          sd.name.toLowerCase().includes(q) ||
+          sd.code.toLowerCase().includes(q)
+        )
+      : allOptions;
+
+    dropdown.innerHTML = '';
+    focusedIdx = -1;
+
+    // "All Subdealers" option
+    const allOpt = document.createElement('div');
+    allOpt.className = 'sd-option font-semibold text-slate-600';
+    allOpt.innerHTML = '<span>All Subdealers</span>';
+    allOpt.addEventListener('mousedown', e => {
+      e.preventDefault();
+      clearSelection();
+    });
+    dropdown.appendChild(allOpt);
+
+    if (filtered.length === 0 && q) {
+      dropdown.innerHTML += '<div class="sd-no-result">No subdealer found for "' + query + '"</div>';
+      return;
+    }
+
+    filtered.forEach(sd => {
+      const opt = document.createElement('div');
+      opt.className = 'sd-option';
+      opt.dataset.id = sd.id;
+      opt.innerHTML = `<span class="sd-code-badge">${sd.code}</span>`
+                    + `<span class="sd-name">${sd.name}</span>`;
+      opt.addEventListener('mousedown', e => {
+        e.preventDefault();
+        selectSubdealer(sd.id, sd.name, sd.code);
+      });
+      dropdown.appendChild(opt);
+    });
+  }
+
+  function selectSubdealer(id, name, code) {
+    selectElem.value = id;
+    searchInp.value = name + ' (' + code + ')';
+    searchInp.classList.add('sd-has-value');
+    clearBtn.style.display = 'flex';
+    searchInp.style.backgroundImage = 'none';
+    isSelected = true;
+    closeDropdown();
+  }
+
+  function clearSelection() {
+    selectElem.value = '';
+    searchInp.value = '';
+    searchInp.classList.remove('sd-has-value');
+    clearBtn.style.display = 'none';
+    searchInp.style.backgroundImage = '';
+    isSelected = false;
+    closeDropdown();
+  }
+
+  function openDropdown() {
+    renderOptions(isSelected ? '' : searchInp.value);
+    positionDropdown();
+    dropdown.style.display = 'block';
+    window.addEventListener('scroll', positionDropdown, true);
+    window.addEventListener('resize', positionDropdown);
+  }
+
+  function closeDropdown() {
+    dropdown.style.display = 'none';
+    window.removeEventListener('scroll', positionDropdown, true);
+    window.removeEventListener('resize', positionDropdown);
+    if (!isSelected && !selectElem.value) searchInp.value = '';
+  }
+
+  if (selectElem.value) {
+    const preSelected = allOptions.find(o => o.id === selectElem.value);
+    if (preSelected) {
+      searchInp.value = preSelected.name + ' (' + preSelected.code + ')';
+      searchInp.classList.add('sd-has-value');
+      clearBtn.style.display = 'flex';
+      searchInp.style.backgroundImage = 'none';
+      isSelected = true;
+    }
+  }
+
+  clearBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearSelection();
+  });
+
+  searchInp.addEventListener('focus', () => {
+    if (isSelected) searchInp.select();
+    openDropdown();
+  });
+
+  searchInp.addEventListener('input', () => {
+    isSelected = false;
+    selectElem.value = '';
+    searchInp.classList.remove('sd-has-value');
+    clearBtn.style.display = 'none';
+    searchInp.style.backgroundImage = '';
+    renderOptions(searchInp.value);
+    if (dropdown.style.display === 'none') openDropdown();
+  });
+
+  searchInp.addEventListener('blur', () => {
+    setTimeout(() => closeDropdown(), 150);
+  });
+})();
 </script>
 
 {% endblock %}

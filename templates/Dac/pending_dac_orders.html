@@ -5,7 +5,6 @@
 
 {% block content %}
 <style>
-  /* Base typography & containers */
   .billing-card {
     background: #ffffff;
     border: 1px solid #eef2f6;
@@ -13,88 +12,84 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
   }
 
-  /* Table styling */
+  /* ── Table ── */
   .dash-table {
     border-collapse: separate;
     border-spacing: 0;
     width: 100%;
+    table-layout: auto;
   }
   .dash-table th {
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: #64748b;
-    padding: 12px 16px;
+    color: #475569;
+    padding: 10px 12px;
     background: #f8fafc;
-    border-bottom: 1px solid #eef2f6;
-    white-space: nowrap;
+    border-bottom: 2px solid #e2e8f0;
+    line-height: 1.35;
   }
   .dash-table td {
-    padding: 14px 16px;
-    font-size: 13px;
+    padding: 11px 12px;
+    font-size: 12.5px;
     color: #334155;
     border-bottom: 1px solid #f1f5f9;
     vertical-align: middle;
   }
-  .dash-table tbody tr {
-    transition: background-color .15s ease;
-  }
-  .dash-table tbody tr:hover {
-    background-color: #f8faff;
+  .dash-table tbody tr { transition: background-color .15s ease; }
+  .dash-table tbody tr:hover { background-color: #f8faff; }
+
+  /* Subtle border separator */
+  .dash-table th.col-sep,
+  .dash-table td.col-sep {
+    border-left: 1px solid #f1f5f9;
   }
 
-  /* Badges & Pills */
+  /* ── Pills ── */
   .pill {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 3.5px 10px;
+    gap: 4px;
+    padding: 3.5px 9px;
     border-radius: 99px;
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 700;
   }
-  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-indigo  { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
   .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-  .pill-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-  .pill-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
-  .pill-rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
-  .pill-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .pill-blue    { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .pill-amber   { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+  .pill-rose    { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+  .pill-slate   { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .pill-teal    { background: #f0fdfa; color: #0f766e; border: 1px solid #99f6e4; }
 
-  /* KPI Stat Cards */
+  /* ── KPI Stat Cards ── */
   .stat-card {
     background: #ffffff;
     border: 1px solid #eef2f6;
     border-radius: 16px;
-    padding: 16px 20px;
+    padding: 14px 16px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     display: flex;
     align-items: center;
     justify-content: space-between;
     transition: all .2s ease;
   }
-  .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
-  /* Custom Input & Select */
+  /* ── Filter bar ── */
   .filter-input {
     border: 1px solid #cbd5e1;
     background: #ffffff;
     border-radius: 10px;
-    padding: 7px 12px;
+    padding: 8px 12px;
     font-size: 13px;
     color: #1e293b;
     outline: none;
     transition: all .15s ease;
   }
-  .filter-input:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
-  }
+  .filter-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
 
-  /* Create Button */
+  /* ── Primary Button ── */
   .btn-create-dac {
     background: linear-gradient(135deg, #6366f1, #4f46e5);
     box-shadow: 0 4px 14px rgba(99,102,241,.32);
@@ -108,11 +103,76 @@
     gap: 8px;
     transition: all .18s ease;
   }
-  .btn-create-dac:hover {
-    box-shadow: 0 6px 20px rgba(99,102,241,.42);
-    transform: translateY(-1px);
-    color: #ffffff;
+  .btn-create-dac:hover { box-shadow: 0 6px 20px rgba(99,102,241,.42); transform: translateY(-1px); color: #ffffff; }
+  /* ── Searchable Subdealer Combobox ────────────── */
+  .sd-combobox { position: relative; width: 100%; }
+  .sd-search-input {
+    height: 40px;
+    padding: 0 36px 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #1e293b;
+    background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat right 10px center / 15px;
+    width: 100%;
+    outline: none;
+    cursor: text;
+    transition: border-color .18s, box-shadow .18s;
+    box-sizing: border-box;
   }
+  .sd-search-input:focus {
+    border-color: #6366f1;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+  }
+  .sd-search-input.sd-has-value {
+    border-color: #a5b4fc;
+    background-color: #f5f3ff;
+    color: #3730a3;
+    font-weight: 600;
+  }
+  .sd-dropdown {
+    position: fixed;
+    background: #ffffff;
+    border: 1.5px solid #e0e7ff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(15,23,42,.15), 0 2px 8px rgba(99,102,241,.1);
+    z-index: 99999;
+    max-height: 240px;
+    overflow-y: auto;
+    display: none;
+    padding: 6px 0;
+    min-width: 240px;
+  }
+  .sd-dropdown.sd-open { display: block; }
+  .sd-dropdown::-webkit-scrollbar { width: 5px; }
+  .sd-dropdown::-webkit-scrollbar-track { background: #f8fafc; border-radius: 99px; }
+  .sd-dropdown::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 99px; }
+  .sd-option {
+    padding: 8px 12px; font-size: 12.5px; color: #1e293b;
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+    transition: background .12s;
+  }
+  .sd-option:hover, .sd-option.sd-focused { background: #eef2ff; color: #3730a3; }
+  .sd-option .sd-code-badge {
+    font-size: 10px; font-weight: 700; background: #e0e7ff; color: #4338ca;
+    border-radius: 5px; padding: 2px 6px; flex-shrink: 0;
+    font-family: monospace;
+  }
+  .sd-option .sd-rate-badge {
+    font-size: 10px; font-weight: 700; margin-left: auto; flex-shrink: 0;
+    background: #f1f5f9; color: #475569; padding: 1px 6px; border-radius: 4px;
+  }
+  .sd-option .sd-name { flex: 1; font-weight: 600; }
+  .sd-no-result { padding: 12px; text-align: center; font-size: 12px; color: #94a3b8; font-style: italic; }
+  .sd-clear-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    width: 18px; height: 18px; border-radius: 99px; background: #e0e7ff; color: #4338ca;
+    border: none; cursor: pointer; font-size: 11px; display: none;
+    align-items: center; justify-content: center; line-height: 1;
+    transition: background .15s; z-index: 2;
+  }
+  .sd-clear-btn:hover { background: #6366f1; color: #fff; }
 </style>
 
 <div class="max-w-7xl mx-auto space-y-6 pb-12">
@@ -127,20 +187,17 @@
           <i class="fa-solid fa-house mr-1"></i> Dashboard
         </a>
         <span class="text-xs text-slate-300">/</span>
-        <a href="{% url 'view_dac' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
-          DAC Operations
-        </a>
+        <a href="{% url 'view_dac' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">DAC Operations</a>
         <span class="text-xs text-slate-300">/</span>
         <span class="text-xs font-medium text-slate-500">Pending Orders</span>
       </div>
       <div class="flex items-center gap-3">
-        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Pending DAC Orders</h1>
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">DAC Balance &amp; Pending Orders</h1>
         <span class="pill pill-indigo">
-          <i class="fa-regular fa-calendar text-[10px]"></i> Month: {{ selected_month }}
+          <i class="fa-regular fa-calendar text-[10px]"></i> {{ period_label }}
         </span>
       </div>
     </div>
-
     <div class="flex items-center gap-3">
       <a href="{% url 'view_dac' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
         <i class="fa-solid fa-book-open text-indigo-600"></i> DAC Ledger
@@ -152,55 +209,79 @@
   </div>
 
   <!-- ════════════════════════════════════════
-       KPI SUMMARY METRICS BAR
+       KPI SUMMARY METRICS BAR (6 INFORMATIVE CARDS)
   ════════════════════════════════════════ -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
 
-    <!-- Total Pending Cylinders -->
+    <!-- 1. Actual Punched (This Month / Year) -->
     <div class="stat-card">
       <div>
-        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Pending Refill Orders</div>
-        <div class="text-2xl font-extrabold text-amber-600">{{ stats.sum_pending_positive|default:0|intcomma }}</div>
-        <div class="text-[11px] text-amber-700 font-medium mt-0.5">{{ stats.pending_subdealers_count }} subdealers pending</div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">Punched {% if selected_month %}(CM){% else %}({{ selected_year }}){% endif %}</div>
+        <div class="text-lg font-extrabold text-slate-800">{{ stats.sum_raw_credit|floatformat:2|intcomma }}</div>
+        <div class="text-[10.5px] text-slate-400 font-medium mt-0.5">Raw cylinders</div>
       </div>
-      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-amber-600 bg-amber-50 border border-amber-100">
-        <i class="fa-solid fa-hourglass-half text-lg"></i>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 bg-slate-100 shrink-0">
+        <i class="fa-solid fa-hashtag text-xs"></i>
       </div>
     </div>
 
-    <!-- Effective DAC Target -->
+    <!-- 2. Actual Credit -->
     <div class="stat-card">
       <div>
-        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Effective DAC Target</div>
-        <div class="text-2xl font-extrabold text-indigo-700">{{ stats.sum_effective_dac|default:0|intcomma }}</div>
-        <div class="text-[11px] text-indigo-500 font-medium mt-0.5">Allocated Refills (Month)</div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-teal-600 mb-0.5">{% if selected_month %}Month Actual Credit{% else %}Year Actual Credit{% endif %}</div>
+        <div class="text-lg font-extrabold text-teal-700">{{ stats.sum_dac_credited|floatformat:2|intcomma }}</div>
+        <div class="text-[10.5px] text-teal-600/80 font-medium mt-0.5">After deduction rate</div>
       </div>
-      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-indigo-600 bg-indigo-50 border border-indigo-100">
-        <i class="fa-solid fa-gas-pump text-lg"></i>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-teal-600 bg-teal-50 border border-teal-100 shrink-0">
+        <i class="fa-solid fa-gas-pump text-xs"></i>
       </div>
     </div>
 
-    <!-- Actual Refills Sold -->
+    <!-- 3. Previous Balance -->
     <div class="stat-card">
       <div>
-        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Refills Dispatched</div>
-        <div class="text-2xl font-extrabold text-emerald-700">{{ stats.sum_total_refills|default:0|intcomma }}</div>
-        <div class="text-[11px] text-emerald-600 font-medium mt-0.5">Fulfilled in {{ selected_month }}</div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-0.5">{% if selected_month %}Previous Month Bal{% else %}Previous Year Bal{% endif %}</div>
+        <div class="text-lg font-extrabold text-indigo-700">{{ stats.sum_prev_balances|floatformat:2|intcomma }}</div>
+        <div class="text-[10.5px] text-indigo-500 font-medium mt-0.5">Rolled over</div>
       </div>
-      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-emerald-600 bg-emerald-50 border border-emerald-100">
-        <i class="fa-solid fa-circle-check text-lg"></i>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-indigo-600 bg-indigo-50 border border-indigo-100 shrink-0">
+        <i class="fa-solid fa-rotate-left text-xs"></i>
       </div>
     </div>
 
-    <!-- Subdealers Tracked -->
+    <!-- 4. Total Cylinders Delivered -->
     <div class="stat-card">
       <div>
-        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Subdealers Tracked</div>
-        <div class="text-2xl font-extrabold text-slate-900">{{ stats.total_subdealers|default:0|intcomma }}</div>
-        <div class="text-[11px] text-slate-500 mt-0.5">Active Partners</div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 mb-0.5">Cylinders Delivered</div>
+        <div class="text-lg font-extrabold text-emerald-700">{{ stats.sum_refills|intcomma }}</div>
+        <div class="text-[10.5px] text-emerald-600/80 font-medium mt-0.5">{% if selected_month %}Invoiced this month{% else %}Invoiced in {{ selected_year }}{% endif %}</div>
       </div>
-      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-slate-700 bg-slate-100 border border-slate-200">
-        <i class="fa-solid fa-users text-lg"></i>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-emerald-600 bg-emerald-50 border border-emerald-100 shrink-0">
+        <i class="fa-solid fa-truck text-xs"></i>
+      </div>
+    </div>
+
+    <!-- 5. Remaining Pending (Positive) -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-amber-600 mb-0.5">Remaining Pending</div>
+        <div class="text-lg font-extrabold text-amber-700">+{{ stats.sum_pending_positive|floatformat:2|intcomma }}</div>
+        <div class="text-[10.5px] text-amber-500 font-medium mt-0.5">{{ stats.pending_subdealers_count }} subdealers</div>
+      </div>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-amber-600 bg-amber-50 border border-amber-100 shrink-0">
+        <i class="fa-solid fa-clock text-xs"></i>
+      </div>
+    </div>
+
+    <!-- 6. Extra Delivered (Negative Balance in Final Remaining) -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-red-600 mb-0.5">Extra Delivered</div>
+        <div class="text-lg font-extrabold text-red-700">{{ stats.sum_negative_remaining|floatformat:2|intcomma }}</div>
+        <div class="text-[10.5px] text-red-500 font-medium mt-0.5">{{ stats.negative_subdealers_count }} subdealers in excess</div>
+      </div>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-red-600 bg-red-50 border border-red-100 shrink-0">
+        <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
       </div>
     </div>
 
@@ -211,36 +292,66 @@
   ════════════════════════════════════════ -->
   <div class="billing-card p-4">
     <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-      
-      <!-- Subdealer Filter -->
-      <div class="lg:col-span-6">
+
+      <!-- Subdealer Partner (Searchable Combobox) -->
+      <div class="lg:col-span-5">
         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-          <i class="fa-solid fa-users text-slate-400 mr-1"></i> Filter by Subdealer
+          <i class="fa-solid fa-users text-slate-400 mr-1"></i> Subdealer Partner
         </label>
-        <select name="subdealer" class="filter-input w-full">
-          <option value="">All Subdealers</option>
-          {% for subdealer in subdealers %}
-          <option value="{{ subdealer.id }}" {% if selected_subdealer == subdealer.id|stringformat:"s" %}selected{% endif %}>
-            {{ subdealer.name }} ({{ subdealer.subdealerCode }})
-          </option>
+        <div class="sd-combobox">
+          <select id="subdealerSelect" name="subdealer" style="display:none;">
+            <option value="">All Subdealers</option>
+            {% for s in subdealers %}
+            <option value="{{ s.id }}"
+                    data-name="{{ s.name }}"
+                    data-code="{{ s.subdealerCode }}"
+                    data-rate="{{ s.dac_percentage }}% DAC"
+                    {% if selected_subdealer == s.id|stringformat:"s" %}selected{% endif %}>
+              {{ s.name }} ({{ s.subdealerCode }})
+            </option>
+            {% endfor %}
+          </select>
+          <input type="text"
+                 id="subdealerSearchInput"
+                 class="sd-search-input"
+                 placeholder="🔍 Search subdealer by name or code…"
+                 autocomplete="off"
+                 spellcheck="false">
+          <button type="button" id="subdealerClearBtn" class="sd-clear-btn" title="Clear selection">✕</button>
+        </div>
+      </div>
+
+      <!-- Year Filter -->
+      <div class="lg:col-span-2">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-regular fa-calendar-days mr-1 text-slate-400"></i> Year
+        </label>
+        <select name="year" class="filter-input w-full font-semibold">
+          {% for y in available_years %}
+          <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
           {% endfor %}
         </select>
       </div>
 
-      <!-- Month Selector -->
-      <div class="lg:col-span-4">
+      <!-- Month Filter -->
+      <div class="lg:col-span-3">
         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-          <i class="fa-regular fa-calendar mr-1 text-slate-400"></i> Target Month
+          <i class="fa-regular fa-calendar mr-1 text-slate-400"></i> Month
         </label>
-        <input type="month" name="month" value="{{ selected_month }}" class="filter-input w-full">
+        <select name="month" class="filter-input w-full font-semibold">
+          <option value="" {% if not selected_month %}selected{% endif %}>All Months</option>
+          {% for m_val, m_name in month_choices %}
+          <option value="{{ m_val }}" {% if selected_month == m_val %}selected{% endif %}>{{ m_name }}</option>
+          {% endfor %}
+        </select>
       </div>
 
       <!-- Actions -->
       <div class="lg:col-span-2 flex items-center gap-2">
         <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 px-3 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
-          <i class="fa-solid fa-filter text-[11px]"></i> Apply
+          <i class="fa-solid fa-filter text-[11px]"></i> Filter
         </button>
-        {% if selected_subdealer or selected_month %}
+        {% if selected_subdealer or selected_month or selected_year != today.year %}
         <a href="{% url 'pending_dac_orders' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center" title="Reset Filters">
           <i class="fa-solid fa-xmark"></i>
         </a>
@@ -251,93 +362,127 @@
   </div>
 
   <!-- ════════════════════════════════════════
-       PENDING ORDERS DATA TABLE
+       DATA TABLE
   ════════════════════════════════════════ -->
   <div class="billing-card overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="dash-table">
+      <table class="dash-table w-full">
         <thead>
           <tr>
-            <th style="min-width: 220px;">Subdealer</th>
-            <th style="width: 140px;" class="text-right">Refills Sold (Month)</th>
-            <th style="width: 150px;" class="text-right">Overall DAC Balance</th>
-            <th style="width: 110px;" class="text-center">DAC % Rate</th>
-            <th style="width: 150px;" class="text-right">Effective DAC Target</th>
-            <th style="width: 180px;" class="text-center">Pending Cylinder Status</th>
+            <th style="width: 44px;" class="text-center">#</th>
+            <th style="min-width: 170px;">Subdealer</th>
+            <th class="text-right col-sep" style="width: 130px;">
+              Punched QTY <br><span class="text-[9.5px] text-slate-400 font-normal normal-case">{% if selected_month %}(CM){% else %}({{ selected_year }}){% endif %}</span>
+            </th>
+            <th class="text-right" style="width: 145px;">
+              Actual Credited<br><span class="text-[9.5px] text-teal-600 font-normal normal-case">(After Deduction Rate)</span>
+            </th>
+            <th class="text-right col-sep" style="width: 130px;">
+              {% if selected_month %}Previous Month Bal<br><span class="text-[9.5px] text-indigo-600 font-normal normal-case">(Rolled Over)</span>{% else %}Previous Year Bal<br><span class="text-[9.5px] text-indigo-600 font-normal normal-case">(Before {{ selected_year }})</span>{% endif %}
+            </th>
+            <th class="text-right col-sep" style="width: 135px;">
+              Total Available Bal<br><span class="text-[9.5px] text-sky-700 font-normal normal-case">{% if selected_month %}(This Month){% else %}({{ selected_year }}){% endif %}</span>
+            </th>
+            <th class="text-right col-sep" style="width: 145px;">
+              Cylinders Delivered<br><span class="text-[9.5px] text-emerald-600 font-normal normal-case">{% if selected_month %}(This Month){% else %}({{ selected_year }}){% endif %}</span>
+            </th>
+            <th class="text-center col-sep" style="width: 155px;">
+              Final Remaining<br><span class="text-[9.5px] text-slate-400 font-normal normal-case">DAC Balance</span>
+            </th>
           </tr>
         </thead>
         <tbody>
           {% for row in rows %}
           <tr>
-            <!-- Subdealer -->
+
+            <!-- Row index -->
+            <td class="text-center text-xs font-bold text-slate-400">
+              {{ forloop.counter }}
+            </td>
+
+            <!-- Subdealer details -->
             <td>
-              <div class="font-bold text-slate-800 text-sm">{{ row.subdealer.name }}</div>
-              <div class="text-[11px] font-mono text-indigo-600">{{ row.subdealer.subdealerCode }}</div>
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-black shrink-0">
+                  {{ row.subdealer.name|slice:":1"|upper }}
+                </div>
+                <div class="min-w-0">
+                  <div class="font-bold text-slate-900 text-xs sm:text-sm truncate">{{ row.subdealer.name }}</div>
+                  <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                    <span class="font-mono text-[10.5px] font-semibold text-indigo-600 bg-indigo-50/60 px-1 py-0.2 rounded">{{ row.subdealer.subdealerCode }}</span>
+                    <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-1 py-0.2 rounded">{{ row.dac_percentage }}% DAC</span>
+                  </div>
+                </div>
+              </div>
             </td>
 
-            <!-- Refills Sold -->
-            <td class="text-right font-semibold text-slate-800">
-              <span class="inline-flex items-center gap-1 font-mono">
-                <i class="fa-solid fa-gas-pump text-[10px] text-slate-400"></i> {{ row.total_refills|intcomma }}
+            <!-- DAC Entry/Punched (CM) -->
+            <td class="text-right col-sep font-mono text-xs sm:text-sm font-semibold text-slate-700">
+              {{ row.this_month_raw_credit|floatformat:2|intcomma }}
+            </td>
+
+            <!-- Actual DAC Credited (After Deduction Rate) -->
+            <td class="text-right font-mono text-xs sm:text-sm font-bold text-teal-700">
+              {{ row.this_month_dac_credited|floatformat:2|intcomma }}
+            </td>
+
+            <!-- Previous Month Bal -->
+            <td class="text-right col-sep font-mono text-xs sm:text-sm">
+              {% if row.prev_month_balance > 0 %}
+                <span class="font-bold text-indigo-700">+{{ row.prev_month_balance|floatformat:2|intcomma }}</span>
+              {% elif row.prev_month_balance < 0 %}
+                <span class="font-bold text-rose-600">{{ row.prev_month_balance|floatformat:2|intcomma }}</span>
+              {% else %}
+                <span class="text-slate-400 font-normal">0.00</span>
+              {% endif %}
+            </td>
+
+            <!-- Total Available Bal (This Month) -->
+            <td class="text-right col-sep">
+              <span class="inline-block font-mono font-extrabold text-sky-950 bg-sky-50/90 border border-sky-200/80 px-2 py-0.5 rounded text-xs sm:text-sm">
+                {{ row.available_dac_balance|floatformat:2|intcomma }}
               </span>
             </td>
 
-            <!-- Current DAC Balance -->
-            <td class="text-right">
-              {% if row.current_dac >= 0 %}
-                <span class="font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 text-xs">
-                  {{ row.current_dac|intcomma }}
+            <!-- Refills Delivered / Cylinders Delivered (This Month) -->
+            <td class="text-right col-sep font-mono text-xs sm:text-sm font-semibold text-emerald-700">
+              {{ row.refills_this_month|floatformat:0|intcomma }}
+            </td>
+
+            <!-- Final Remaining DAC Balance -->
+            <td class="text-center col-sep">
+              {% if row.final_remaining > 0 %}
+                <span class="pill pill-amber text-[11px] font-extrabold px-2.5 py-0.5 shadow-sm whitespace-nowrap">
+                  <i class="fa-solid fa-clock text-[9.5px]"></i>
+                  +{{ row.final_remaining|floatformat:2|intcomma }} Pending
+                </span>
+              {% elif row.final_remaining < 0 %}
+                <span class="pill pill-rose text-[11px] font-semibold px-2.5 py-0.5 whitespace-nowrap" title="Delivered in excess of available balance">
+                  <i class="fa-solid fa-arrow-up-right-from-square text-[9.5px]"></i>
+                  {{ row.final_remaining|floatformat:2|intcomma }} Extra Delivered
                 </span>
               {% else %}
-                <span class="font-mono font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200 text-xs">
-                  {{ row.current_dac|intcomma }}
+                <span class="pill pill-emerald text-[11px] font-semibold px-2.5 py-0.5 whitespace-nowrap">
+                  <i class="fa-solid fa-check text-[9.5px]"></i> Fulfilled
                 </span>
               {% endif %}
             </td>
 
-            <!-- DAC % -->
-            <td class="text-center">
-              <span class="pill pill-indigo text-xs">
-                {{ row.dac_percentage }}%
-              </span>
-            </td>
-
-            <!-- Effective DAC -->
-            <td class="text-right font-bold text-slate-900 font-mono">
-              {{ row.effective_dac|intcomma }}
-            </td>
-
-            <!-- Pending Status -->
-            <td class="text-center">
-              {% if row.pending_order > 0 %}
-                <span class="pill pill-amber text-xs font-extrabold px-3 py-1">
-                  <i class="fa-solid fa-clock text-[10px]"></i> +{{ row.pending_order|intcomma }} Pending
-                </span>
-              {% elif row.pending_order < 0 %}
-                <span class="pill pill-blue text-xs font-semibold px-3 py-1">
-                  <i class="fa-solid fa-circle-check text-[10px]"></i> Surplus ({{ row.pending_order|intcomma }})
-                </span>
-              {% else %}
-                <span class="pill pill-emerald text-xs font-semibold px-3 py-1">
-                  <i class="fa-solid fa-check text-[10px]"></i> Fulfilled (0)
-                </span>
-              {% endif %}
-            </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="6" class="text-center py-12">
+            <td colspan="8" class="text-center py-12">
               <div class="max-w-sm mx-auto space-y-3">
                 <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mx-auto text-xl">
                   <i class="fa-solid fa-hourglass-half"></i>
                 </div>
-                <div class="text-sm font-bold text-slate-700">No Pending Order Data Found</div>
+                <div class="text-sm font-bold text-slate-700">No Orders Found for {{ selected_month }}</div>
                 <p class="text-xs text-slate-500">
-                  No subdealer records or refills found for {{ selected_month }}. Try changing the month or resetting the filter.
+                  No subdealers with active transactions, pending orders, or over-delivered balances were found. Inactive subdealers with 0 balance are hidden.
                 </p>
-                <div>
-                  <a href="{% url 'pending_dac_orders' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
-                    <i class="fa-solid fa-rotate-left"></i> Reset filter to current month
+                <div class="flex items-center justify-center gap-3 pt-1">
+                  <a href="{% url 'pending_dac_orders' %}" class="text-xs font-semibold text-slate-600 hover:text-slate-800 transition">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset filters
                   </a>
                 </div>
               </div>
@@ -345,6 +490,7 @@
           </tr>
           {% endfor %}
         </tbody>
+
       </table>
     </div>
   </div>
@@ -355,4 +501,153 @@
   {% include 'components/pagination.html' %}
 
 </div>
+
+<!-- ════════════════════════════════════════
+     SEARCHABLE SUBDEALER COMBOBOX SCRIPT
+════════════════════════════════════════ -->
+<script>
+(function initPendingSubdealerSearch() {
+  const selectElem = document.getElementById('subdealerSelect');
+  const searchInp  = document.getElementById('subdealerSearchInput');
+  const clearBtn   = document.getElementById('subdealerClearBtn');
+  if (!selectElem || !searchInp || !clearBtn) return;
+
+  let focusedIdx = -1;
+  let isSelected = false;
+
+  const allOptions = Array.from(selectElem.options)
+    .filter(o => o.value)
+    .map(o => ({
+      id: o.value,
+      name: o.dataset.name,
+      code: o.dataset.code,
+      rate: o.dataset.rate || ''
+    }));
+
+  // Create portal dropdown
+  const dropdown = document.createElement('div');
+  dropdown.className = 'sd-dropdown';
+  document.body.appendChild(dropdown);
+
+  function positionDropdown() {
+    const rect = searchInp.getBoundingClientRect();
+    dropdown.style.top   = (rect.bottom + 4) + 'px';
+    dropdown.style.left  = rect.left + 'px';
+    dropdown.style.width = rect.width + 'px';
+  }
+
+  function renderOptions(query) {
+    const q = (query || '').trim().toLowerCase();
+    const filtered = q
+      ? allOptions.filter(sd =>
+          sd.name.toLowerCase().includes(q) ||
+          sd.code.toLowerCase().includes(q)
+        )
+      : allOptions;
+
+    dropdown.innerHTML = '';
+    focusedIdx = -1;
+
+    // Option for "All Subdealers"
+    const allOpt = document.createElement('div');
+    allOpt.className = 'sd-option font-semibold text-slate-600';
+    allOpt.innerHTML = '<span>All Subdealers</span>';
+    allOpt.addEventListener('mousedown', e => {
+      e.preventDefault();
+      clearSelection();
+    });
+    dropdown.appendChild(allOpt);
+
+    if (filtered.length === 0 && q) {
+      dropdown.innerHTML += '<div class="sd-no-result">No subdealer found for "' + query + '"</div>';
+      return;
+    }
+
+    filtered.forEach(sd => {
+      const opt = document.createElement('div');
+      opt.className = 'sd-option';
+      opt.dataset.id = sd.id;
+      opt.innerHTML = `<span class="sd-code-badge">${sd.code}</span>`
+                    + `<span class="sd-name">${sd.name}</span>`
+                    + (sd.rate ? `<span class="sd-rate-badge">${sd.rate}</span>` : '');
+      opt.addEventListener('mousedown', e => {
+        e.preventDefault();
+        selectSubdealer(sd.id, sd.name, sd.code);
+      });
+      dropdown.appendChild(opt);
+    });
+  }
+
+  function selectSubdealer(id, name, code) {
+    selectElem.value = id;
+    searchInp.value = name + ' (' + code + ')';
+    searchInp.classList.add('sd-has-value');
+    clearBtn.style.display = 'flex';
+    searchInp.style.backgroundImage = 'none';
+    isSelected = true;
+    closeDropdown();
+  }
+
+  function clearSelection() {
+    selectElem.value = '';
+    searchInp.value = '';
+    searchInp.classList.remove('sd-has-value');
+    clearBtn.style.display = 'none';
+    searchInp.style.backgroundImage = '';
+    isSelected = false;
+    closeDropdown();
+  }
+
+  function openDropdown() {
+    renderOptions(isSelected ? '' : searchInp.value);
+    positionDropdown();
+    dropdown.style.display = 'block';
+    window.addEventListener('scroll', positionDropdown, true);
+    window.addEventListener('resize', positionDropdown);
+  }
+
+  function closeDropdown() {
+    dropdown.style.display = 'none';
+    window.removeEventListener('scroll', positionDropdown, true);
+    window.removeEventListener('resize', positionDropdown);
+    if (!isSelected && !selectElem.value) searchInp.value = '';
+  }
+
+  // Pre-fill if already selected on page load
+  if (selectElem.value) {
+    const preSelected = allOptions.find(o => o.id === selectElem.value);
+    if (preSelected) {
+      searchInp.value = preSelected.name + ' (' + preSelected.code + ')';
+      searchInp.classList.add('sd-has-value');
+      clearBtn.style.display = 'flex';
+      searchInp.style.backgroundImage = 'none';
+      isSelected = true;
+    }
+  }
+
+  clearBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearSelection();
+  });
+
+  searchInp.addEventListener('focus', () => {
+    if (isSelected) searchInp.select();
+    openDropdown();
+  });
+
+  searchInp.addEventListener('input', () => {
+    isSelected = false;
+    selectElem.value = '';
+    searchInp.classList.remove('sd-has-value');
+    clearBtn.style.display = 'none';
+    searchInp.style.backgroundImage = '';
+    renderOptions(searchInp.value);
+    if (dropdown.style.display === 'none') openDropdown();
+  });
+
+  searchInp.addEventListener('blur', () => {
+    setTimeout(() => closeDropdown(), 150);
+  });
+})();
+</script>
 {% endblock %}

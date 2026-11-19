@@ -18,11 +18,17 @@ def recalculate_balances(subdealer):
         entry.opening_balance = balance
 
         if entry.transaction_type == "CR":
-            balance += entry.transaction_quantity
+            pct = (
+                entry.dac_percentage_at_entry
+                if entry.dac_percentage_at_entry is not None
+                else (subdealer.dac_percentage or Decimal("100"))
+            )
+            credited_amount = (entry.transaction_quantity * pct / Decimal("100")).quantize(Decimal("0.01"))
+            balance += credited_amount
         else:
             balance -= entry.transaction_quantity
 
-        entry.closing_balance = balance
+        entry.closing_balance = balance.quantize(Decimal("0.01"))
 
         DACEntry.objects.filter(pk=entry.pk).update(
             opening_balance=entry.opening_balance,
