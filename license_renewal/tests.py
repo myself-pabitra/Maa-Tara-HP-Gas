@@ -207,3 +207,45 @@ class LicenseRenewalViewTests(TestCase):
         warning_messages = [str(m) for m in messages_list if "Reminder" in str(m)]
         self.assertTrue(len(warning_messages) >= 1)
         self.assertTrue(any("WB58URGENT" in msg for msg in warning_messages))
+
+    def test_10_day_expiry_reminder_threshold(self):
+        # Record expiring in 9 days (within 10 days)
+        LicenseRenewal.objects.create(
+            vehicle_no="WB58NINEDAY",
+            vehicle_name="Van 9D",
+            paper="Fitness",
+            expire_date=date.today() + timedelta(days=9),
+        )
+        response = self.client.get(reverse("license_renewal_view"))
+        messages_list = list(response.context["messages"])
+        warning_messages = [str(m) for m in messages_list if "WB58NINEDAY" in str(m)]
+        self.assertTrue(len(warning_messages) >= 1)
+        self.assertIn("expires in 9 day(s)", warning_messages[0])
+
+    def test_dashboard_syncs_remaining_days_and_triggers_toasts(self):
+        # Set a record with an outdated remaining_days in DB
+        LicenseRenewal.objects.create(
+            vehicle_no="WB58STALE",
+            vehicle_name="Stale Van",
+            paper="Insurance",
+            expire_date=date.today() + timedelta(days=7),
+            remaining_days=999,  # Intentionally stale
+            status="Active",
+        )
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 200)
+
+        # Verify DB record was resynced
+        stale_record = LicenseRenewal.objects.get(vehicle_no="WB58STALE")
+        self.assertEqual(stale_record.remaining_days, 7)
+        self.assertEqual(stale_record.status, "Expiring Soon")
+
+        # Verify toaster notification was sent to dashboard
+        messages_list = list(response.context["messages"])
+        stale_messages = [str(m) for m in messages_list if "WB58STALE" in str(m)]
+        self.assertTrue(len(stale_messages) >= 1)
+        self.assertIn("expires in 7 day(s)", stale_messages[0])
+
+        # Verify top alert card renders on dashboard
+        self.assertIn("Expiring / Expired Vehicle Papers", response.content.decode())
+        self.assertIn("WB58STALE", response.content.decode())

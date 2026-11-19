@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.db import models
+from django.utils import timezone
 
 
 class LicenseRenewal(models.Model):
@@ -50,7 +51,7 @@ class LicenseRenewal(models.Model):
         target_date = self.normalize_date(expire_date) if expire_date is not None else self.normalize_date(self.expire_date)
         if not target_date:
             return 0
-        return (target_date - date.today()).days
+        return (target_date - timezone.localdate()).days
 
     def update_status(self, expire_date=None):
         remaining = self.calculate_remaining_days(expire_date)

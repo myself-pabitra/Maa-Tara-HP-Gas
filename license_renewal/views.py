@@ -9,11 +9,11 @@ from django.utils import timezone
 from .models import LicenseRenewal
 
 
-def add_expiry_reminders(request):
+def add_expiry_reminders(request=None):
     """
     Recalculates remaining days and statuses for all license records,
     saving records if status or remaining days have changed,
-    and adds warning flash messages for records expiring within 5 days.
+    and adds warning/alert flash messages for records expiring within 10 days or expired.
     """
     records = LicenseRenewal.objects.all()
     reminder_count = 0
@@ -26,12 +26,19 @@ def add_expiry_reminders(request):
         if record.remaining_days != prev_days or record.status != prev_status:
             record.save(update_fields=["remaining_days", "status"])
 
-        if 0 <= record.remaining_days <= 5:
-            messages.warning(
-                request,
-                f"Reminder: {record.vehicle_no} ({record.paper_display}) expires in {record.remaining_days} day(s).",
-            )
-            reminder_count += 1
+        if request:
+            if 0 <= record.remaining_days <= 10:
+                messages.warning(
+                    request,
+                    f"Reminder: {record.vehicle_no} ({record.paper_display}) expires in {record.remaining_days} day(s).",
+                )
+                reminder_count += 1
+            elif record.remaining_days < 0:
+                messages.error(
+                    request,
+                    f"Alert: {record.vehicle_no} ({record.paper_display}) has EXPIRED {abs(record.remaining_days)} day(s) ago!",
+                )
+                reminder_count += 1
 
     return reminder_count
 
@@ -41,7 +48,7 @@ def license_renewal_view(request):
     List vehicle licenses and compliance records with search, filtering,
     KPI summary metrics, and pagination.
     """
-    # Sync statuses and surface any 5-day expiry warnings
+    # Sync statuses and surface any 10-day expiry / expired warnings
     add_expiry_reminders(request)
 
     all_records = LicenseRenewal.objects.all().order_by("expire_date")
@@ -51,7 +58,7 @@ def license_renewal_view(request):
     active_count = all_records.filter(status="Active").count()
     expiring_count = all_records.filter(status="Expiring Soon").count()
     expired_count = all_records.filter(status="Expired").count()
-    critical_count = all_records.filter(remaining_days__gte=0, remaining_days__lte=5).count()
+    critical_count = all_records.filter(remaining_days__gte=0, remaining_days__lte=10).count()
 
     # Search and filtering
     records = all_records
@@ -72,8 +79,8 @@ def license_renewal_view(request):
     if paper_filter:
         records = records.filter(paper=paper_filter)
 
-    # Critical records for page banner (expiring within 5 days)
-    critical_records = all_records.filter(remaining_days__gte=0, remaining_days__lte=5)[:5]
+    # Critical records for page banner (expiring within 10 days)
+    critical_records = all_records.filter(remaining_days__gte=0, remaining_days__lte=10)[:5]
 
     # Pagination: 10 items per page
     paginator = Paginator(records, 10)

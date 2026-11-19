@@ -22,6 +22,7 @@ from employees.models import Employee
 from inventory.models import ProductInventory
 from SubDealers.models import Subdealer
 from license_renewal.models import LicenseRenewal
+from license_renewal.views import add_expiry_reminders
 
 
 def dashboard(request):
@@ -316,9 +317,16 @@ def dashboard(request):
 
     active_employees = Employee.objects.filter(is_active=True).count()
 
+    # Sync license statuses & trigger toaster notifications for papers expiring in <= 10 days or expired
+    add_expiry_reminders(request)
+
     active_licenses = LicenseRenewal.objects.filter(status="Active").count()
-    expiring_licenses = LicenseRenewal.objects.filter(status__in=["Expiring Soon", "Expired"]).order_by("expire_date")[:5]
-    total_expiring_licenses_count = LicenseRenewal.objects.filter(status__in=["Expiring Soon", "Expired"]).count()
+    expiring_licenses = LicenseRenewal.objects.filter(
+        status__in=["Expiring Soon", "Expired"]
+    ).order_by("expire_date")[:10]
+    total_expiring_licenses_count = LicenseRenewal.objects.filter(
+        status__in=["Expiring Soon", "Expired"]
+    ).count()
 
     pending_verifications = (
         DailyInvoiceLineItem.objects.filter(payment_status="PENDING")

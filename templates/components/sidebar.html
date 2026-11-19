@@ -84,7 +84,7 @@
     </div>
 
     <!-- Inventory / Products Accordion -->
-    <details class="group" {% if page_type == "add_product" or page_type == "view_products" or page_type == "edit_product" or page_type == "manage_products" or page_type == "topup_stock" %}open{% endif %}>
+    <details class="group" {% if page_type == "add_product" or page_type == "view_products" or page_type == "edit_product" or page_type == "manage_products" or page_type == "topup_stock" or page_type == "daily_stock_trend" %}open{% endif %}>
       <summary onclick="handleDetailsToggle(event)" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold cursor-pointer text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all list-none">
         <div class="flex items-center gap-3">
           <i class="fa-solid fa-boxes-stacked w-4 text-center text-slate-400 group-open:text-indigo-600"></i>
@@ -97,13 +97,17 @@
            class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition {% if page_type == 'manage_products' %}bg-indigo-50 text-indigo-700 font-bold{% else %}text-slate-600 hover:text-indigo-600 hover:bg-slate-50{% endif %}">
           <i class="fa-solid fa-list-check text-[9px]"></i> Product Catalog
         </a>
-        <a href="{% url 'Add_product' %}"
-           class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition {% if page_type == 'add_product' %}bg-indigo-50 text-indigo-700 font-bold{% else %}text-slate-600 hover:text-indigo-600 hover:bg-slate-50{% endif %}">
-          <i class="fa-solid fa-plus text-[9px]"></i> Add Product SKU
+        <a href="{% url 'daily_stock_trend' %}"
+           class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition {% if page_type == 'daily_stock_trend' %}bg-indigo-50 text-indigo-700 font-bold{% else %}text-slate-600 hover:text-indigo-600 hover:bg-slate-50{% endif %}">
+          <i class="fa-solid fa-chart-line text-[9px]"></i> Daily Stock Trend
         </a>
         <a href="{% url 'topup_stock' %}"
            class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition {% if page_type == 'topup_stock' %}bg-indigo-50 text-indigo-700 font-bold{% else %}text-slate-600 hover:text-indigo-600 hover:bg-slate-50{% endif %}">
           <i class="fa-solid fa-arrow-up-from-bracket text-[9px]"></i> Top-Up Stock
+        </a>
+        <a href="{% url 'Add_product' %}"
+           class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition {% if page_type == 'add_product' %}bg-indigo-50 text-indigo-700 font-bold{% else %}text-slate-600 hover:text-indigo-600 hover:bg-slate-50{% endif %}">
+          <i class="fa-solid fa-plus text-[9px]"></i> Add Product SKU
         </a>
       </div>
     </details>

@@ -1,0 +1,929 @@
+{% extends "layout.html" %}
+{% load static humanize %}
+
+{% block title %}Daily Product Stock Trend | Maa Tara HP Gas{% endblock %}
+
+{% block content %}
+<style>
+  /* Base typography & containers */
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
+
+  /* Table styling */
+  .dash-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+  }
+  .dash-table th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .dash-table td {
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .dash-table tbody tr {
+    transition: background-color .15s ease;
+  }
+  .dash-table tbody tr:hover {
+    background-color: #f8faff;
+  }
+  .dash-table th.col-sep,
+  .dash-table td.col-sep {
+    border-left: 1px solid #f1f5f9;
+  }
+
+  /* Badges & Pills */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3.5px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .pill-indigo  { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-blue    { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .pill-amber   { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+  .pill-rose    { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+  .pill-slate   { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .pill-teal    { background: #f0fdfa; color: #0f766e; border: 1px solid #99f6e4; }
+  .pill-sky     { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+
+  /* KPI Stat Cards */
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 16px;
+    padding: 14px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all .2s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  /* Inputs & Selects */
+  .filter-input {
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #1e293b;
+    outline: none;
+    transition: all .15s ease;
+  }
+  .filter-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  }
+
+  /* Preset Pills */
+  .preset-btn {
+    padding: 5px 11px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    transition: all .15s ease;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .preset-btn:hover {
+    background: #f8fafc;
+    color: #334155;
+    border-color: #cbd5e1;
+  }
+  .preset-btn.active {
+    background: #4f46e5;
+    color: #ffffff;
+    border-color: #4f46e5;
+    box-shadow: 0 2px 6px rgba(79,70,229,0.25);
+  }
+
+  /* Spotlight Highlight Ring */
+  .spotlight-card {
+    background: linear-gradient(135deg, #ffffff 0%, #fcfdff 100%);
+    border: 1.5px solid #e0e7ff;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px -5px rgba(99,102,241,0.08), 0 8px 10px -6px rgba(99,102,241,0.04);
+  }
+</style>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<div class="max-w-7xl mx-auto space-y-6 pb-14">
+
+  <!-- ════════════════════════════════════════
+       PAGE HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <a href="{% url 'manage_products' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          Inventory
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Stock Trend</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Day-Wise Product Stock Trend</h1>
+        <span class="pill pill-indigo">
+          <i class="fa-regular fa-calendar-check text-[10px]"></i> {{ target_date|date:"d M Y" }}
+        </span>
+        {% if selected_product %}
+        <span class="pill pill-teal">
+          <i class="fa-solid fa-box text-[10px]"></i> {{ selected_product.product_name }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <a href="{% url 'manage_products' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-boxes-stacked text-indigo-600"></i> Catalog
+      </a>
+      <a href="{% url 'topup_stock' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-arrow-up-from-bracket text-emerald-600"></i> Top-Up Stock
+      </a>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       FILTER & LOOKUP TOOLBAR
+  ════════════════════════════════════════ -->
+  <div class="billing-card p-5 space-y-4">
+    
+    <!-- Product Quick Tabs -->
+    <div>
+      <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+        <i class="fa-solid fa-boxes-stacked mr-1"></i> Select Product SKU:
+      </div>
+      <div class="flex items-center gap-2 overflow-x-auto pb-1">
+        {% for p in products %}
+        <a href="?product={{ p.id }}&date={{ target_date_str }}&preset={{ preset }}&from_date={{ from_date_str }}&to_date={{ to_date_str }}&active_only={% if active_only %}1{% else %}0{% endif %}"
+           class="px-3.5 py-2 rounded-xl text-xs font-semibold transition border flex items-center gap-2 shrink-0
+           {% if selected_product.id == p.id %}bg-indigo-600 text-white border-indigo-600 shadow-sm{% else %}bg-slate-50 text-slate-700 border-slate-200 hover:bg-indigo-50 hover:text-indigo-700{% endif %}">
+          <span>{{ p.product_name }}</span>
+          <span class="font-mono text-[10.5px] px-1.5 py-0.2 rounded font-bold {% if selected_product.id == p.id %}bg-indigo-500 text-white{% else %}bg-white text-slate-600 border border-slate-200{% endif %}">
+            {{ p.product_quantity }} left
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Main Filter Form -->
+    <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end pt-2 border-t border-slate-100">
+
+      <!-- Hidden Product Selection -->
+      <input type="hidden" name="product" value="{{ selected_product.id }}">
+
+      <!-- Specific Target Date Lookup -->
+      <div class="lg:col-span-3">
+        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+          <i class="fa-solid fa-calendar-day text-indigo-600 mr-1"></i> Target Date (Lookup)
+        </label>
+        <input type="date" name="date" value="{{ target_date_str }}" class="filter-input w-full font-semibold">
+      </div>
+
+      <!-- Date Range (From) -->
+      <div class="lg:col-span-3">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-regular fa-calendar mr-1 text-slate-400"></i> Trend Range From
+        </label>
+        <input type="date" name="from_date" value="{{ from_date_str }}" class="filter-input w-full">
+      </div>
+
+      <!-- Date Range (To) -->
+      <div class="lg:col-span-3">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-regular fa-calendar mr-1 text-slate-400"></i> Trend Range To
+        </label>
+        <input type="date" name="to_date" value="{{ to_date_str }}" class="filter-input w-full">
+      </div>
+
+      <!-- Preset and Custom Input Flag -->
+      <input type="hidden" name="preset" value="custom">
+
+      <!-- Actions -->
+      <div class="lg:col-span-3 flex items-center gap-2">
+        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2.5 px-3 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-magnifying-glass text-[11px]"></i> View Trend
+        </button>
+        <a href="?product={{ selected_product.id }}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center" title="Reset Range">
+          <i class="fa-solid fa-rotate-left"></i>
+        </a>
+      </div>
+
+    </form>
+
+    <!-- Range Preset Shortcut Buttons -->
+    <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+      <div class="flex items-center gap-1.5 flex-wrap">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Quick Ranges:</span>
+        <a href="?product={{ selected_product.id }}&date={{ today|date:'Y-m-d' }}&preset=today"
+           class="preset-btn {% if preset == 'today' %}active{% endif %}">Today</a>
+        <a href="?product={{ selected_product.id }}&date={{ target_date_str }}&preset=last_7_days"
+           class="preset-btn {% if preset == 'last_7_days' %}active{% endif %}">Last 7 Days</a>
+        <a href="?product={{ selected_product.id }}&date={{ target_date_str }}&preset=this_month"
+           class="preset-btn {% if preset == 'this_month' %}active{% endif %}">This Month</a>
+        <a href="?product={{ selected_product.id }}&date={{ target_date_str }}&preset=last_month"
+           class="preset-btn {% if preset == 'last_month' %}active{% endif %}">Last Month</a>
+        <a href="?product={{ selected_product.id }}&date={{ target_date_str }}&preset=last_30_days"
+           class="preset-btn {% if preset == 'last_30_days' %}active{% endif %}">Last 30 Days</a>
+      </div>
+
+      <!-- Toggle Active Days Only -->
+      <div class="flex items-center gap-2">
+        <a href="?product={{ selected_product.id }}&date={{ target_date_str }}&preset={{ preset }}&from_date={{ from_date_str }}&to_date={{ to_date_str }}&active_only={% if active_only %}0{% else %}1{% endif %}"
+           class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition {% if active_only %}bg-indigo-50 border-indigo-200 text-indigo-700{% else %}bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100{% endif %}">
+          <i class="fa-solid {% if active_only %}fa-check-square text-indigo-600{% else %}fa-square text-slate-400{% endif %}"></i>
+          Show Days With Movement Only
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION 1: TARGET DATE SPOTLIGHT CARD
+       Directly answers: "How much product quantity was available on date X?"
+  ════════════════════════════════════════ -->
+  <div class="spotlight-card p-6 sm:p-7">
+    
+    <!-- Top Bar with Date & Status -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-indigo-50">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-indigo-100 text-indigo-800">
+            <i class="fa-solid fa-bullseye"></i> Specific Date Snapshot
+          </span>
+          <span class="text-xs font-bold text-slate-400">·</span>
+          <span class="text-xs font-bold text-slate-600">{{ target_date|date:"l" }}</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1">
+          Stock Position on {{ target_date|date:"d M Y" }}
+        </h2>
+        <p class="text-xs text-slate-500 mt-0.5">
+          Showing available stock and movements for <strong class="text-indigo-700">{{ selected_product.product_name }}</strong> (Code: <code class="font-mono text-indigo-600">{{ selected_product.productCode }}</code>)
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        {% if target_date_metrics.is_out_of_stock %}
+          <span class="pill pill-rose text-xs px-3 py-1 font-extrabold">
+            <i class="fa-solid fa-triangle-exclamation"></i> Out of Stock on this Date
+          </span>
+        {% elif target_date_metrics.is_low_stock %}
+          <span class="pill pill-amber text-xs px-3 py-1 font-extrabold">
+            <i class="fa-solid fa-circle-exclamation"></i> Low Stock (&lt;15 Units)
+          </span>
+        {% else %}
+          <span class="pill pill-emerald text-xs px-3 py-1 font-extrabold">
+            <i class="fa-solid fa-circle-check"></i> Sufficient Stock
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 4 Main Metric Highlights for Target Date -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-5">
+      
+      <!-- 1. Closing Stock (Available at End of Day) -->
+      <div class="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-100/90 relative overflow-hidden">
+        <div class="text-[10.5px] font-bold uppercase tracking-wider text-indigo-700 mb-1">
+          Available at End of Day
+        </div>
+        <div class="text-2xl sm:text-3xl font-black text-indigo-950 font-mono tracking-tight">
+          {{ target_date_metrics.closing_stock|intcomma }} <span class="text-xs font-semibold text-indigo-600">units</span>
+        </div>
+        <div class="text-[11px] text-indigo-700/80 font-medium mt-1">
+          Valuation: ₹{{ target_date_metrics.stock_value|floatformat:2|intcomma }}
+        </div>
+        <div class="absolute right-3 top-3 w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-xs opacity-90">
+          <i class="fa-solid fa-box-archive"></i>
+        </div>
+      </div>
+
+      <!-- 2. Opening Stock (Start of Day) -->
+      <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 relative overflow-hidden">
+        <div class="text-[10.5px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+          Opening Stock (Start)
+        </div>
+        <div class="text-2xl sm:text-3xl font-black text-slate-800 font-mono tracking-tight">
+          {{ target_date_metrics.opening_stock|intcomma }} <span class="text-xs font-semibold text-slate-500">units</span>
+        </div>
+        <div class="text-[11px] text-slate-500 font-medium mt-1">
+          Available at day opening
+        </div>
+        <div class="absolute right-3 top-3 w-8 h-8 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center text-xs">
+          <i class="fa-regular fa-clock"></i>
+        </div>
+      </div>
+
+      <!-- 3. Stock Inward (Top-ups Added) -->
+      <div class="p-4 rounded-2xl bg-teal-50/70 border border-teal-100 relative overflow-hidden">
+        <div class="text-[10.5px] font-bold uppercase tracking-wider text-teal-700 mb-1">
+          Stock Inward (+Added)
+        </div>
+        <div class="text-2xl sm:text-3xl font-black text-teal-900 font-mono tracking-tight">
+          +{{ target_date_metrics.inward|intcomma }} <span class="text-xs font-semibold text-teal-600">units</span>
+        </div>
+        <div class="text-[11px] text-teal-700/80 font-medium mt-1">
+          {% if target_date_metrics.inward > 0 %}Stock top-up received{% else %}No top-ups on this day{% endif %}
+        </div>
+        <div class="absolute right-3 top-3 w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center text-xs">
+          <i class="fa-solid fa-arrow-down-left"></i>
+        </div>
+      </div>
+
+      <!-- 4. Stock Outward (Dispatched / Sold) -->
+      <div class="p-4 rounded-2xl bg-rose-50/70 border border-rose-100 relative overflow-hidden">
+        <div class="text-[10.5px] font-bold uppercase tracking-wider text-rose-700 mb-1">
+          Stock Outward (-Sold)
+        </div>
+        <div class="text-2xl sm:text-3xl font-black text-rose-900 font-mono tracking-tight">
+          -{{ target_date_metrics.outward|intcomma }} <span class="text-xs font-semibold text-rose-600">units</span>
+        </div>
+        <div class="text-[11px] text-rose-700/80 font-medium mt-1">
+          {% if target_date_metrics.outward > 0 %}Invoiced to subdealers{% else %}No sales on this day{% endif %}
+        </div>
+        <div class="absolute right-3 top-3 w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center text-xs">
+          <i class="fa-solid fa-arrow-up-right"></i>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Activity on Target Date Breakdown -->
+    <div class="mt-6 pt-5 border-t border-slate-100">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-list-check text-indigo-600"></i> Transactions on {{ target_date|date:"d M Y" }}
+        </h3>
+        <span class="text-xs text-slate-400 font-medium">
+          {{ target_date_invoices|length }} Invoices · {{ target_date_batches|length }} Stock Batches
+        </span>
+      </div>
+
+      {% if target_date_invoices or target_date_batches %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+          <!-- Dispatches / Invoices -->
+          <div class="rounded-xl border border-slate-200/90 bg-white overflow-hidden">
+            <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700"><i class="fa-solid fa-truck text-rose-500 mr-1"></i> Stock Dispatches (Outward)</span>
+              <span class="pill pill-rose text-[10.5px] font-bold">-{{ target_date_metrics.outward }} units</span>
+            </div>
+            {% if target_date_invoices %}
+            <div class="divide-y divide-slate-100 max-h-56 overflow-y-auto">
+              {% for item in target_date_invoices %}
+              <div class="p-3 flex items-center justify-between hover:bg-slate-50/70 transition text-xs">
+                <div>
+                  <div class="font-bold text-slate-800">{{ item.subdealer.name }}</div>
+                  <div class="text-[10.5px] text-slate-400 font-mono">{{ item.invoice.invoice_number }}</div>
+                </div>
+                <div class="text-right">
+                  <div class="font-mono font-bold text-rose-600">-{{ item.quantity }} units</div>
+                  <div class="text-[10.5px] text-slate-500">₹{{ item.line_total|floatformat:2|intcomma }}</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="p-4 text-center text-xs text-slate-400 italic">No dispatches occurred on this date.</div>
+            {% endif %}
+          </div>
+
+          <!-- Top-ups / Stock Receipts -->
+          <div class="rounded-xl border border-slate-200/90 bg-white overflow-hidden">
+            <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700"><i class="fa-solid fa-arrow-down-left text-teal-600 mr-1"></i> Stock Receipts (Inward)</span>
+              <span class="pill pill-teal text-[10.5px] font-bold">+{{ target_date_metrics.inward }} units</span>
+            </div>
+            {% if target_date_batches %}
+            <div class="divide-y divide-slate-100 max-h-56 overflow-y-auto">
+              {% for b in target_date_batches %}
+              <div class="p-3 flex items-center justify-between hover:bg-slate-50/70 transition text-xs">
+                <div>
+                  <div class="font-bold text-slate-800">Batch #{{ b.id }} · ₹{{ b.buy_price }}/unit</div>
+                  <div class="text-[10.5px] text-slate-500">{{ b.notes|default:"Stock top-up receipt" }}</div>
+                </div>
+                <div class="text-right">
+                  <div class="font-mono font-bold text-teal-700">+{{ b.quantity_added }} units</div>
+                  <div class="text-[10.5px] text-slate-400">{{ b.added_at|date:"h:i A" }}</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="p-4 text-center text-xs text-slate-400 italic">No stock top-up batches added on this date.</div>
+            {% endif %}
+          </div>
+
+        </div>
+      {% else %}
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/70 text-center text-xs text-slate-500">
+          <i class="fa-solid fa-check text-emerald-600 mr-1"></i> No invoices or stock top-ups occurred on <strong>{{ target_date|date:"d M Y" }}</strong>.
+          Available stock remained steady at <strong class="text-indigo-900 font-mono">{{ target_date_metrics.closing_stock }} units</strong>.
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION 2: ALL PRODUCTS SNAPSHOT ON TARGET DATE
+       Godown / Warehouse view on that exact date
+  ════════════════════════════════════════ -->
+  <div class="billing-card overflow-hidden" x-data="{ openSnapshot: true }">
+    <div class="p-4 bg-slate-50/70 border-b border-slate-200/80 flex items-center justify-between cursor-pointer select-none"
+         @click="openSnapshot = !openSnapshot">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
+          <i class="fa-solid fa-warehouse"></i>
+        </div>
+        <div>
+          <h2 class="text-sm font-extrabold text-slate-900">All Products Position on {{ target_date|date:"d M Y" }}</h2>
+          <p class="text-[11px] text-slate-500">Full warehouse available stock snapshot across all SKUs on this date.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="pill pill-indigo text-xs">
+          Total: {{ total_snapshot_units|intcomma }} units · ₹{{ total_snapshot_value|floatformat:2|intcomma }}
+        </span>
+        <i class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"
+           :class="openSnapshot ? 'rotate-180' : ''"></i>
+      </div>
+    </div>
+
+    <div x-show="openSnapshot" x-collapse>
+      <div class="overflow-x-auto">
+        <table class="dash-table w-full">
+          <thead>
+            <tr>
+              <th style="width: 44px;" class="text-center">#</th>
+              <th>Product SKU</th>
+              <th class="text-right">Opening Stock</th>
+              <th class="text-right">Inward (+Added)</th>
+              <th class="text-right">Outward (-Sold)</th>
+              <th class="text-right col-sep" style="width: 170px;">Available on Date</th>
+              <th class="text-right">Unit Buy Price</th>
+              <th class="text-right">Total Inventory Value</th>
+              <th class="text-center" style="width: 100px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in all_products_snapshot %}
+            <tr class="{% if item.is_selected %}bg-indigo-50/40{% endif %}">
+              <td class="text-center text-xs font-bold text-slate-400">{{ forloop.counter }}</td>
+              <td>
+                <div class="font-bold text-slate-900 text-xs sm:text-sm">{{ item.product.product_name }}</div>
+                <div class="font-mono text-[10.5px] text-slate-400">{{ item.product.productCode }}</div>
+              </td>
+              <td class="text-right font-mono font-semibold text-slate-700">{{ item.opening_stock|intcomma }}</td>
+              <td class="text-right font-mono font-bold text-teal-700">
+                {% if item.inward > 0 %}+{{ item.inward|intcomma }}{% else %}<span class="text-slate-300 font-normal">0</span>{% endif %}
+              </td>
+              <td class="text-right font-mono font-bold text-rose-600">
+                {% if item.outward > 0 %}-{{ item.outward|intcomma }}{% else %}<span class="text-slate-300 font-normal">0</span>{% endif %}
+              </td>
+              <td class="text-right col-sep">
+                <span class="inline-block font-mono font-extrabold text-xs sm:text-sm px-2.5 py-0.5 rounded-lg border
+                  {% if item.closing_stock <= 0 %}bg-rose-50 text-rose-700 border-rose-200
+                  {% elif item.closing_stock < 15 %}bg-amber-50 text-amber-700 border-amber-200
+                  {% else %}bg-emerald-50 text-emerald-800 border-emerald-200{% endif %}">
+                  {{ item.closing_stock|intcomma }} units
+                </span>
+              </td>
+              <td class="text-right font-mono text-xs text-slate-600">₹{{ item.product.buy_price|floatformat:2|intcomma }}</td>
+              <td class="text-right font-mono font-bold text-slate-900 text-xs sm:text-sm">₹{{ item.value|floatformat:2|intcomma }}</td>
+              <td class="text-center">
+                {% if not item.is_selected %}
+                <a href="?product={{ item.product.id }}&date={{ target_date_str }}&preset={{ preset }}&from_date={{ from_date_str }}&to_date={{ to_date_str }}&active_only={% if active_only %}1{% else %}0{% endif %}"
+                   class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition">
+                  Focus <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
+                {% else %}
+                <span class="text-[11px] font-black text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded">Active</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION 3: INTERACTIVE VISUAL TREND CHART
+  ════════════════════════════════════════ -->
+  <div class="billing-card p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+      <div>
+        <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-chart-area text-indigo-600"></i> Stock Level Progression Curve
+        </h2>
+        <p class="text-xs text-slate-500 mt-0.5">
+          Daily closing available stock for <strong class="text-slate-800">{{ selected_product.product_name }}</strong> from {{ from_date|date:"d M Y" }} to {{ to_date|date:"d M Y" }}.
+        </p>
+      </div>
+
+      <!-- Quick Legend -->
+      <div class="flex items-center gap-3 text-xs font-semibold">
+        <span class="flex items-center gap-1.5 text-indigo-700">
+          <span class="w-3 h-3 rounded-full bg-indigo-600 inline-block"></span> Available Stock
+        </span>
+        <span class="flex items-center gap-1.5 text-teal-700">
+          <span class="w-2.5 h-2.5 rounded bg-teal-500 inline-block"></span> Top-Up (+In)
+        </span>
+        <span class="flex items-center gap-1.5 text-rose-700">
+          <span class="w-2.5 h-2.5 rounded bg-rose-500 inline-block"></span> Sales (-Out)
+        </span>
+      </div>
+    </div>
+
+    <!-- Chart Canvas Container -->
+    <div class="relative w-full h-[280px] sm:h-[320px]">
+      <canvas id="stockTrendChart"></canvas>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION 4: RANGE SUMMARY METRIC CARDS
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+
+    <!-- 1. Start of Period Stock -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">Start Stock</div>
+        <div class="text-lg font-extrabold text-slate-800 font-mono">{{ range_summary.start_stock|intcomma }}</div>
+        <div class="text-[10.5px] text-slate-400 font-medium mt-0.5">{{ from_date|date:"d M Y" }}</div>
+      </div>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 bg-slate-100 shrink-0">
+        <i class="fa-solid fa-hourglass-start text-xs"></i>
+      </div>
+    </div>
+
+    <!-- 2. End of Period Stock -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-0.5">End Stock</div>
+        <div class="text-lg font-extrabold text-indigo-700 font-mono">{{ range_summary.end_stock|intcomma }}</div>
+        <div class="text-[10.5px] text-indigo-500 font-medium mt-0.5">{{ to_date|date:"d M Y" }}</div>
+      </div>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-indigo-600 bg-indigo-50 border border-indigo-100 shrink-0">
+        <i class="fa-solid fa-hourglass-end text-xs"></i>
+      </div>
+    </div>
+
+    <!-- 3. Total Inward Added in Range -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-teal-600 mb-0.5">Total Inward</div>
+        <div class="text-lg font-extrabold text-teal-700 font-mono">+{{ range_summary.total_inward|intcomma }}</div>
+        <div class="text-[10.5px] text-teal-600/80 font-medium mt-0.5">Top-up batches</div>
+      </div>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-teal-600 bg-teal-50 border border-teal-100 shrink-0">
+        <i class="fa-solid fa-arrow-down-left text-xs"></i>
+      </div>
+    </div>
+
+    <!-- 4. Total Outward Dispatched in Range -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-rose-600 mb-0.5">Total Outward</div>
+        <div class="text-lg font-extrabold text-rose-700 font-mono">-{{ range_summary.total_outward|intcomma }}</div>
+        <div class="text-[10.5px] text-rose-500 font-medium mt-0.5">Invoiced deliveries</div>
+      </div>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-rose-600 bg-rose-50 border border-rose-100 shrink-0">
+        <i class="fa-solid fa-truck text-xs"></i>
+      </div>
+    </div>
+
+    <!-- 5. Net Stock Change in Range -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[10px] font-bold uppercase tracking-wider {% if range_summary.net_change >= 0 %}text-emerald-600{% else %}text-amber-600{% endif %} mb-0.5">Net Change</div>
+        <div class="text-lg font-extrabold font-mono {% if range_summary.net_change >= 0 %}text-emerald-700{% else %}text-amber-700{% endif %}">
+          {% if range_summary.net_change > 0 %}+{% endif %}{{ range_summary.net_change|intcomma }}
+        </div>
+        <div class="text-[10.5px] text-slate-400 font-medium mt-0.5">Units in period</div>
+      </div>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center {% if range_summary.net_change >= 0 %}text-emerald-600 bg-emerald-50 border border-emerald-100{% else %}text-amber-600 bg-amber-50 border border-amber-100{% endif %} shrink-0">
+        <i class="fa-solid fa-scale-balanced text-xs"></i>
+      </div>
+    </div>
+
+    <!-- 6. Peak Available Stock in Range -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-sky-600 mb-0.5">Peak Stock</div>
+        <div class="text-lg font-extrabold text-sky-700 font-mono">{{ range_summary.highest_stock|intcomma }}</div>
+        <div class="text-[10.5px] text-sky-600/80 font-medium mt-0.5">{{ range_summary.highest_date|date:"d M"|default:"-" }}</div>
+      </div>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sky-600 bg-sky-50 border border-sky-100 shrink-0">
+        <i class="fa-solid fa-arrow-trend-up text-xs"></i>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION 5: DAY-BY-DAY INVENTORY PROGRESSION TABLE
+  ════════════════════════════════════════ -->
+  <div class="billing-card overflow-hidden">
+    <div class="p-4 bg-slate-50 border-b border-slate-200/90 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <h2 class="text-sm font-extrabold text-slate-900">
+          Day-Wise Inventory Ledger ({{ from_date|date:"d M Y" }} to {{ to_date|date:"d M Y" }})
+        </h2>
+        <p class="text-xs text-slate-500">
+          Showing daily progression of opening stock, receipts, dispatches, and final available stock at day close.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="pill pill-slate text-xs">
+          {{ daily_records|length }} Days Displayed {% if active_only %}(Filtered to Activity Days){% endif %}
+        </span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="dash-table w-full">
+        <thead>
+          <tr>
+            <th style="width: 44px;" class="text-center">#</th>
+            <th style="width: 150px;">Date</th>
+            <th class="text-right" style="width: 140px;">Opening Stock</th>
+            <th class="text-right" style="width: 140px;">Inward (+Added)</th>
+            <th class="text-right" style="width: 140px;">Outward (-Dispatched)</th>
+            <th class="text-right col-sep" style="width: 180px;">Closing Available Stock</th>
+            <th class="text-right" style="width: 130px;">Net Day Change</th>
+            <th class="text-center" style="width: 120px;">Lookup Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in daily_records %}
+          <tr class="{% if r.is_target_date %}bg-indigo-50/60 font-semibold{% elif r.has_activity %}bg-white{% else %}opacity-75{% endif %}">
+            
+            <!-- Index -->
+            <td class="text-center text-xs font-bold text-slate-400">
+              {{ forloop.counter }}
+            </td>
+
+            <!-- Date -->
+            <td>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-900 text-xs sm:text-sm whitespace-nowrap">{{ r.date_formatted }}</span>
+                <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded {% if r.is_target_date %}bg-indigo-600 text-white{% else %}bg-slate-100 text-slate-600{% endif %}">
+                  {{ r.weekday }}
+                </span>
+                {% if r.is_target_date %}
+                <span class="pill pill-indigo text-[9.5px] py-0 px-1.5" title="Currently selected target date">Active</span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Opening Stock -->
+            <td class="text-right font-mono text-xs sm:text-sm font-semibold text-slate-600">
+              {{ r.opening_stock|intcomma }}
+            </td>
+
+            <!-- Inward -->
+            <td class="text-right font-mono text-xs sm:text-sm">
+              {% if r.inward > 0 %}
+                <span class="font-bold text-teal-700 bg-teal-50 border border-teal-200/80 px-2 py-0.5 rounded">
+                  +{{ r.inward|intcomma }}
+                </span>
+              {% else %}
+                <span class="text-slate-300 font-normal">0</span>
+              {% endif %}
+            </td>
+
+            <!-- Outward -->
+            <td class="text-right font-mono text-xs sm:text-sm">
+              {% if r.outward > 0 %}
+                <span class="font-bold text-rose-600 bg-rose-50 border border-rose-200/80 px-2 py-0.5 rounded">
+                  -{{ r.outward|intcomma }}
+                </span>
+              {% else %}
+                <span class="text-slate-300 font-normal">0</span>
+              {% endif %}
+            </td>
+
+            <!-- Closing Available Stock -->
+            <td class="text-right col-sep">
+              <span class="inline-block font-mono font-extrabold text-xs sm:text-sm px-2.5 py-0.5 rounded-lg border shadow-xs
+                {% if r.closing_stock <= 0 %}bg-rose-50 text-rose-700 border-rose-200
+                {% elif r.closing_stock < 15 %}bg-amber-50 text-amber-700 border-amber-200
+                {% else %}bg-emerald-50 text-emerald-800 border-emerald-200{% endif %}">
+                {{ r.closing_stock|intcomma }} units
+              </span>
+            </td>
+
+            <!-- Net Day Change -->
+            <td class="text-right font-mono text-xs font-bold">
+              {% if r.net_change > 0 %}
+                <span class="text-teal-700">+{{ r.net_change|intcomma }}</span>
+              {% elif r.net_change < 0 %}
+                <span class="text-rose-600">{{ r.net_change|intcomma }}</span>
+              {% else %}
+                <span class="text-slate-300 font-normal">0</span>
+              {% endif %}
+            </td>
+
+            <!-- Quick Snapshot Action -->
+            <td class="text-center">
+              <a href="?product={{ selected_product.id }}&date={{ r.date|date:'Y-m-d' }}&preset={{ preset }}&from_date={{ from_date_str }}&to_date={{ to_date_str }}&active_only={% if active_only %}1{% else %}0{% endif %}"
+                 class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-lg border transition
+                   {% if r.is_target_date %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white text-indigo-600 border-slate-200 hover:bg-indigo-50{% endif %}"
+                 title="Inspect exact snapshot on this date">
+                <i class="fa-solid fa-bullseye text-[10px]"></i> Snapshot
+              </a>
+            </td>
+
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="text-center py-12 text-slate-400 text-xs">
+              No daily records found for the selected period.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════
+     CHART.JS INITIALIZATION SCRIPT
+════════════════════════════════════════ -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const ctx = document.getElementById('stockTrendChart');
+  if (!ctx) return;
+
+  const labels = {{ chart_labels_json|safe }};
+  const closingData = {{ chart_closing_stock_json|safe }};
+  const inwardData = {{ chart_inward_json|safe }};
+  const outwardData = {{ chart_outward_json|safe }};
+
+  if (!labels || labels.length === 0) return;
+
+  // Create subtle gradient for area fill
+  const chartCtx = ctx.getContext('2d');
+  const gradient = chartCtx.createLinearGradient(0, 0, 0, 280);
+  gradient.addColorStop(0, 'rgba(99, 102, 241, 0.28)');
+  gradient.addColorStop(1, 'rgba(99, 102, 241, 0.01)');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Available Stock',
+          data: closingData,
+          borderColor: '#4f46e5',
+          backgroundColor: gradient,
+          borderWidth: 2.5,
+          pointBackgroundColor: '#4f46e5',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1.5,
+          pointRadius: labels.length > 31 ? 2 : 3.5,
+          pointHoverRadius: 6,
+          fill: true,
+          tension: 0.25,
+          yAxisID: 'y',
+        },
+        {
+          label: 'Stock Added (+In)',
+          data: inwardData,
+          type: 'bar',
+          backgroundColor: 'rgba(13, 148, 136, 0.75)',
+          borderRadius: 4,
+          maxBarThickness: 16,
+          yAxisID: 'y1',
+        },
+        {
+          label: 'Dispatched (-Out)',
+          data: outwardData,
+          type: 'bar',
+          backgroundColor: 'rgba(225, 29, 72, 0.70)',
+          borderRadius: 4,
+          maxBarThickness: 16,
+          yAxisID: 'y1',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          backgroundColor: '#0f172a',
+          titleFont: { family: 'Inter', size: 12, weight: 'bold' },
+          bodyFont: { family: 'Inter', size: 11.5 },
+          padding: 10,
+          cornerRadius: 10,
+          callbacks: {
+            label: function(context) {
+              const label = context.dataset.label || '';
+              const value = context.parsed.y;
+              if (label.includes('Added')) {
+                return value > 0 ? `+${value} units added (Top-up)` : null;
+              } else if (label.includes('Dispatched')) {
+                return value > 0 ? `-${value} units dispatched (Sold)` : null;
+              }
+              return `Available Stock: ${value} units`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            color: '#64748b',
+            font: { family: 'Inter', size: 10.5 },
+            maxRotation: 45,
+            autoSkip: true,
+            maxTicksLimit: 16,
+          }
+        },
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          grid: {
+            color: '#f1f5f9',
+          },
+          ticks: {
+            color: '#475569',
+            font: { family: 'Inter', size: 10.5, weight: '600' },
+          },
+          title: {
+            display: true,
+            text: 'Available Units',
+            color: '#64748b',
+            font: { family: 'Inter', size: 10.5, weight: 'bold' }
+          }
+        },
+        y1: {
+          type: 'linear',
+          display: false,
+          position: 'right',
+          grid: { display: false },
+          min: 0,
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

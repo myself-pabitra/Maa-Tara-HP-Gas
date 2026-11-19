@@ -24,4 +24,14 @@ urlpatterns = [
         views.topup_stock,
         name="topup_stock",
     ),
+    path(
+        "daily-stock-trend/",
+        views.daily_stock_trend,
+        name="daily_stock_trend",
+    ),
+    path(
+        "product-trend/",
+        views.daily_stock_trend,
+        name="product_stock_trend",
+    ),
 ]

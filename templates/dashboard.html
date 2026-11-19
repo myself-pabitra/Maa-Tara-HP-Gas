@@ -374,6 +374,92 @@
     </form>
   </div>
 
+  {% if total_expiring_licenses_count > 0 %}
+  <!-- ════════════════════════════════════════
+       TOP ALERT: EXPIRING / EXPIRED VEHICLE PAPERS
+  ════════════════════════════════════════ -->
+  <div class="dash-card border-l-4 border-l-rose-500 shadow-sm bg-gradient-to-r from-rose-50/40 via-amber-50/20 to-white">
+    <div class="dash-card-header !pb-3 border-b border-slate-100">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-sm font-bold shrink-0">
+          <i class="fa-solid fa-truck-front animate-pulse"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="dash-card-title text-slate-900 font-extrabold text-sm sm:text-base">
+              Expiring / Expired Vehicle Papers
+            </span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-xs">
+              <i class="fa-solid fa-circle-exclamation text-[9px]"></i> Action Required
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium mt-0.5">Fleet legal compliance alert &bull; Renew before expiry to avoid transport disruption</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="{% url 'license_renewal_view' %}" class="pill pill-rose hover:opacity-90 transition font-bold" title="View all vehicle licenses">
+          {{ total_expiring_licenses_count }} Due / Expired <i class="fa-solid fa-arrow-right text-[9px] ml-1"></i>
+        </a>
+        <a href="{% url 'license_renewal_update' %}" class="btn-create-item !py-1.5 !px-3 !text-xs hidden sm:inline-flex" title="Add / Renew Paper">
+          <i class="fa-solid fa-plus text-[10px]"></i> Renew
+        </a>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="dash-table w-full">
+        <thead>
+          <tr>
+            <th>Vehicle No</th>
+            <th>Vehicle Name</th>
+            <th>Document</th>
+            <th>Expiry Date</th>
+            <th class="text-right">Remaining / Status</th>
+            <th class="text-center w-24">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lic in expiring_licenses %}
+          <tr class="hover:bg-rose-50/30 transition">
+            <td class="font-mono text-xs font-bold text-slate-900">{{ lic.vehicle_no }}</td>
+            <td class="font-medium text-slate-700 text-xs">{{ lic.vehicle_name }}</td>
+            <td><span class="pill pill-indigo">{{ lic.paper_display }}</span></td>
+            <td>
+              <div class="text-xs text-slate-700 font-semibold">{{ lic.expire_date|date:"d M Y" }}</div>
+              <div class="text-[10px] text-slate-400 font-medium">{{ lic.expire_date|date:"l" }}</div>
+            </td>
+            <td class="text-right">
+              {% if lic.remaining_days < 0 %}
+                <span class="pill pill-rose font-bold">
+                  <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                  Overdue by {{ lic.remaining_days|stringformat:"d"|slice:"1:" }} day{{ lic.remaining_days|stringformat:"d"|slice:"1:"|pluralize }}
+                </span>
+              {% elif lic.remaining_days == 0 %}
+                <span class="pill pill-rose font-black animate-pulse">
+                  <i class="fa-solid fa-bell text-[10px]"></i> Expires Today!
+                </span>
+              {% elif lic.remaining_days <= 10 %}
+                <span class="pill pill-amber font-bold">
+                  <i class="fa-solid fa-clock text-[10px]"></i> {{ lic.remaining_days }} day{{ lic.remaining_days|pluralize }} left
+                </span>
+              {% else %}
+                <span class="pill pill-amber">
+                  <i class="fa-solid fa-hourglass-half text-[10px]"></i> {{ lic.remaining_days }} days left
+                </span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <a href="{% url 'license_renewal_update_record' lic.id %}" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold inline-flex items-center gap-1 hover:underline">
+                <i class="fa-solid fa-pen-to-square text-[10px]"></i> Edit
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- ════════════════════════════════════════
        KPI ROW 1 — Financial
   ════════════════════════════════════════ -->
@@ -765,55 +851,6 @@
     </div>
 
   </div>
-
-  {% if total_expiring_licenses_count > 0 %}
-  <!-- ════════════════════════════════════════
-       VEHICLE COMPLIANCE ALERTS
-  ════════════════════════════════════════ -->
-  <div class="dash-card">
-    <div class="dash-card-header">
-      <div>
-        <span class="dash-card-title">
-          <i class="fa-solid fa-truck-front text-amber-500"></i> Expiring / Expired Vehicle Papers
-        </span>
-        <span class="text-[11px] text-slate-400 font-medium ml-2">Action required for fleet legal compliance</span>
-      </div>
-      <a href="{% url 'license_renewal_view' %}" class="pill pill-warn hover:opacity-80 transition" title="View all license renewals">
-        {{ total_expiring_licenses_count }} Due / Expired <i class="fa-solid fa-arrow-right text-[9px]"></i>
-      </a>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="dash-table w-full">
-        <thead>
-          <tr>
-            <th>Vehicle No</th>
-            <th>Vehicle Name</th>
-            <th>Document</th>
-            <th>Expiry Date</th>
-            <th class="text-right">Remaining / Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for lic in expiring_licenses %}
-          <tr>
-            <td class="font-mono text-xs font-bold text-slate-800">{{ lic.vehicle_no }}</td>
-            <td class="font-medium text-slate-700">{{ lic.vehicle_name }}</td>
-            <td><span class="pill pill-indigo">{{ lic.paper_display }}</span></td>
-            <td class="text-xs text-slate-600 font-semibold">{{ lic.expire_date|date:"d M Y" }}</td>
-            <td class="text-right">
-              {% if lic.status == 'Expired' %}
-                <span class="pill pill-err">Expired ({{ lic.remaining_days }}d)</span>
-              {% else %}
-                <span class="pill pill-warn">{{ lic.remaining_days }} day{{ lic.remaining_days|pluralize }} left</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-  {% endif %}
 
 </div>
 
