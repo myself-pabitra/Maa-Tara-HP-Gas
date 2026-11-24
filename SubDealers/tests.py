@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from SubDealers.models import DailyInvoice, DailyInvoiceLineItem, Subdealer
 from UserDAC.models import DACEntry
+from UserDAC.helpers import recalculate_balances
 from inventory.models import ProductInventory
 
 
@@ -154,3 +155,121 @@ class InvoiceUpdateDACTests(TestCase):
         # Step 5: Verify product inventory is still 90 (reverted 10 then deducted 10)
         self.product.refresh_from_db()
         self.assertEqual(self.product.product_quantity, 90)
+
+
+class SubdealerAuditLogTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        User = get_user_model()
+        self.user = User.objects.create_user(username="audituser", password="password")
+        self.client.force_login(self.user)
+
+    def test_subdealer_creation_logs_audit_entry(self):
+        response = self.client.post(
+            reverse("CreateNewSubDealers"),
+            {
+                "name": "New Partner",
+                "phone_number": "9876500000",
+                "address": "Market Complex",
+                "dac_percentage": "95.00",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+
+        from SubDealers.models import SubdealerAuditLog
+        sub = Subdealer.objects.filter(name="New Partner").first()
+        self.assertIsNotNone(sub)
+
+        log = SubdealerAuditLog.objects.filter(subdealer=sub, change_type="CREATED").first()
+        self.assertIsNotNone(log)
+        self.assertEqual(log.new_dac_percentage, Decimal("95.00"))
+        self.assertEqual(log.changed_by, self.user)
+
+    def test_dac_percentage_change_logs_audit_entry_and_preserves_old_entries(self):
+        sub = Subdealer.objects.create(
+            name="Testing Partner",
+            phone_number="9876511111",
+            address="Village 1",
+            dac_percentage=Decimal("90.00"),
+        )
+
+        # 1. First DAC entry at 90%
+        entry1 = DACEntry.objects.create(
+            subdealer=sub,
+            entry_date=date(2026, 11, 1),
+            transaction_type="CR",
+            transaction_quantity=Decimal("10.00"),
+            dac_percentage_at_entry=Decimal("90.00"),
+        )
+        recalculate_balances(sub)
+        entry1.refresh_from_db()
+        self.assertEqual(entry1.effective_quantity, Decimal("9.00"))
+        self.assertEqual(entry1.closing_balance, Decimal("9.00"))
+
+        # 2. Update DAC % from 90% to 95% via edit_subdealer view
+        res = self.client.post(
+            reverse("edit_subdealer", args=[sub.id]),
+            {
+                "name": "Testing Partner",
+                "phone_number": "9876511111",
+                "address": "Village 1 Updated",
+                "dac_percentage": "95.00",
+            },
+        )
+        self.assertEqual(res.status_code, 302)
+
+        sub.refresh_from_db()
+        self.assertEqual(sub.dac_percentage, Decimal("95.00"))
+
+        from SubDealers.models import SubdealerAuditLog
+        audit = SubdealerAuditLog.objects.filter(subdealer=sub, change_type="DAC_PERCENTAGE").first()
+        self.assertIsNotNone(audit)
+        self.assertEqual(audit.old_dac_percentage, Decimal("90.00"))
+        self.assertEqual(audit.new_dac_percentage, Decimal("95.00"))
+        self.assertEqual(audit.changed_by, self.user)
+
+        # 3. Second DAC entry created after the change -> uses 95%
+        entry2 = DACEntry.objects.create(
+            subdealer=sub,
+            entry_date=date(2026, 11, 20),
+            transaction_type="CR",
+            transaction_quantity=Decimal("10.00"),
+            dac_percentage_at_entry=sub.dac_percentage,
+        )
+        recalculate_balances(sub)
+
+        # 4. Verify historical entry remained at 9.00 and new entry is 9.50
+        entry1.refresh_from_db()
+        entry2.refresh_from_db()
+        self.assertEqual(entry1.effective_quantity, Decimal("9.00"))
+        self.assertEqual(entry2.effective_quantity, Decimal("9.50"))
+        self.assertEqual(entry2.closing_balance, Decimal("18.50"))
+
+    def test_audit_logs_view_filtering(self):
+        sub = Subdealer.objects.create(
+            name="Filter Partner",
+            phone_number="9876522222",
+            dac_percentage=Decimal("100.00"),
+        )
+        from SubDealers.models import SubdealerAuditLog
+        SubdealerAuditLog.objects.create(
+            subdealer=sub,
+            subdealer_name=sub.name,
+            subdealer_code=sub.subdealerCode,
+            changed_by=self.user,
+            change_type="DAC_PERCENTAGE",
+            old_dac_percentage=Decimal("100.00"),
+            new_dac_percentage=Decimal("95.00"),
+            details="Annual revision",
+        )
+
+        res = self.client.get(reverse("subdealer_audit_logs"))
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "Filter Partner")
+        self.assertContains(res, "95")
+
+        # Filter by subdealer
+        res_filtered = self.client.get(reverse("subdealer_audit_logs"), {"subdealer": sub.id})
+        self.assertEqual(res_filtered.status_code, 200)
+        self.assertContains(res_filtered, "Filter Partner")
+

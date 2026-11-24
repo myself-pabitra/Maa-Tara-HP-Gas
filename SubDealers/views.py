@@ -27,6 +27,7 @@ from .models import (
     DailyInvoiceLineItem,
     PredefinedExpense,
     Subdealer,
+    SubdealerAuditLog,
     SubDealerSKUDiscount,
 )
 
@@ -47,11 +48,22 @@ def CreateNewSubDealers(request):
 
         # Address is optional
         if subDealer_name and phone_number:
-            Subdealer.objects.create(
+            new_sub = Subdealer.objects.create(
                 name=subDealer_name,
                 phone_number=phone_number,
                 address=address,
                 dac_percentage=dac_percentage,
+            )
+
+            user = request.user if request.user.is_authenticated else None
+            SubdealerAuditLog.objects.create(
+                subdealer=new_sub,
+                subdealer_name=new_sub.name,
+                subdealer_code=new_sub.subdealerCode,
+                changed_by=user,
+                change_type="CREATED",
+                new_dac_percentage=dac_percentage,
+                details=f"Subdealer created with {dac_percentage}% DAC quota.",
             )
 
             messages.success(
@@ -103,19 +115,34 @@ def edit_subdealer(request, subdealer_id):
     subdealer = get_object_or_404(Subdealer, pk=subdealer_id)
 
     if request.method == "POST":
-        name = request.POST.get("name")
-        phone_number = request.POST.get("phone_number")
-        address = request.POST.get("address")
-        dac_percentage_raw = request.POST.get("dac_percentage", "100")
+        name = request.POST.get("name", "").strip()
+        phone_number = request.POST.get("phone_number", "").strip()
+        address = request.POST.get("address", "").strip()
+        dac_percentage_raw = request.POST.get("dac_percentage", "100").strip()
 
         try:
             dac_percentage = Decimal(dac_percentage_raw)
         except InvalidOperation:
             dac_percentage = Decimal("100")
 
-        if not name or not phone_number or not address:
-            messages.error(request, "Please fill in all fields before saving.")
+        if not name or not phone_number:
+            messages.error(request, "Subdealer Name and Phone Number are required.")
             return redirect("edit_subdealer", subdealer_id=subdealer.id)
+
+        old_dac_pct = subdealer.dac_percentage
+        old_name = subdealer.name
+        old_phone = subdealer.phone_number
+        old_address = subdealer.address
+
+        changes = []
+        if old_name != name:
+            changes.append(f"Name: '{old_name}' → '{name}'")
+        if old_phone != phone_number:
+            changes.append(f"Phone: '{old_phone}' → '{phone_number}'")
+        if (old_address or "") != (address or ""):
+            changes.append("Address updated")
+
+        dac_changed = (old_dac_pct != dac_percentage)
 
         subdealer.name = name
         subdealer.phone_number = phone_number
@@ -123,14 +150,45 @@ def edit_subdealer(request, subdealer_id):
         subdealer.dac_percentage = dac_percentage
         subdealer.save()
 
-        messages.success(request, "Subdealer updated successfully.")
+        user = request.user if request.user.is_authenticated else None
+
+        if dac_changed:
+            changes_desc = f"DAC % updated from {old_dac_pct}% to {dac_percentage}%."
+            if changes:
+                changes_desc += " Profile changes: " + ", ".join(changes)
+            SubdealerAuditLog.objects.create(
+                subdealer=subdealer,
+                subdealer_name=subdealer.name,
+                subdealer_code=subdealer.subdealerCode,
+                changed_by=user,
+                change_type="DAC_PERCENTAGE",
+                old_dac_percentage=old_dac_pct,
+                new_dac_percentage=dac_percentage,
+                details=changes_desc,
+            )
+        elif changes:
+            SubdealerAuditLog.objects.create(
+                subdealer=subdealer,
+                subdealer_name=subdealer.name,
+                subdealer_code=subdealer.subdealerCode,
+                changed_by=user,
+                change_type="PROFILE_UPDATE",
+                old_dac_percentage=old_dac_pct,
+                new_dac_percentage=old_dac_pct,
+                details=", ".join(changes),
+            )
+
+        messages.success(request, f"Subdealer '{subdealer.name}' updated successfully.")
         return redirect("view_subdealers")
+
+    recent_logs = SubdealerAuditLog.objects.filter(subdealer=subdealer).order_by("-created_at")[:5]
 
     return render(
         request,
         "SubDealers/edit_subdealer.html",
         {
             "subdealer": subdealer,
+            "recent_logs": recent_logs,
             "page_type": "edit_subdealer",
         },
     )
@@ -140,8 +198,23 @@ def delete_subdealer(request, subdealer_id):
     subdealer = get_object_or_404(Subdealer, pk=subdealer_id)
 
     if request.method == "POST":
+        user = request.user if request.user.is_authenticated else None
         try:
+            sub_name = subdealer.name
+            sub_code = subdealer.subdealerCode
+            old_pct = subdealer.dac_percentage
             subdealer.delete()
+
+            SubdealerAuditLog.objects.create(
+                subdealer=None,
+                subdealer_name=sub_name,
+                subdealer_code=sub_code,
+                changed_by=user,
+                change_type="DELETED",
+                old_dac_percentage=old_pct,
+                details=f"Subdealer {sub_name} ({sub_code}) was deleted.",
+            )
+
             messages.success(request, "Subdealer deleted successfully.")
         except ProtectedError:
             messages.error(
@@ -152,6 +225,55 @@ def delete_subdealer(request, subdealer_id):
 
     messages.error(request, "Invalid delete request.")
     return redirect("view_subdealers")
+
+
+def subdealer_audit_logs(request):
+    subdealers = Subdealer.objects.all().order_by("name")
+    selected_subdealer = request.GET.get("subdealer", "").strip()
+    selected_type = request.GET.get("type", "").strip()
+    from_date = request.GET.get("from_date", "").strip()
+    to_date = request.GET.get("to_date", "").strip()
+
+    logs = SubdealerAuditLog.objects.select_related("subdealer", "changed_by").all()
+
+    if selected_subdealer:
+        logs = logs.filter(Q(subdealer_id=selected_subdealer) | Q(subdealer_code=selected_subdealer))
+
+    if selected_type:
+        logs = logs.filter(change_type=selected_type)
+
+    if from_date:
+        logs = logs.filter(created_at__date__gte=from_date)
+
+    if to_date:
+        logs = logs.filter(created_at__date__lte=to_date)
+
+    total_logs = logs.count()
+    dac_pct_changes_count = logs.filter(change_type="DAC_PERCENTAGE").count()
+    profile_updates_count = logs.filter(change_type="PROFILE_UPDATE").count()
+
+    paginator = Paginator(logs, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "SubDealers/audit_logs.html",
+        {
+            "logs": page_obj,
+            "page_obj": page_obj,
+            "subdealers": subdealers,
+            "selected_subdealer": selected_subdealer,
+            "selected_type": selected_type,
+            "from_date": from_date,
+            "to_date": to_date,
+            "total_logs": total_logs,
+            "dac_pct_changes_count": dac_pct_changes_count,
+            "profile_updates_count": profile_updates_count,
+            "page_type": "subdealer_audit_logs",
+        },
+    )
+
 
 
 def addSubDealersProductDiscount(request):

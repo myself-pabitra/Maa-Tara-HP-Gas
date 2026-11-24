@@ -75,6 +75,10 @@
            class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition {% if page_type == 'pending_dac_orders' %}bg-indigo-50 text-indigo-700 font-bold{% else %}text-slate-600 hover:text-indigo-600 hover:bg-slate-50{% endif %}">
           <i class="fa-solid fa-hourglass-half text-[9px]"></i> Pending DAC Orders
         </a>
+        <a href="{% url 'subdealer_audit_logs' %}?type=DAC_PERCENTAGE"
+           class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition {% if page_type == 'subdealer_audit_logs' %}bg-indigo-50 text-indigo-700 font-bold{% else %}text-slate-600 hover:text-indigo-600 hover:bg-slate-50{% endif %}">
+          <i class="fa-solid fa-clock-rotate-left text-[9px]"></i> DAC % Change Log
+        </a>
       </div>
     </details>
 
@@ -141,6 +145,10 @@
         <a href="{% url 'view_subdealer_discounts' %}"
            class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition {% if page_type == 'view_discount' %}bg-indigo-50 text-indigo-700 font-bold{% else %}text-slate-600 hover:text-indigo-600 hover:bg-slate-50{% endif %}">
           <i class="fa-solid fa-tags text-[9px]"></i> SKU Discounts
+        </a>
+        <a href="{% url 'subdealer_audit_logs' %}"
+           class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition {% if page_type == 'subdealer_audit_logs' %}bg-indigo-50 text-indigo-700 font-bold{% else %}text-slate-600 hover:text-indigo-600 hover:bg-slate-50{% endif %}">
+          <i class="fa-solid fa-clipboard-check text-[9px]"></i> Audit Logs & History
         </a>
         <a href="{% url 'addSubDealersProductDiscount' %}"
            class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition {% if page_type == 'add_discount' %}bg-indigo-50 text-indigo-700 font-bold{% else %}text-slate-600 hover:text-indigo-600 hover:bg-slate-50{% endif %}">

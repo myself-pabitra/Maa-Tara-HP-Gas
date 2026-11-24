@@ -2369,6 +2369,9 @@
   .h-64 {
     height: calc(var(--spacing) * 64);
   }
+  .h-\[40px\] {
+    height: 40px;
+  }
   .h-\[42px\] {
     height: 42px;
   }
@@ -2979,6 +2982,9 @@
   .border-teal-100 {
     border-color: var(--color-teal-100);
   }
+  .border-teal-200 {
+    border-color: var(--color-teal-200);
+  }
   .border-teal-200\/80 {
     border-color: color-mix(in srgb, oklch(91% 0.096 180.426) 80%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -3411,6 +3417,9 @@
   }
   .p-2 {
     padding: calc(var(--spacing) * 2);
+  }
+  .p-2\.5 {
+    padding: calc(var(--spacing) * 2.5);
   }
   .p-3 {
     padding: calc(var(--spacing) * 3);
@@ -4809,6 +4818,11 @@
   .lg\:bottom-auto {
     @media (width >= 64rem) {
       bottom: auto;
+    }
+  }
+  .lg\:col-span-1 {
+    @media (width >= 64rem) {
+      grid-column: span 1 / span 1;
     }
   }
   .lg\:col-span-2 {

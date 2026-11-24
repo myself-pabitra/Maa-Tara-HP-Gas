@@ -1,6 +1,7 @@
 from decimal import Decimal
 import random
 import string
+from django.conf import settings
 from django.db import models, transaction
 from inventory.models import ProductInventory
 from django.utils import timezone
@@ -45,6 +46,46 @@ class Subdealer(models.Model):
         if not self.subdealerCode:  # Only generate if not already set
             self.subdealerCode = self.create_subdealer_code()
         super().save(*args, **kwargs)
+
+
+class SubdealerAuditLog(models.Model):
+    CHANGE_TYPES = (
+        ("DAC_PERCENTAGE", "DAC % Change"),
+        ("PROFILE_UPDATE", "Profile Update"),
+        ("CREATED", "Subdealer Created"),
+        ("DELETED", "Subdealer Deleted"),
+    )
+
+    subdealer = models.ForeignKey(
+        Subdealer,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_logs",
+    )
+    subdealer_name = models.CharField(max_length=100)
+    subdealer_code = models.CharField(max_length=50)
+
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="subdealer_audit_logs",
+    )
+
+    change_type = models.CharField(max_length=20, choices=CHANGE_TYPES, default="PROFILE_UPDATE")
+    old_dac_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    new_dac_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    details = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "Subdealer_Audit_Log"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.subdealer_name} - {self.get_change_type_display()} at {self.created_at}"
 
 
 class SubDealerSKUDiscount(models.Model):

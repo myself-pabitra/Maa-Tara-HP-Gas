@@ -1,0 +1,370 @@
+{% extends "layout.html" %}
+{% load static humanize %}
+
+{% block title %}Subdealer & DAC % Change Logs | Maa Tara HP Gas{% endblock %}
+
+{% block content %}
+<style>
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .dash-table { border-collapse: separate; border-spacing: 0; }
+  .dash-table thead th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .dash-table tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 13px;
+    color: #334155;
+    vertical-align: middle;
+  }
+  .dash-table tbody tr:hover td { background-color: #f8fafc; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+  .pill-amber { background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; }
+  .pill-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .pill-teal { background: #f0fdf4; color: #0f766e; border: 1px solid #ccfbf1; }
+
+  .custom-input {
+    height: 40px;
+    padding: 0 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #1e293b;
+    background: #ffffff;
+    outline: none;
+    transition: all .18s;
+  }
+  .custom-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+  }
+</style>
+
+<div class="space-y-6">
+
+  <!-- ════════════════════════════════════════
+       TOP HEADER
+  ════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a href="{% url 'dashboard' %}" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition">
+          <i class="fa-solid fa-house mr-1"></i> Dashboard
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <a href="{% url 'view_subdealers' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          Subdealers
+        </a>
+        <span class="text-xs text-slate-300">/</span>
+        <span class="text-xs font-medium text-slate-500">Audit Logs</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Subdealer &amp; DAC % Change Log</h1>
+        <span class="pill pill-indigo">
+          <i class="fa-solid fa-clock-rotate-left text-[10px]"></i> Audit Trail
+        </span>
+      </div>
+      <p class="text-xs text-slate-500 mt-1">
+        Permanent, immutable record of every DAC % rate modification and subdealer profile revision.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <a href="{% url 'view_dac' %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-book-open text-indigo-600"></i> DAC Ledger
+      </a>
+      <a href="{% url 'pending_dac_orders' %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-hourglass-half text-amber-600"></i> Pending DAC
+      </a>
+      <a href="{% url 'view_subdealers' %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition shadow-sm">
+        <i class="fa-solid fa-users"></i> Subdealers List
+      </a>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       KPI METRIC CARDS
+  ════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+    <!-- Total Changes Logged -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Total Audit Events</div>
+        <div class="text-2xl font-extrabold text-slate-900">{{ total_logs|default:0|intcomma }}</div>
+        <div class="text-[11px] text-slate-500 mt-0.5 font-medium">All logged actions</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-indigo-600 bg-indigo-50 border border-indigo-100">
+        <i class="fa-solid fa-list-check text-lg"></i>
+      </div>
+    </div>
+
+    <!-- DAC % Rate Revisions -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-teal-600 mb-0.5">DAC % Rate Changes</div>
+        <div class="text-2xl font-extrabold text-teal-700">{{ dac_pct_changes_count|default:0|intcomma }}</div>
+        <div class="text-[11px] text-teal-600 mt-0.5 font-medium">Quota rate adjustments</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-teal-600 bg-teal-50 border border-teal-100">
+        <i class="fa-solid fa-percent text-lg"></i>
+      </div>
+    </div>
+
+    <!-- Profile & Contact Updates -->
+    <div class="stat-card">
+      <div>
+        <div class="text-[11.5px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Profile &amp; Info Updates</div>
+        <div class="text-2xl font-extrabold text-slate-700">{{ profile_updates_count|default:0|intcomma }}</div>
+        <div class="text-[11px] text-slate-500 mt-0.5 font-medium">Name, phone, address edits</div>
+      </div>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-slate-600 bg-slate-50 border border-slate-100">
+        <i class="fa-solid fa-id-card text-lg"></i>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SEARCH & FILTER TOOLBAR
+  ════════════════════════════════════════ -->
+  <div class="billing-card p-4">
+    <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+
+      <!-- Subdealer Filter -->
+      <div class="lg:col-span-4">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-solid fa-user text-slate-400 mr-1"></i> Subdealer
+        </label>
+        <select name="subdealer" class="custom-input w-full">
+          <option value="">All Subdealers</option>
+          {% for s in subdealers %}
+          <option value="{{ s.id }}" {% if selected_subdealer == s.id|stringformat:"s" %}selected{% endif %}>
+            {{ s.name }} ({{ s.subdealerCode }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Change Type Filter -->
+      <div class="lg:col-span-3">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-solid fa-filter text-slate-400 mr-1"></i> Change Type
+        </label>
+        <select name="type" class="custom-input w-full">
+          <option value="">All Event Types</option>
+          <option value="DAC_PERCENTAGE" {% if selected_type == "DAC_PERCENTAGE" %}selected{% endif %}>DAC % Changes Only</option>
+          <option value="PROFILE_UPDATE" {% if selected_type == "PROFILE_UPDATE" %}selected{% endif %}>Profile Updates</option>
+          <option value="CREATED" {% if selected_type == "CREATED" %}selected{% endif %}>New Subdealers</option>
+          <option value="DELETED" {% if selected_type == "DELETED" %}selected{% endif %}>Deleted Subdealers</option>
+        </select>
+      </div>
+
+      <!-- Date Range (From) -->
+      <div class="lg:col-span-2">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-regular fa-calendar mr-1 text-slate-400"></i> From
+        </label>
+        <input type="date" name="from_date" value="{{ from_date }}" class="custom-input w-full font-mono text-xs" />
+      </div>
+
+      <!-- Date Range (To) -->
+      <div class="lg:col-span-2">
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <i class="fa-regular fa-calendar mr-1 text-slate-400"></i> To
+        </label>
+        <input type="date" name="to_date" value="{{ to_date }}" class="custom-input w-full font-mono text-xs" />
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="lg:col-span-1 flex items-center gap-1.5">
+        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs h-[40px] rounded-xl transition flex items-center justify-center" title="Apply Filters">
+          <i class="fa-solid fa-filter text-[11px]"></i>
+        </button>
+        {% if selected_subdealer or selected_type or from_date or to_date %}
+        <a href="{% url 'subdealer_audit_logs' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs h-[40px] px-3 rounded-xl transition flex items-center justify-center" title="Reset Filters">
+          <i class="fa-solid fa-xmark"></i>
+        </a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       AUDIT LOG TABLE
+  ════════════════════════════════════════ -->
+  <div class="billing-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="dash-table w-full">
+        <thead>
+          <tr>
+            <th style="width: 44px;" class="text-center">#</th>
+            <th style="width: 170px;">Date &amp; Time</th>
+            <th style="min-width: 180px;">Subdealer</th>
+            <th style="width: 150px;">Event Type</th>
+            <th style="width: 180px;">DAC % Revision</th>
+            <th style="width: 140px;">Changed By</th>
+            <th style="min-width: 220px;">Details &amp; Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <!-- Index -->
+            <td class="text-center text-xs font-bold text-slate-400">
+              {{ page_obj.start_index|add:forloop.counter0 }}
+            </td>
+
+            <!-- Date & Time -->
+            <td>
+              <div class="font-semibold text-slate-800 text-xs whitespace-nowrap">
+                <i class="fa-regular fa-clock text-slate-400 mr-1 text-[11px]"></i>
+                {{ log.created_at|date:"d M Y, h:i A" }}
+              </div>
+            </td>
+
+            <!-- Subdealer -->
+            <td>
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-black shrink-0">
+                  {{ log.subdealer_name|slice:":1"|upper }}
+                </div>
+                <div class="min-w-0">
+                  <div class="font-bold text-slate-900 text-xs sm:text-sm truncate">{{ log.subdealer_name }}</div>
+                  <span class="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded">{{ log.subdealer_code }}</span>
+                </div>
+              </div>
+            </td>
+
+            <!-- Event Type Badge -->
+            <td>
+              {% if log.change_type == "DAC_PERCENTAGE" %}
+                <span class="pill pill-teal">
+                  <i class="fa-solid fa-percent text-[10px]"></i> DAC % Change
+                </span>
+              {% elif log.change_type == "CREATED" %}
+                <span class="pill pill-emerald">
+                  <i class="fa-solid fa-plus text-[10px]"></i> Created
+                </span>
+              {% elif log.change_type == "DELETED" %}
+                <span class="pill pill-rose">
+                  <i class="fa-solid fa-trash text-[10px]"></i> Deleted
+                </span>
+              {% else %}
+                <span class="pill pill-slate">
+                  <i class="fa-solid fa-pen text-[10px]"></i> Profile Update
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- DAC % Revision Display -->
+            <td>
+              {% if log.old_dac_percentage is not None and log.new_dac_percentage is not None and log.old_dac_percentage != log.new_dac_percentage %}
+                <div class="inline-flex items-center gap-1.5 font-mono text-xs">
+                  <span class="pill pill-slate font-bold">{{ log.old_dac_percentage }}%</span>
+                  <i class="fa-solid fa-arrow-right text-[10px] text-slate-400"></i>
+                  <span class="pill pill-emerald font-extrabold text-teal-800 bg-teal-50 border border-teal-200">{{ log.new_dac_percentage }}%</span>
+                </div>
+              {% elif log.new_dac_percentage is not None %}
+                <span class="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">{{ log.new_dac_percentage }}%</span>
+              {% else %}
+                <span class="text-xs text-slate-400">—</span>
+              {% endif %}
+            </td>
+
+            <!-- Changed By User -->
+            <td>
+              <div class="flex items-center gap-1.5">
+                <i class="fa-solid fa-user-circle text-slate-400 text-xs"></i>
+                <span class="text-xs font-semibold text-slate-700">{{ log.changed_by.username|default:"System Admin" }}</span>
+              </div>
+            </td>
+
+            <!-- Details -->
+            <td>
+              <div class="text-xs text-slate-600 font-medium">
+                {{ log.details|default:"No additional details." }}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-12">
+              <div class="text-slate-300 text-4xl mb-3">
+                <i class="fa-solid fa-clipboard-check"></i>
+              </div>
+              <div class="text-slate-600 font-bold text-sm">No Audit Logs Found</div>
+              <div class="text-slate-400 text-xs mt-1">
+                Any changes to Subdealer DAC % or profile info will appear here automatically.
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+      <div>
+        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} logs
+      </div>
+      <div class="flex items-center gap-1">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if selected_subdealer %}&subdealer={{ selected_subdealer }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}"
+           class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition font-semibold text-slate-700">
+          Previous
+        </a>
+        {% endif %}
+        <span class="px-3 py-1.5 font-bold text-slate-900 bg-slate-100 rounded-lg">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if selected_subdealer %}&subdealer={{ selected_subdealer }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}"
+           class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition font-semibold text-slate-700">
+          Next
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+</div>
+{% endblock %}

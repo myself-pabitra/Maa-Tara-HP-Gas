@@ -60,8 +60,8 @@ urlpatterns = [
         views.print_mismatch_record,
         name="print_mismatch_record",
     ),
-    path(
-        "selling-history/",
+    path("audit-logs/", views.subdealer_audit_logs, name="subdealer_audit_logs"),
+    path("selling-history/",
         views.subdealer_selling_history,
         name="subdealer_selling_history",
     ),

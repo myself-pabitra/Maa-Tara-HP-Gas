@@ -1,5 +1,6 @@
 from . import views
 from django.urls import path
+from SubDealers.views import subdealer_audit_logs
 
 urlpatterns = [
     path("dac-entry/", views.dac_entry, name="dac_entry"),
@@ -7,4 +8,5 @@ urlpatterns = [
     path("dac-edit/<int:entry_id>/", views.dac_edit, name="dac_edit"),
     path("dac-delete/<int:entry_id>/", views.dac_delete, name="dac_delete"),
     path("pending-dac-orders/", views.Pending_DAC_Orders, name="pending_dac_orders"),
+    path("dac-percentage-history/", subdealer_audit_logs, name="dac_percentage_history"),
 ]
