@@ -379,29 +379,32 @@
        TOP ALERT: EXPIRING / EXPIRED VEHICLE PAPERS
   ════════════════════════════════════════ -->
   <div class="dash-card border-l-4 border-l-rose-500 shadow-sm bg-gradient-to-r from-rose-50/40 via-amber-50/20 to-white">
-    <div class="dash-card-header !pb-3 border-b border-slate-100">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-sm font-bold shrink-0">
-          <i class="fa-solid fa-truck-front animate-pulse"></i>
+    <div class="dash-card-header !pb-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-base font-bold shrink-0 shadow-2xs">
+          <i class="fa-solid fa-truck-front"></i>
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <span class="dash-card-title text-slate-900 font-extrabold text-sm sm:text-base">
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="dash-card-title text-slate-900 font-extrabold text-sm sm:text-base">
               Expiring / Expired Vehicle Papers
-            </span>
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-xs">
-              <i class="fa-solid fa-circle-exclamation text-[9px]"></i> Action Required
+            </h3>
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-xs tracking-wider uppercase">
+              <i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Action Required
             </span>
           </div>
           <p class="text-[11px] text-slate-500 font-medium mt-0.5">Fleet legal compliance alert &bull; Renew before expiry to avoid transport disruption</p>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <a href="{% url 'license_renewal_view' %}" class="pill pill-rose hover:opacity-90 transition font-bold" title="View all vehicle licenses">
-          {{ total_expiring_licenses_count }} Due / Expired <i class="fa-solid fa-arrow-right text-[9px] ml-1"></i>
+      <div class="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
+        <a href="{% url 'license_renewal_view' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition shadow-2xs" title="View all vehicle licenses">
+          <i class="fa-solid fa-folder-open text-slate-400 text-[11px]"></i>
+          <span>View All Papers</span>
+          <span class="ml-1 px-1.5 py-0.2 rounded-md bg-rose-100 text-rose-700 font-black text-[10px]">{{ total_expiring_licenses_count }}</span>
         </a>
-        <a href="{% url 'license_renewal_update' %}" class="btn-create-item !py-1.5 !px-3 !text-xs hidden sm:inline-flex" title="Add / Renew Paper">
-          <i class="fa-solid fa-plus text-[10px]"></i> Renew
+        <a href="{% url 'license_renewal_update' %}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition active:scale-95" title="Add or Renew Paper">
+          <i class="fa-solid fa-plus text-[10px]"></i>
+          <span>Renew / Add</span>
         </a>
       </div>
     </div>
@@ -414,7 +417,7 @@
             <th>Document</th>
             <th>Expiry Date</th>
             <th class="text-right">Remaining / Status</th>
-            <th class="text-center w-24">Action</th>
+            <th class="text-center w-28">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -448,8 +451,8 @@
               {% endif %}
             </td>
             <td class="text-center">
-              <a href="{% url 'license_renewal_update_record' lic.id %}" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold inline-flex items-center gap-1 hover:underline">
-                <i class="fa-solid fa-pen-to-square text-[10px]"></i> Edit
+              <a href="{% url 'license_renewal_update_record' lic.id %}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 hover:bg-indigo-100 transition shadow-2xs">
+                <i class="fa-solid fa-pen-to-square text-[10px]"></i> Renew
               </a>
             </td>
           </tr>

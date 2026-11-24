@@ -428,12 +428,12 @@ def Pending_DAC_Orders(request):
 
     for subdealer in subdealers:
 
-        # Step 1: Punched & Actual Credit in this period
+        # Step 1: Punched & Actual Credit in this period (excluding invoice reconciliation refunds)
         period_cr_entries = DACEntry.objects.filter(
             subdealer=subdealer,
             transaction_type="CR",
             **period_cr_kwargs,
-        )
+        ).exclude(description__istartswith="Refund")
         period_raw_credit = Decimal("0")
         period_dac_credited = Decimal("0")
         for entry in period_cr_entries:
@@ -478,8 +478,8 @@ def Pending_DAC_Orders(request):
         # Step 3: Total Available Bal
         available_dac_balance = (period_dac_credited + prev_balance).quantize(Decimal("0.01"))
 
-        # Step 4: Cylinders Delivered in this period
-        refills_period = (
+        # Step 4: Net Cylinders Delivered in this period (gross DR minus reconciliation refunds)
+        total_dr_period = (
             DACEntry.objects.filter(
                 subdealer=subdealer,
                 transaction_type="DR",
@@ -487,6 +487,18 @@ def Pending_DAC_Orders(request):
             ).aggregate(total=Sum("transaction_quantity"))["total"]
             or Decimal("0")
         )
+
+        total_refund_period = (
+            DACEntry.objects.filter(
+                subdealer=subdealer,
+                transaction_type="CR",
+                description__istartswith="Refund",
+                **period_cr_kwargs,
+            ).aggregate(total=Sum("transaction_quantity"))["total"]
+            or Decimal("0")
+        )
+
+        refills_period = max(Decimal("0"), total_dr_period - total_refund_period)
 
         # Step 5: Final Remaining DAC Balance
         final_remaining = (available_dac_balance - refills_period).quantize(Decimal("0.01"))

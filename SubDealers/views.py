@@ -18,6 +18,7 @@ from django.core.paginator import Paginator
 from employees.models import Employee
 from inventory.models import ProductInventory, StockBatch
 from UserDAC.models import DACEntry
+from UserDAC.helpers import recalculate_balances
 
 from .models import (
     Cylender_information,
@@ -323,6 +324,9 @@ def create_invoice(request):
                 remarks_list = request.POST.getlist("remarks[]")
                 buying_prices = request.POST.getlist("buying_price[]")
 
+                # Track affected subdealers for DAC balance recalculation
+                affected_dac_subdealers = set()
+
                 # Basic length validation
                 n = len(product_codes)
                 if not (
@@ -345,6 +349,7 @@ def create_invoice(request):
                 subtotal = Decimal("0.00")
                 total_other_expense = Decimal("0.00")
                 modes_seen = set()
+                new_sub_dac_qtys = {}
 
                 for i in range(n):
                     product_code = product_codes[i]
@@ -515,30 +520,15 @@ def create_invoice(request):
                     # Deduct DAC only for DAC applicable products
                     # ----------------------------------------------------------
 
-                    if product and product.dac_applicable:
-                        latest_entry = (
-                            DACEntry.objects.filter(subdealer=subdealer)
-                            .order_by("-entry_date", "-created_at")
-                            .first()
-                        )
-
-                        opening_balance = (
-                            latest_entry.closing_balance
-                            if latest_entry
-                            else Decimal("0.00")
-                        )
-
-                        closing_balance = opening_balance - Decimal(qty)
-
+                    if product and product.dac_applicable and qty > 0:
                         DACEntry.objects.create(
                             subdealer=subdealer,
                             entry_date=invoice.invoice_date,
                             transaction_type="DR",
                             transaction_quantity=Decimal(qty),
-                            opening_balance=opening_balance,
-                            closing_balance=closing_balance,
                             description=f"Invoice {invoice.invoice_number}",
                         )
+                        affected_dac_subdealers.add(subdealer)
 
                     # update or create cylinder info
                     if product:
@@ -594,6 +584,9 @@ def create_invoice(request):
                 invoice.other_expense = total_other_expense
                 invoice.grand_total = subtotal - total_other_expense
                 invoice.save()
+
+                for sub in affected_dac_subdealers:
+                    recalculate_balances(sub)
 
                 messages.success(
                     request, f"Invoice {invoice.invoice_number} created successfully!"
@@ -1574,6 +1567,32 @@ def edit_invoice(request, invoice_id):
                 else:
                     invoice.employees.clear()
 
+                # Map old DAC quantities per subdealer on this invoice before modification
+                old_sub_dac_qtys = {}
+                for old_item in invoice.line_items.filter(product__dac_applicable=True):
+                    old_sub_dac_qtys[old_item.subdealer] = (
+                        old_sub_dac_qtys.get(old_item.subdealer, Decimal("0"))
+                        + Decimal(old_item.quantity)
+                    )
+
+                # Revert inventory stock and cylinder due counts from existing line items
+                for old_item in invoice.line_items.select_related("product", "subdealer").all():
+                    if old_item.product:
+                        old_item.product.product_quantity += old_item.quantity
+                        old_item.product.in_stock = old_item.product.product_quantity > 0
+                        old_item.product.save(update_fields=["product_quantity", "in_stock"])
+
+                        if old_item.due_cyl:
+                            try:
+                                cyl_info = Cylender_information.objects.get(
+                                    Subdealer=old_item.subdealer,
+                                    product=old_item.product,
+                                )
+                                cyl_info.due_cylender_qty = max(0, cyl_info.due_cylender_qty - old_item.due_cyl)
+                                cyl_info.save(update_fields=["due_cylender_qty"])
+                            except Cylender_information.DoesNotExist:
+                                pass
+
                 invoice.line_items.all().delete()
                 invoice.expenses.all().delete()
 
@@ -1611,6 +1630,7 @@ def edit_invoice(request, invoice_id):
                 subtotal = Decimal("0.00")
                 total_other_expense = Decimal("0.00")
                 modes_seen = set()
+                new_sub_dac_qtys = {}
 
                 for i in range(n):
                     product_code = product_codes[i]
@@ -1711,6 +1731,18 @@ def edit_invoice(request, invoice_id):
 
                     subtotal += line_total
 
+                    # Deduct stock for updated line item
+                    if product:
+                        if product.product_quantity < qty:
+                            raise ValueError(
+                                f"Insufficient stock for {product.product_name} "
+                                f"(Available: {product.product_quantity}, "
+                                f"Requested: {qty})"
+                            )
+                        product.product_quantity -= qty
+                        product.in_stock = product.product_quantity > 0
+                        product.save(update_fields=["product_quantity", "in_stock"])
+
                     DailyInvoiceLineItem.objects.create(
                         invoice=invoice,
                         subdealer=subdealer,
@@ -1731,15 +1763,22 @@ def edit_invoice(request, invoice_id):
                         payment_status=payment_status,
                     )
 
-                    if product:
+                    # Track DAC quantities for post-reconciliation
+                    if product and product.dac_applicable and qty > 0:
+                        new_sub_dac_qtys[subdealer] = (
+                            new_sub_dac_qtys.get(subdealer, Decimal("0"))
+                            + Decimal(qty)
+                        )
+
+                    if product and due_cyl:
                         cyl_info, created = Cylender_information.objects.get_or_create(
                             Subdealer=subdealer,
                             product=product,
                             defaults={"due_cylender_qty": due_cyl},
                         )
                         if not created:
-                            cyl_info.due_cylender_qty = due_cyl
-                            cyl_info.save()
+                            cyl_info.due_cylender_qty += due_cyl
+                            cyl_info.save(update_fields=["due_cylender_qty"])
 
                 for key in request.POST:
                     if key.startswith("expense_type_"):
@@ -1781,6 +1820,50 @@ def edit_invoice(request, invoice_id):
                 invoice.other_expense = total_other_expense
                 invoice.grand_total = subtotal - total_other_expense
                 invoice.save()
+
+                # Reconcile DAC entries: create explicit Refund transactions for reduced/swapped subdealers
+                all_dac_subdealers = set(old_sub_dac_qtys.keys()) | set(new_sub_dac_qtys.keys())
+                for sub in all_dac_subdealers:
+                    old_q = old_sub_dac_qtys.get(sub, Decimal("0"))
+                    new_q = new_sub_dac_qtys.get(sub, Decimal("0"))
+                    diff = new_q - old_q
+
+                    if diff < 0:
+                        # Subdealer was debited on the invoice but quantity was reduced or transferred to another subdealer
+                        refund_qty = abs(diff)
+                        new_recipient_names = ", ".join(s.name for s in new_sub_dac_qtys.keys()) if new_sub_dac_qtys else "Cancelled"
+                        if new_q == 0:
+                            desc = f"Refund: Invoice {invoice.invoice_number} (Reconciled to {new_recipient_names})"
+                        else:
+                            desc = f"Refund: Invoice {invoice.invoice_number} (Quantity reduced from {old_q} to {new_q})"
+
+                        DACEntry.objects.create(
+                            subdealer=sub,
+                            entry_date=invoice.invoice_date,
+                            transaction_type="CR",
+                            transaction_quantity=refund_qty,
+                            dac_percentage_at_entry=Decimal("100.00"),
+                            description=desc,
+                        )
+                    elif diff > 0:
+                        # Additional quantity or new subdealer added to this invoice
+                        add_qty = diff
+                        old_source_names = ", ".join(s.name for s in old_sub_dac_qtys.keys())
+                        if old_q == 0:
+                            desc = f"Invoice {invoice.invoice_number} (Reconciled from {old_source_names})" if old_source_names else f"Invoice {invoice.invoice_number}"
+                        else:
+                            desc = f"Invoice {invoice.invoice_number} (Quantity increased from {old_q} to {new_q})"
+
+                        DACEntry.objects.create(
+                            subdealer=sub,
+                            entry_date=invoice.invoice_date,
+                            transaction_type="DR",
+                            transaction_quantity=add_qty,
+                            description=desc,
+                        )
+
+                for sub in all_dac_subdealers:
+                    recalculate_balances(sub)
 
                 messages.success(
                     request, f"Invoice {invoice.invoice_number} updated successfully!"

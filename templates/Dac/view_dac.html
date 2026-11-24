@@ -429,15 +429,22 @@
             <td>
               <div class="flex items-center gap-1.5 flex-wrap">
                 {% if entry.transaction_type == "CR" %}
-                  <span class="pill pill-emerald"><i class="fa-solid fa-circle-plus text-[10px]"></i> Credit</span>
-                  {% if entry.dac_percentage_at_entry %}
-                    <span class="text-[10px] font-bold text-teal-800 bg-teal-50 border border-teal-200/80 px-1.5 py-0.2 rounded" title="Snapshot DAC percentage applied for this credit">
-                      {{ entry.dac_percentage_at_entry }}% DAC
+                  {% if "refund" in entry.description|lower %}
+                    <span class="pill pill-warn font-bold"><i class="fa-solid fa-rotate-left text-[10px]"></i> Refund</span>
+                    <span class="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200/80 px-1.5 py-0.2 rounded" title="100% Refund for invoice reconciliation">
+                      100% Refund
                     </span>
-                  {% elif entry.subdealer.dac_percentage %}
-                    <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">
-                      {{ entry.subdealer.dac_percentage }}% DAC
-                    </span>
+                  {% else %}
+                    <span class="pill pill-emerald"><i class="fa-solid fa-circle-plus text-[10px]"></i> Credit</span>
+                    {% if entry.dac_percentage_at_entry %}
+                      <span class="text-[10px] font-bold text-teal-800 bg-teal-50 border border-teal-200/80 px-1.5 py-0.2 rounded" title="Snapshot DAC percentage applied for this credit">
+                        {{ entry.dac_percentage_at_entry }}% DAC
+                      </span>
+                    {% elif entry.subdealer.dac_percentage %}
+                      <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">
+                        {{ entry.subdealer.dac_percentage }}% DAC
+                      </span>
+                    {% endif %}
                   {% endif %}
                 {% else %}
                   <span class="pill pill-rose"><i class="fa-solid fa-circle-minus text-[10px]"></i> Debit</span>
