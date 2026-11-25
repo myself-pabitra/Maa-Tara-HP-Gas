@@ -308,8 +308,7 @@ def daily_stock_trend(request):
         to_date = today
     elif preset == "this_month":
         from_date = date(today.year, today.month, 1)
-        last_day = calendar.monthrange(today.year, today.month)[1]
-        to_date = date(today.year, today.month, last_day)
+        to_date = today  # Month-to-date up to today to prevent phantom future days
     elif preset == "last_month":
         first_this_month = date(today.year, today.month, 1)
         last_prev_month = first_this_month - timedelta(days=1)
@@ -326,10 +325,13 @@ def daily_stock_trend(request):
         except ValueError:
             to_date = target_date
     else:
-        # Default to the month of the target_date
+        # Default to month-to-date up to today
         from_date = date(target_date.year, target_date.month, 1)
-        last_day = calendar.monthrange(target_date.year, target_date.month)[1]
-        to_date = date(target_date.year, target_date.month, last_day)
+        to_date = min(target_date, today)
+
+    # Do not project historical stock into future days
+    if to_date > today:
+        to_date = today
 
     if from_date > to_date:
         from_date, to_date = to_date, from_date
@@ -483,27 +485,40 @@ def daily_stock_trend(request):
         stock_at_to_date = selected_product.product_quantity + sales_after_to - topups_after_to
 
         # Aggregate daily sales and topups in [from_date, to_date]
-        sales_in_range = {
-            row["invoice__invoice_date"]: row["qty"]
-            for row in DailyInvoiceLineItem.objects.filter(
+        items_in_range_qs = (
+            DailyInvoiceLineItem.objects.filter(
                 product=selected_product,
                 invoice__invoice_date__gte=from_date,
                 invoice__invoice_date__lte=to_date,
             )
-            .values("invoice__invoice_date")
-            .annotate(qty=Sum("quantity"))
-        }
+            .select_related("invoice", "subdealer")
+            .order_by("-id")
+        )
+        items_by_date = {}
+        sales_in_range = {}
+        for item in items_in_range_qs:
+            d = item.invoice.invoice_date
+            if d not in items_by_date:
+                items_by_date[d] = []
+            items_by_date[d].append(item)
+            sales_in_range[d] = sales_in_range.get(d, 0) + item.quantity
 
-        topups_in_range = {
-            row["added_at__date"]: row["qty"]
-            for row in StockBatch.objects.filter(
+        batches_in_range_qs = (
+            StockBatch.objects.filter(
                 product=selected_product,
                 added_at__date__gte=from_date,
                 added_at__date__lte=to_date,
             )
-            .values("added_at__date")
-            .annotate(qty=Sum("quantity_added"))
-        }
+            .order_by("-added_at")
+        )
+        batches_by_date = {}
+        topups_in_range = {}
+        for b in batches_in_range_qs:
+            d = b.added_at.date()
+            if d not in batches_by_date:
+                batches_by_date[d] = []
+            batches_by_date[d].append(b)
+            topups_in_range[d] = topups_in_range.get(d, 0) + b.quantity_added
 
         # Step backwards from to_date to from_date
         curr_closing = stock_at_to_date
@@ -514,6 +529,8 @@ def daily_stock_trend(request):
             inw = topups_in_range.get(curr, 0)
             outw = sales_in_range.get(curr, 0)
             opn = curr_closing + outw - inw
+            day_invoices = items_by_date.get(curr, [])
+            day_batches = batches_by_date.get(curr, [])
             has_act = (inw > 0 or outw > 0)
 
             range_total_inward += inw
@@ -538,6 +555,8 @@ def daily_stock_trend(request):
                 "net_change": inw - outw,
                 "has_activity": has_act,
                 "is_target_date": (curr == target_date),
+                "invoices": day_invoices,
+                "batches": day_batches,
             })
 
             curr_closing = opn

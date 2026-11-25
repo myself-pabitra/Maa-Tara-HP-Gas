@@ -11,10 +11,28 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://kit.fontawesome.com/6f9c0d8b17.js" crossorigin="anonymous"></script>
+<script>
+  (function() {
+    var theme = localStorage.getItem('app_theme');
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+</script>
 <style>
   * { font-family: 'Inter', sans-serif; }
 
   body { background: #f1f5f9; min-height: 100vh; }
+
+  html.dark body { background: #080d1a !important; color: #f8fafc !important; }
+  html.dark .form-card { background: #0f172a !important; border: 1px solid #1e293b !important; box-shadow: 0 16px 40px rgba(0,0,0,0.6) !important; }
+  html.dark .field-input { background: #0b1325 !important; border-color: #334155 !important; color: #f8fafc !important; }
+  html.dark .field-input:focus { border-color: #ff6a00 !important; background: #0d172e !important; box-shadow: 0 0 0 4px rgba(255,106,0,0.2) !important; }
+  html.dark .login-btn { background: linear-gradient(135deg, #ff7a18 0%, #ea580c 100%) !important; box-shadow: 0 4px 14px rgba(234,88,12,0.4) !important; }
+  html.dark .brand-panel { background: linear-gradient(145deg, #070e1c 0%, #0b162e 45%, #112348 100%) !important; }
+  html.dark .text-slate-900, html.dark .text-slate-800, html.dark .text-slate-700 { color: #f8fafc !important; }
+  html.dark .text-slate-600, html.dark .text-slate-500 { color: #94a3b8 !important; }
 
   /* Left brand panel */
   .brand-panel {

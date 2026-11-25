@@ -17,7 +17,45 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         <style>
             [x-cloak] { display: none !important; }
+            {% include "components/theme_midnight_css.html" %}
         </style>
+        <script>
+            // Anti-FOUC theme initializer
+            (function() {
+                var theme = localStorage.getItem('app_theme');
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.setAttribute('data-theme', 'light');
+                }
+            })();
+
+            function toggleAppTheme() {
+                var isDark = document.documentElement.classList.contains('dark');
+                if (isDark) {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    localStorage.setItem('app_theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('app_theme', 'dark');
+                }
+                updateThemeToggleUI();
+            }
+
+            function updateThemeToggleUI() {
+                var isDark = document.documentElement.classList.contains('dark');
+                var lights = document.querySelectorAll('.theme-icon-light');
+                var darks = document.querySelectorAll('.theme-icon-dark');
+                lights.forEach(function(el) { el.style.display = isDark ? 'none' : 'inline-flex'; });
+                darks.forEach(function(el) { el.style.display = isDark ? 'inline-flex' : 'none'; });
+            }
+
+            document.addEventListener('DOMContentLoaded', updateThemeToggleUI);
+        </script>
         <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
                 defer></script>
     </head>
@@ -48,5 +86,8 @@
             {% block js %}
             {% endblock js %}
         </main>
+        <style id="theme-midnight-override">
+            {% include "components/theme_midnight_css.html" %}
+        </style>
     </body>
 </html>

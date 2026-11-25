@@ -422,8 +422,12 @@ def create_invoice(request):
                 if not invoice_date_raw:
                     raise ValueError("Invoice date is required.")
 
+                parsed_date = parse_date(invoice_date_raw) if isinstance(invoice_date_raw, str) else invoice_date_raw
+                if not parsed_date:
+                    raise ValueError("Invalid invoice date format.")
+
                 invoice = DailyInvoice.objects.create(
-                    invoice_date=invoice_date_raw,
+                    invoice_date=parsed_date,
                     payment_mode="",  # will derive after line processing
                     notes="",
                 )

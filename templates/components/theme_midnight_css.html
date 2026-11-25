@@ -1,0 +1,822 @@
+/* ==========================================================================
+   MAA TARA HP GAS — MASTER MIDNIGHT & HP ORANGE THEME
+   Applies across ALL pages when <html class="dark" data-theme="dark"> is active.
+   Light mode retains the default original palette completely untouched.
+   ========================================================================== */
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* ── 1. Page, Body & Layout Containers ── */
+html.dark,
+html.dark body,
+html.dark main,
+html.dark main#content,
+html.dark .bg-base-100,
+html.dark .bg-base-200,
+html.dark .bg-base-300,
+html.dark .bg-slate-50,
+html.dark .bg-gray-50,
+html.dark .bg-slate-100,
+html.dark .bg-gray-100,
+html.dark [class*="bg-slate-50"],
+html.dark [class*="bg-gray-50"] {
+  background-color: #080d1a !important;
+  color: #f8fafc !important;
+}
+
+/* ── 2. Header & Navigation Bar ── */
+html.dark header,
+html.dark header.fixed {
+  background-color: #0d1527 !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark #themeToggleBtn {
+  background-color: #111d35 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark #themeToggleBtn:hover {
+  background-color: #172647 !important;
+  border-color: #ff6a00 !important;
+  color: #ff9142 !important;
+}
+
+html.dark button[aria-haspopup="true"] {
+  background-color: #111d35 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark button[aria-haspopup="true"]:hover {
+  background-color: #172647 !important;
+  border-color: #ff6a00 !important;
+}
+
+/* Header Brand Logo Emblem */
+html.dark .group .rounded-xl.bg-gradient-to-br {
+  background: #111d35 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark span.bg-blue-50 {
+  background-color: rgba(255, 106, 0, 0.16) !important;
+  color: #ff9142 !important;
+  border-color: rgba(255, 106, 0, 0.3) !important;
+}
+
+/* ── 3. Sidebar ── */
+html.dark #sidebar,
+html.dark #sidebarContainer,
+html.dark aside {
+  background-color: #0b1325 !important;
+  border-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+html.dark #sidebar a,
+html.dark #sidebar summary {
+  color: #cbd5e1 !important;
+}
+
+html.dark #sidebar a:hover,
+html.dark #sidebar summary:hover {
+  background-color: #111d35 !important;
+  color: #ffffff !important;
+}
+
+/* Sidebar Active Items -> HP Orange Accent */
+html.dark #sidebar a.bg-indigo-50,
+html.dark #sidebar a.font-bold {
+  background-color: rgba(255, 106, 0, 0.16) !important;
+  color: #ff9142 !important;
+  border: 1px solid rgba(255, 106, 0, 0.28) !important;
+}
+
+html.dark #sidebar a.bg-indigo-50 i,
+html.dark #sidebar a.font-bold i,
+html.dark #sidebar a.text-indigo-600,
+html.dark #sidebar .group-open\:text-indigo-600 {
+  color: #ff781f !important;
+}
+
+/* ── 4. Cards Across All Modules (Billing, Subdealers, Inventory, DAC, Licenses, Expenses, Analytics) ── */
+html.dark .bg-white,
+html.dark .billing-card,
+html.dark .dash-card,
+html.dark .kpi-card,
+html.dark .stat-card,
+html.dark .chart-card,
+html.dark .analytics-card,
+html.dark .form-card,
+html.dark .spotlight-card,
+html.dark .toggle-card,
+html.dark .tx-type-card,
+html.dark .invoice-sheet,
+html.dark .card,
+html.dark .summary-box {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45) !important;
+}
+
+html.dark .billing-card-header,
+html.dark .dash-card-header,
+html.dark .chart-header,
+html.dark .analytics-card-header,
+html.dark .card-title,
+html.dark .dash-card-title,
+html.dark .billing-card-title,
+html.dark .analytics-card-title,
+html.dark .card-body {
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+  background-color: transparent !important;
+}
+
+html.dark .kpi-value {
+  color: #f8fafc !important;
+}
+
+html.dark .kpi-card:hover,
+html.dark .dash-card:hover,
+html.dark .stat-card:hover,
+html.dark .billing-card:hover,
+html.dark .card:hover {
+  border-color: rgba(255, 106, 0, 0.35) !important;
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ── 5. Quick Action & Mini Stat Buttons ── */
+html.dark .qa-btn {
+  background-color: #111d35 !important;
+  border-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark .qa-btn:hover {
+  background-color: rgba(255, 106, 0, 0.14) !important;
+  border-color: #ff781f !important;
+  color: #ff9142 !important;
+  box-shadow: 0 8px 20px rgba(255, 106, 0, 0.2) !important;
+}
+
+html.dark .qa-btn .qa-icon {
+  background-color: rgba(255, 106, 0, 0.12) !important;
+  border-color: rgba(255, 106, 0, 0.3) !important;
+  color: #ff8c38 !important;
+}
+
+html.dark .stat-mini {
+  border-color: #1e293b !important;
+}
+
+html.dark .stat-mini:hover {
+  background-color: #15223c !important;
+}
+
+/* Dashboard KPI Icons with inline styles */
+html.dark .kpi-icon,
+html.dark .kpi-icon[style],
+html.dark [style*="background:#eef2ff"],
+html.dark [style*="background:#dcfce7"],
+html.dark [style*="background:#fee2e2"],
+html.dark [style*="background:#ecfdf5"],
+html.dark [style*="background:#dbeafe"],
+html.dark [style*="background:#f0fdf4"],
+html.dark [style*="background:#eff6ff"],
+html.dark [style*="background:#fef3c7"] {
+  background-color: #111d35 !important;
+  border: 1px solid #1e293b !important;
+  color: #ff9142 !important;
+}
+
+/* ── 6. Search & Filter Primary Buttons (Previously invisible bg-slate-900 / bg-slate-800) ── */
+html.dark button[type="submit"].bg-slate-900,
+html.dark button[type="submit"].bg-slate-800,
+html.dark button.bg-slate-900,
+html.dark button.bg-slate-800,
+html.dark a.bg-slate-900,
+html.dark a.bg-slate-800 {
+  background: linear-gradient(135deg, #ff7a18 0%, #ea580c 100%) !important;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.38) !important;
+  border: 1px solid rgba(255, 140, 50, 0.4) !important;
+  color: #ffffff !important;
+}
+
+html.dark button[type="submit"].bg-slate-900:hover,
+html.dark button[type="submit"].bg-slate-800:hover,
+html.dark button.bg-slate-900:hover,
+html.dark button.bg-slate-800:hover,
+html.dark a.bg-slate-900:hover,
+html.dark a.bg-slate-800:hover {
+  background: linear-gradient(135deg, #ff8c38 0%, #f97316 100%) !important;
+  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.5) !important;
+  color: #ffffff !important;
+}
+
+/* Clear Filter / Secondary Buttons */
+html.dark a.bg-slate-100,
+html.dark button.bg-slate-100 {
+  background-color: #111d35 !important;
+  border: 1px solid #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+html.dark a.bg-slate-100:hover,
+html.dark a.hover\:bg-slate-200:hover,
+html.dark button.bg-slate-100:hover,
+html.dark button.hover\:bg-slate-200:hover {
+  background-color: #172647 !important;
+  border-color: #ff6a00 !important;
+  color: #ff9142 !important;
+}
+
+/* White Action / Navigation / Cancel Buttons & Toolbar Links */
+html.dark a.bg-white,
+html.dark button.bg-white,
+html.dark a.border-slate-200,
+html.dark button.border-slate-200,
+html.dark .border-slate-200.bg-white {
+  background-color: #111d35 !important;
+  border-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+html.dark a.bg-white:hover,
+html.dark button.bg-white:hover,
+html.dark a.hover\:bg-slate-50:hover,
+html.dark button.hover\:bg-slate-50:hover,
+html.dark .border-slate-200.bg-white:hover {
+  background-color: #172647 !important;
+  border-color: #ff6a00 !important;
+  color: #ffffff !important;
+}
+
+/* ── 7. Tables across all modules (Billing, Subdealers, Inventory, DAC, Licenses, Expenses) ── */
+html.dark .dash-table,
+html.dark .items-table,
+html.dark table,
+html.dark .table {
+  color: #f1f5f9 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .dash-table thead,
+html.dark .dash-table thead tr,
+html.dark .dash-table thead th,
+html.dark .items-table thead,
+html.dark .items-table thead tr,
+html.dark .items-table thead th,
+html.dark table thead,
+html.dark table thead tr,
+html.dark table thead th,
+html.dark .table thead th {
+  background-color: #091022 !important;
+  color: #94a3b8 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .dash-table tbody tr,
+html.dark .items-table tbody tr,
+html.dark table tbody tr,
+html.dark .dash-table td,
+html.dark .items-table td,
+html.dark table td,
+html.dark .table td {
+  border-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  background-color: transparent !important;
+}
+
+/* Row Hover states — prevents white flash on hover */
+html.dark .dash-table tbody tr:hover,
+html.dark .dash-table tbody tr:hover td,
+html.dark .items-table tbody tr:hover,
+html.dark .items-table tbody tr:hover td,
+html.dark table tbody tr:hover,
+html.dark table tbody tr:hover td,
+html.dark .table tbody tr:hover,
+html.dark .table tbody tr:hover td,
+html.dark tr.hover\:bg-slate-50:hover,
+html.dark tr.hover\:bg-slate-50:hover td {
+  background-color: #15223c !important;
+  color: #ffffff !important;
+}
+
+html.dark .dash-table th.col-sep,
+html.dark .dash-table td.col-sep {
+  border-left-color: #1e293b !important;
+}
+
+html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1e293b !important;
+}
+
+/* Scrollbars */
+html.dark .invoice-table-scroll::-webkit-scrollbar-track,
+html.dark .sd-dropdown::-webkit-scrollbar-track {
+  background: #091022 !important;
+}
+
+html.dark .invoice-table-scroll::-webkit-scrollbar-thumb,
+html.dark .sd-dropdown::-webkit-scrollbar-thumb {
+  background: #1e293b !important;
+}
+
+html.dark .invoice-table-scroll::-webkit-scrollbar-thumb:hover,
+html.dark .sd-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #334155 !important;
+}
+
+/* ── 8. Forms, Inputs, Selects & Comboboxes ── */
+html.dark input,
+html.dark select,
+html.dark textarea,
+html.dark .custom-input,
+html.dark .custom-select,
+html.dark .filter-input,
+html.dark .field-input,
+html.dark .sd-search-input,
+html.dark .input,
+html.dark .select,
+html.dark .textarea {
+  background-color: #0b1325 !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus,
+html.dark .custom-input:focus,
+html.dark .custom-select:focus,
+html.dark .filter-input:focus,
+html.dark .field-input:focus,
+html.dark .sd-search-input:focus,
+html.dark .focus\:bg-white:focus {
+  border-color: #ff6a00 !important;
+  background-color: #0d172e !important;
+  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.25) !important;
+}
+
+html.dark input:read-only,
+html.dark input:disabled,
+html.dark select:disabled,
+html.dark .custom-input:read-only,
+html.dark .custom-input[readonly],
+html.dark .custom-select:disabled,
+html.dark .field-input:read-only,
+html.dark .filter-input:read-only {
+  background-color: #121e35 !important;
+  color: #94a3b8 !important;
+  border-color: #1e293b !important;
+}
+
+/* Searchable Subdealer Combobox & Floating Dropdowns */
+html.dark .sd-search-input.sd-has-value {
+  background-color: rgba(255, 106, 0, 0.12) !important;
+  border-color: #ff781f !important;
+  color: #ff9142 !important;
+  font-weight: 700 !important;
+}
+
+html.dark .sd-dropdown {
+  background-color: #10192d !important;
+  border: 1.5px solid #1e293b !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75) !important;
+}
+
+html.dark .sd-option {
+  color: #f1f5f9 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .sd-option:hover,
+html.dark .sd-option.sd-focused,
+html.dark .sd-option.active {
+  background-color: #172647 !important;
+  color: #ff9142 !important;
+}
+
+html.dark .sd-code-badge {
+  background-color: rgba(255, 106, 0, 0.16) !important;
+  color: #ff9142 !important;
+}
+
+html.dark .sd-no-result {
+  color: #64748b !important;
+}
+
+/* Staff Multi-select Panel */
+html.dark #empPanel {
+  background-color: #10192d !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75) !important;
+}
+
+html.dark #empPanel label {
+  color: #cbd5e1 !important;
+}
+
+html.dark #empPanel label:hover {
+  background-color: #172647 !important;
+  color: #ffffff !important;
+}
+
+/* Row Index Badges & Row Remove Buttons */
+html.dark .index-badge {
+  background-color: rgba(255, 106, 0, 0.16) !important;
+  color: #ff9142 !important;
+  border: 1px solid rgba(255, 106, 0, 0.3) !important;
+}
+
+html.dark .btn-remove-row {
+  background-color: #1a1625 !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
+  color: #fb7185 !important;
+}
+
+html.dark .btn-remove-row:hover {
+  background-color: #e11d48 !important;
+  color: #ffffff !important;
+  border-color: #e11d48 !important;
+}
+
+/* ── 9. DAC Entry Radio Selection Cards ── */
+html.dark .tx-type-card {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark .tx-type-card:hover {
+  background-color: #15223c !important;
+  border-color: #334155 !important;
+}
+
+html.dark input[type="radio"]:checked + .tx-type-card-cr {
+  background-color: rgba(16, 185, 129, 0.18) !important;
+  border-color: #10b981 !important;
+  color: #34d399 !important;
+}
+
+html.dark input[type="radio"]:checked + .tx-type-card-dr {
+  background-color: rgba(244, 63, 94, 0.18) !important;
+  border-color: #f43f5e !important;
+  color: #fb7185 !important;
+}
+
+/* ── 10. Badges, Pills & Statuses (Full Spectrum) ── */
+html.dark .pill,
+html.dark .badge {
+  border-width: 1px !important;
+}
+
+html.dark .pill-indigo,
+html.dark .bg-indigo-50,
+html.dark .bg-indigo-100 {
+  background-color: rgba(255, 106, 0, 0.16) !important;
+  color: #ff9142 !important;
+  border-color: rgba(255, 106, 0, 0.3) !important;
+}
+
+html.dark .pill-ok,
+html.dark .pill-emerald,
+html.dark .bg-emerald-50,
+html.dark .bg-emerald-100,
+html.dark .text-emerald-700,
+html.dark .text-emerald-800 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  color: #34d399 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+html.dark .pill-err,
+html.dark .pill-rose,
+html.dark .bg-rose-50,
+html.dark .bg-rose-100,
+html.dark .text-rose-700,
+html.dark .text-rose-800 {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+  color: #fb7185 !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+html.dark .pill-warn,
+html.dark .pill-amber,
+html.dark .bg-amber-50,
+html.dark .bg-amber-100,
+html.dark .bg-yellow-50,
+html.dark .text-amber-800,
+html.dark .text-amber-900 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+html.dark .pill-blue,
+html.dark .pill-sky,
+html.dark .bg-blue-50,
+html.dark .bg-sky-50,
+html.dark .bg-sky-100,
+html.dark .text-sky-900 {
+  background-color: rgba(56, 189, 248, 0.15) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+html.dark .pill-purple,
+html.dark .pill-violet {
+  background-color: rgba(168, 85, 247, 0.15) !important;
+  color: #c084fc !important;
+  border-color: rgba(168, 85, 247, 0.3) !important;
+}
+
+html.dark .pill-teal {
+  background-color: rgba(20, 184, 166, 0.15) !important;
+  color: #2dd4bf !important;
+  border-color: rgba(20, 184, 166, 0.3) !important;
+}
+
+html.dark .pill-slate {
+  background-color: rgba(148, 163, 184, 0.12) !important;
+  color: #cbd5e1 !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
+}
+
+/* ── 11. Primary CTA Buttons ── */
+html.dark .btn-save-invoice,
+html.dark .btn-submit-dac,
+html.dark .btn-save-subdealer,
+html.dark .btn-save-emp,
+html.dark .btn-save-discount,
+html.dark .btn-submit-lic,
+html.dark .btn-topup-submit,
+html.dark .btn-submit,
+html.dark .btn-create-bill,
+html.dark .btn-create-subdealer,
+html.dark .btn-create-product,
+html.dark .btn-create-emp,
+html.dark .btn-create-expense,
+html.dark .btn-primary,
+html.dark .login-btn,
+html.dark a[style*="background:linear-gradient"],
+html.dark button[style*="background:linear-gradient"] {
+  background: linear-gradient(135deg, #ff7a18 0%, #ea580c 100%) !important;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.38) !important;
+  border: 1px solid rgba(255, 140, 50, 0.4) !important;
+  color: #ffffff !important;
+}
+
+html.dark .btn-action-edit {
+  background-color: rgba(255, 106, 0, 0.12) !important;
+  color: #ff9142 !important;
+  border: 1px solid rgba(255, 106, 0, 0.28) !important;
+}
+
+html.dark .btn-action-delete {
+  background-color: rgba(244, 63, 94, 0.12) !important;
+  color: #fb7185 !important;
+  border: 1px solid rgba(244, 63, 94, 0.28) !important;
+}
+
+html.dark .btn-action-print,
+html.dark .btn-export-print {
+  background-color: #111d35 !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .btn-export-csv {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.28) !important;
+}
+
+html.dark .btn-ghost {
+  color: #94a3b8 !important;
+}
+
+html.dark .btn-ghost:hover {
+  background-color: #111d35 !important;
+  color: #ffffff !important;
+}
+
+/* ── 12. Financial Breakdown & Highlight Boxes ── */
+html.dark [class*="bg-emerald-50"],
+html.dark .bg-emerald-50\/70 {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+  color: #34d399 !important;
+}
+
+html.dark [class*="bg-blue-50"],
+html.dark .bg-blue-50\/70 {
+  background-color: rgba(56, 189, 248, 0.12) !important;
+  border-color: rgba(56, 189, 248, 0.25) !important;
+  color: #38bdf8 !important;
+}
+
+html.dark [class*="bg-amber-50"],
+html.dark .bg-amber-50\/70 {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+  color: #fbbf24 !important;
+}
+
+html.dark [class*="bg-rose-50"],
+html.dark .bg-rose-50\/70 {
+  background-color: rgba(244, 63, 94, 0.12) !important;
+  border-color: rgba(244, 63, 94, 0.25) !important;
+  color: #fb7185 !important;
+}
+
+/* Grand Net Total box in Billing */
+html.dark [class*="from-indigo-900"] {
+  background: linear-gradient(135deg, #0e1e3e 0%, #172d5c 100%) !important;
+  border: 1px solid rgba(255, 106, 0, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ── 13. Pagination ── */
+html.dark .join-item.btn {
+  background-color: #111d35 !important;
+  border-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark .join-item.btn:hover {
+  background-color: #172647 !important;
+  color: #ff9142 !important;
+}
+
+html.dark .join-item.btn-disabled {
+  background-color: #0d1629 !important;
+  color: #475569 !important;
+  border-color: #1a253a !important;
+}
+
+/* ── 14. Filter Chips & Preset Buttons ── */
+html.dark .filter-chip,
+html.dark .preset-chip,
+html.dark .preset-btn {
+  background-color: #111d35 !important;
+  border-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+html.dark .filter-chip:hover,
+html.dark .preset-chip:hover,
+html.dark .preset-btn:hover,
+html.dark .filter-tab-pill.bg-white {
+  background-color: #172647 !important;
+  color: #ff9142 !important;
+  border-color: #ff6a00 !important;
+}
+
+html.dark .preset-btn.active,
+html.dark .filter-chip.active,
+html.dark .preset-chip.active {
+  background: linear-gradient(135deg, #ff7a18 0%, #ea580c 100%) !important;
+  color: #ffffff !important;
+  border-color: #ff7a18 !important;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.4) !important;
+}
+
+html.dark .movement-drawer,
+html.dark .movement-drawer > td {
+  background-color: #091022 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .movement-drawer .bg-white {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+}
+
+/* ── 15. Typography Overrides Across all Templates ── */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-700,
+html.dark .text-gray-900,
+html.dark .text-gray-800,
+html.dark .text-neutral-900 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-slate-600,
+html.dark .text-slate-500,
+html.dark .text-gray-600,
+html.dark .text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+html.dark .text-slate-400,
+html.dark .text-gray-400 {
+  color: #64748b !important;
+}
+
+html.dark .text-slate-300 {
+  color: #475569 !important;
+}
+
+html.dark .text-indigo-600,
+html.dark .text-indigo-700 {
+  color: #ff781f !important;
+}
+
+html.dark a.text-indigo-600:hover,
+html.dark a.text-indigo-700:hover {
+  color: #ff9142 !important;
+}
+
+html.dark .border-slate-200,
+html.dark .border-slate-100,
+html.dark .border-slate-300,
+html.dark .border-gray-200,
+html.dark .border-gray-100,
+html.dark .border-gray-300,
+html.dark .border-base-200,
+html.dark .border-base-300 {
+  border-color: #1e293b !important;
+}
+
+/* ── 16. Dropdowns, Modals & Dialogs ── */
+html.dark [x-show="open"],
+html.dark .dropdown-content,
+html.dark .modal-box {
+  background-color: #10192d !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.75) !important;
+  color: #f8fafc !important;
+}
+
+html.dark [x-show="open"] .bg-slate-50\/80,
+html.dark [x-show="open"] .bg-slate-50 {
+  background-color: #15223c !important;
+  border-color: #1e293b !important;
+}
+
+html.dark [x-show="open"] a,
+html.dark [x-show="open"] button {
+  color: #cbd5e1 !important;
+}
+
+html.dark [x-show="open"] a:hover,
+html.dark [x-show="open"] button:hover {
+  background-color: #172647 !important;
+  color: #ff9142 !important;
+}
+
+html.dark [x-show="open"] a.hover\:bg-rose-50:hover {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+  color: #fb7185 !important;
+}
+
+html.dark .modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+/* ── 17. Marquee Banner ── */
+html.dark .marquee-container {
+  background: linear-gradient(90deg, rgba(13, 21, 39, 0.95), rgba(15, 23, 42, 0.95), rgba(13, 21, 39, 0.95)) !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .marquee-track span {
+  color: #ff9142 !important;
+}
+
+/* ── 18. Strict Print Isolation ── */
+@media print {
+  html.dark,
+  html.dark body,
+  html.dark main,
+  html.dark main#content,
+  html.dark .billing-card,
+  html.dark .invoice-sheet,
+  html.dark table,
+  html.dark thead th,
+  html.dark tbody td {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+  }
+}
