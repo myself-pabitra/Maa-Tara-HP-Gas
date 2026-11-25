@@ -1,30 +1,116 @@
 {% load static %}
-<header class="fixed inset-x-0 top-0 z-[60] flex h-[60px] items-center justify-between bg-white px-4 shadow-md sm:px-6">
-    <div class="flex min-w-0 items-center gap-3 sm:gap-4">
+<header class="fixed inset-x-0 top-0 z-[60] flex h-[60px] items-center justify-between bg-white px-4 border-b border-slate-200/80 shadow-xs sm:px-6">
+    <!-- Left: Mobile Menu Toggle & Modern Brand Logo -->
+    <div class="flex min-w-0 items-center gap-2.5 sm:gap-3.5">
         <button id="sidebarToggle"
                 type="button"
-                class="btn btn-ghost btn-square btn-sm lg:hidden"
+                class="flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition lg:hidden"
                 aria-controls="sidebarContainer"
                 aria-expanded="false"
                 aria-label="Open navigation">
-            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
         </button>
-        <a href="{% url 'dashboard' %}" class="flex min-w-0 items-center gap-2 sm:gap-3" aria-label="Maa Tara HP Gas dashboard">
-            <img src="{% static 'images/maa-tara-hp-gas-logo.png' %}"
-                 alt="Maa Tara HP Gas logo"
-                 class="h-10 w-10 shrink-0 object-contain sm:h-11 sm:w-11">
-            <div class="min-w-0 leading-none">
-                <h1 class="truncate text-lg font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-indigo-700 to-blue-700 sm:text-2xl">
-                    MAA TARA
-                </h1>
-                <p class="mt-1 truncate text-[10px] font-bold tracking-[0.28em] text-amber-600 sm:text-xs">
-                    HP GAS
-                </p>
+        
+        <a href="{% url 'dashboard' %}" class="group flex min-w-0 items-center gap-2.5 sm:gap-3 transition" aria-label="Maa Tara HP Gas dashboard">
+            <!-- Modern Logo Emblem -->
+            <div class="relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 p-1 border border-slate-200/90 shadow-2xs ring-1 ring-slate-900/5 transition-transform duration-200 group-hover:scale-105">
+                <img src="{% static 'images/maa-tara-hp-gas-logo.png' %}"
+                     alt="Maa Tara HP Gas logo"
+                     class="h-full w-full object-contain">
+            </div>
+
+            <!-- Modern Typography & HP Gas Badge -->
+            <div class="min-w-0 flex flex-col justify-center">
+                <div class="flex items-center gap-1.5 leading-tight">
+                    <span class="text-sm sm:text-base font-black tracking-tight text-slate-900">Maa Tara</span>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-black tracking-wider text-blue-700 bg-blue-50 border border-blue-200 uppercase">HP GAS</span>
+                </div>
+                <span class="text-[10px] font-medium text-slate-400 tracking-wider uppercase leading-none hidden sm:block mt-0.5">Authorized Agency</span>
             </div>
         </a>
     </div>
+
+    <!-- Right: Account Dropdown Section -->
+    {% if request.user.is_authenticated %}
+    <div class="relative flex items-center" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+        <!-- Account Trigger Pill -->
+        <button @click="open = !open"
+                type="button"
+                class="flex items-center gap-2 sm:gap-2.5 p-1 sm:pl-1.5 sm:pr-2.5 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-slate-100/80 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/20 active:scale-[0.98]"
+                :class="{ 'bg-slate-100 border-indigo-200 shadow-2xs ring-2 ring-indigo-500/10': open }"
+                aria-haspopup="true"
+                :aria-expanded="open.toString()">
+            
+            <!-- User Avatar Initial -->
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-600 text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs ring-2 ring-white">
+                {{ request.user.username|slice:":1"|upper }}
+            </div>
+
+            <!-- Username & Label -->
+            <div class="hidden sm:flex flex-col text-left min-w-0 pr-0.5">
+                <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 leading-none">Account</span>
+                <span class="text-xs font-bold text-slate-800 truncate leading-tight mt-0.5 max-w-[130px]">{{ request.user.username }}</span>
+            </div>
+
+            <!-- Chevron Icon -->
+            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200 shrink-0 px-1 sm:px-0"
+               :class="{ 'rotate-180 text-indigo-600': open }"></i>
+        </button>
+
+        <!-- Dropdown Card -->
+        <div x-show="open"
+             x-transition:enter="transition ease-out duration-150"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-1"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-100"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-1"
+             x-cloak
+             class="absolute right-0 top-full mt-2 w-64 origin-top-right rounded-2xl bg-white p-2.5 shadow-xl ring-1 ring-slate-900/10 border border-slate-100 z-[70] space-y-2">
+            
+            <!-- User Info Card (moved from sidebar) -->
+            <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/80 border border-slate-200/70">
+                <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="overflow-hidden min-w-0 flex-1">
+                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-none">Logged In</div>
+                    <div class="text-xs font-extrabold text-slate-800 truncate leading-tight mt-1">{{ request.user.username }}</div>
+                    {% if request.user.email %}
+                        <div class="text-[10px] text-slate-400 truncate leading-none mt-0.5">{{ request.user.email }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Menu Navigation Links -->
+            <div class="pt-1 border-t border-slate-100 space-y-0.5">
+                <a href="{% url 'dashboard' %}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition">
+                    <i class="fa-solid fa-house-chimney text-xs text-slate-400 w-4 text-center"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+
+            <!-- Log Out Action -->
+            <div class="pt-1 border-t border-slate-100">
+                <a href="{% url 'logout' %}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-xs text-rose-500 w-4 text-center"></i>
+                    <span>Log Out</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="flex items-center gap-2">
+        <a href="{% url 'login' %}" class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition">
+            <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
+            <span>Log In</span>
+        </a>
+    </div>
+    {% endif %}
 </header>
 
 <script>
