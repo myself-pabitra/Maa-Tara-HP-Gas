@@ -1,0 +1,289 @@
+{% extends "layout.html" %}
+{% load static humanize %}
+
+{% block title %}Add Operational Expense | Maa Tara HP Gas{% endblock %}
+
+{% block content %}
+<style>
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
+  .custom-input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    outline: none;
+    transition: all .18s ease;
+  }
+  .custom-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3.5px rgba(99,102,241,.12);
+  }
+  .input-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64748b;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .btn-submit {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    transition: all .2s ease;
+  }
+  .btn-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+  .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .pill-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+</style>
+
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
+  <!-- Top Header Navigation -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2">
+        <a href="{% url 'operational_expenses_history' %}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-left"></i> Expenses History
+        </a>
+        <span class="text-slate-300">/</span>
+        <span class="text-xs font-semibold text-slate-500">New Entry</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+        <span class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-lg shadow-2xs">
+          <i class="fa-solid fa-receipt"></i>
+        </span>
+        Add Operational Expense
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-500">
+        Record vehicle fuel, tyre changes, vehicle maintenance, license renewals, and other general expenses.
+      </p>
+    </div>
+
+    <!-- Quick Navigation -->
+    <div class="flex items-center gap-2.5">
+      <a href="{% url 'operational_expenses_history' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 hover:border-slate-300 transition shadow-2xs">
+        <i class="fa-solid fa-list-check text-slate-400"></i>
+        <span>View Expenses History</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column: Expense Form -->
+    <div class="lg:col-span-2">
+      <div class="billing-card p-6 sm:p-8">
+        <form method="POST" action="{% url 'add_operational_expense' %}" class="space-y-5" id="expenseForm">
+          {% csrf_token %}
+
+          <!-- Row 1: Date & Payment Mode -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="input-label">Expense Date <span class="text-rose-500">*</span></label>
+              <div class="relative">
+                <input type="date" name="expense_date" value="{{ today|date:'Y-m-d' }}" required class="custom-input font-medium" />
+              </div>
+            </div>
+
+            <div>
+              <label class="input-label">Payment Mode <span class="text-rose-500">*</span></label>
+              <select name="payment_mode" class="custom-input font-medium">
+                <option value="Cash" selected>Cash</option>
+                <option value="Online/UPI">Online / UPI (GPay, PhonePe, Paytm)</option>
+                <option value="Bank Transfer">Bank Transfer / NEFT / IMPS</option>
+                <option value="Cheque">Cheque</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 2: Category & Custom Input -->
+          <div>
+            <label class="input-label">Expense Category / Type <span class="text-rose-500">*</span></label>
+            <div class="space-y-2">
+              <select name="category_select" id="categorySelect" class="custom-input font-medium" onchange="toggleCustomCategory(this.value)">
+                <option value="" disabled selected>-- Select an expense category --</option>
+                <optgroup label="Vehicle & Transport Operations">
+                  <option value="Vehicle Fuel / Diesel">Vehicle Fuel / Diesel</option>
+                  <option value="Vehicle Maintenance">Vehicle Maintenance & Servicing</option>
+                  <option value="Vehicle Tyres">Vehicle Tyres & Tubes</option>
+                  <option value="Vehicle License & Renewal">Vehicle License & Renewal Papers</option>
+                </optgroup>
+                <optgroup label="Office & Operations">
+                  <option value="Driver / Delivery Allowance">Driver / Delivery Allowance</option>
+                  <option value="Tea & Breakfast">Tea, Breakfast & Refreshments</option>
+                  <option value="Office Supplies & Electricity">Office Supplies & Electricity</option>
+                  <option value="Chanda / Local Donation">Chanda / Local Donation</option>
+                  <option value="Miscellaneous Repair">Miscellaneous Repair</option>
+                </optgroup>
+                {% if categories %}
+                <optgroup label="Other Existing Types">
+                  {% for c in categories %}
+                    {% if c != "Vehicle Fuel / Diesel" and c != "Vehicle Maintenance" and c != "Vehicle Tyres" and c != "Vehicle License & Renewal" and c != "Driver / Delivery Allowance" and c != "Tea & Breakfast" and c != "Office Supplies & Electricity" and c != "Chanda / Local Donation" and c != "Miscellaneous Repair" %}
+                      <option value="{{ c }}">{{ c }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </optgroup>
+                {% endif %}
+                <option value="__other__">+ Other (Type Custom Category)</option>
+              </select>
+
+              <!-- Custom Category Text Field (Visible when Other is chosen) -->
+              <div id="customCategoryWrapper" class="hidden">
+                <input type="text" name="custom_category" id="customCategoryInput" placeholder="Enter custom expense category name (e.g., Shop Painting, Generator Fuel)" class="custom-input border-indigo-300 bg-indigo-50/20" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: Amount & Reference Number -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="input-label">Amount (₹) <span class="text-rose-500">*</span></label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                <input type="number" step="0.01" min="0.01" name="amount" placeholder="0.00" required class="custom-input pl-8 font-black text-slate-800 text-base" />
+              </div>
+            </div>
+
+            <div>
+              <label class="input-label">Bill / Slip / Vehicle No. <span class="text-slate-400 font-normal">(Optional)</span></label>
+              <input type="text" name="reference_no" placeholder="e.g. WB-29-XXXX or Fuel Slip #104" class="custom-input" />
+            </div>
+          </div>
+
+          <!-- Row 4: Description / Particulars -->
+          <div>
+            <label class="input-label">Particulars / Remarks <span class="text-slate-400 font-normal">(Optional Details)</span></label>
+            <textarea name="description" rows="3" placeholder="Add specific notes, petrol pump name, tyre brand, mechanic notes, etc." class="w-full p-3 text-xs sm:text-sm border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition resize-y"></textarea>
+          </div>
+
+          <!-- Buttons -->
+          <div class="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
+            <a href="{% url 'operational_expenses_history' %}" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition">
+              Cancel
+            </a>
+            <button type="submit" class="btn-submit px-6 py-2.5 rounded-xl text-xs font-black flex items-center gap-2">
+              <i class="fa-solid fa-check"></i>
+              <span>Save Expense</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right Column: Summary & Quick Actions -->
+    <div class="space-y-6">
+      <!-- Monthly Expense KPI Card -->
+      <div class="billing-card p-5 bg-gradient-to-br from-indigo-900 to-slate-900 text-white relative overflow-hidden">
+        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/5 rounded-full pointer-events-none"></div>
+        <div class="space-y-1 relative z-10">
+          <div class="text-[10px] uppercase font-bold tracking-wider text-indigo-300">This Month's Total Expenses</div>
+          <div class="text-3xl font-black tracking-tight text-white mt-1">₹{{ this_month_total|floatformat:2|intcomma }}</div>
+          <div class="text-[11px] text-slate-300 pt-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-calendar text-[10px] text-indigo-400"></i>
+            <span>{{ today|date:"F Y" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Category Fill Buttons -->
+      <div class="billing-card p-5 space-y-3">
+        <div class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Quick Select Category</div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" onclick="setQuickCategory('Vehicle Fuel / Diesel')" class="pill pill-indigo hover:scale-105 transition cursor-pointer">
+            <i class="fa-solid fa-gas-pump text-[10px]"></i> Fuel / Diesel
+          </button>
+          <button type="button" onclick="setQuickCategory('Vehicle Maintenance')" class="pill pill-slate hover:scale-105 transition cursor-pointer">
+            <i class="fa-solid fa-wrench text-[10px]"></i> Maintenance
+          </button>
+          <button type="button" onclick="setQuickCategory('Vehicle Tyres')" class="pill pill-slate hover:scale-105 transition cursor-pointer">
+            <i class="fa-solid fa-circle-notch text-[10px]"></i> Tyres
+          </button>
+          <button type="button" onclick="setQuickCategory('Vehicle License & Renewal')" class="pill pill-slate hover:scale-105 transition cursor-pointer">
+            <i class="fa-solid fa-id-card text-[10px]"></i> License Renewal
+          </button>
+          <button type="button" onclick="setQuickCategory('Driver / Delivery Allowance')" class="pill pill-slate hover:scale-105 transition cursor-pointer">
+            <i class="fa-solid fa-truck text-[10px]"></i> Driver Allowance
+          </button>
+          <button type="button" onclick="setQuickCategory('Tea & Breakfast')" class="pill pill-slate hover:scale-105 transition cursor-pointer">
+            <i class="fa-solid fa-mug-hot text-[10px]"></i> Tea & Breakfast
+          </button>
+        </div>
+      </div>
+
+      <!-- Recent 5 Recorded Expenses -->
+      <div class="billing-card p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Recent Entries</div>
+          <a href="{% url 'operational_expenses_history' %}" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition">View All</a>
+        </div>
+
+        {% if recent_expenses %}
+        <div class="divide-y divide-slate-100">
+          {% for r in recent_expenses %}
+          <div class="py-2.5 flex items-center justify-between text-xs">
+            <div class="overflow-hidden pr-2">
+              <div class="font-bold text-slate-800 truncate">{{ r.category }}</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">
+                {{ r.expense_date|date:"d M Y" }}
+                {% if r.reference_no %} • <span class="font-medium text-slate-500">{{ r.reference_no }}</span>{% endif %}
+              </div>
+            </div>
+            <div class="font-black text-rose-600 shrink-0">
+              ₹{{ r.amount|floatformat:2|intcomma }}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-6 text-slate-400 text-xs">
+          No expenses recorded yet.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleCustomCategory(value) {
+  const wrapper = document.getElementById('customCategoryWrapper');
+  const input = document.getElementById('customCategoryInput');
+  if (value === '__other__') {
+    wrapper.classList.remove('hidden');
+    input.required = true;
+    input.focus();
+  } else {
+    wrapper.classList.add('hidden');
+    input.required = false;
+  }
+}
+
+function setQuickCategory(categoryName) {
+  const select = document.getElementById('categorySelect');
+  select.value = categoryName;
+  toggleCustomCategory(categoryName);
+}
+</script>
+{% endblock %}

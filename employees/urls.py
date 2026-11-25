@@ -32,4 +32,9 @@ urlpatterns = [
         views.delete_predefined_expense,
         name="delete_predefined_expense",
     ),
+    # Operational Expenses (Manual Expenses)
+    path("expenses/add/", views.add_operational_expense, name="add_operational_expense"),
+    path("expenses/history/", views.operational_expenses_history, name="operational_expenses_history"),
+    path("expenses/edit/<int:expense_id>/", views.edit_operational_expense, name="edit_operational_expense"),
+    path("expenses/delete/<int:expense_id>/", views.delete_operational_expense, name="delete_operational_expense"),
 ]

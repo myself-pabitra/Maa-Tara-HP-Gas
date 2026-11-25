@@ -1,0 +1,180 @@
+{% extends "layout.html" %}
+{% load static humanize %}
+
+{% block title %}Edit Operational Expense #{{ expense.id }} | Maa Tara HP Gas{% endblock %}
+
+{% block content %}
+<style>
+  .billing-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 6px 16px -4px rgba(0,0,0,0.04);
+  }
+  .custom-input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    outline: none;
+    transition: all .18s ease;
+  }
+  .custom-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3.5px rgba(99,102,241,.12);
+  }
+  .input-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64748b;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .btn-submit {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.32);
+    color: #ffffff;
+    transition: all .2s ease;
+  }
+  .btn-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(99,102,241,.42);
+  }
+</style>
+
+<div class="max-w-3xl mx-auto space-y-6 pb-12">
+  <!-- Top Navigation Breadcrumb -->
+  <div class="space-y-1">
+    <div class="flex items-center gap-2">
+      <a href="{% url 'operational_expenses_history' %}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-left"></i> Expenses History
+      </a>
+      <span class="text-slate-300">/</span>
+      <span class="text-xs font-semibold text-slate-500">Edit Expense #{{ expense.id }}</span>
+    </div>
+    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+      <span class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 text-lg shadow-2xs">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </span>
+      Edit Operational Expense
+    </h1>
+    <p class="text-xs sm:text-sm text-slate-500">
+      Update the details, category, or amount for this recorded expense.
+    </p>
+  </div>
+
+  <!-- Form Card -->
+  <div class="billing-card p-6 sm:p-8">
+    <form method="POST" action="{% url 'edit_operational_expense' expense.id %}" class="space-y-5">
+      {% csrf_token %}
+
+      <!-- Row 1: Date & Payment Mode -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="input-label">Expense Date <span class="text-rose-500">*</span></label>
+          <input type="date" name="expense_date" value="{{ expense.expense_date|date:'Y-m-d' }}" required class="custom-input font-medium" />
+        </div>
+
+        <div>
+          <label class="input-label">Payment Mode <span class="text-rose-500">*</span></label>
+          <select name="payment_mode" class="custom-input font-medium">
+            <option value="Cash" {% if expense.payment_mode == 'Cash' %}selected{% endif %}>Cash</option>
+            <option value="Online/UPI" {% if expense.payment_mode == 'Online/UPI' %}selected{% endif %}>Online / UPI (GPay, PhonePe, Paytm)</option>
+            <option value="Bank Transfer" {% if expense.payment_mode == 'Bank Transfer' %}selected{% endif %}>Bank Transfer / NEFT / IMPS</option>
+            <option value="Cheque" {% if expense.payment_mode == 'Cheque' %}selected{% endif %}>Cheque</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Row 2: Category Selection & Custom Option -->
+      <div>
+        <label class="input-label">Expense Category / Type <span class="text-rose-500">*</span></label>
+        <div class="space-y-2">
+          <select name="category_select" id="categorySelect" class="custom-input font-medium" onchange="toggleCustomCategory(this.value)">
+            <optgroup label="Common Operational Categories">
+              <option value="Vehicle Fuel / Diesel" {% if expense.category == "Vehicle Fuel / Diesel" %}selected{% endif %}>Vehicle Fuel / Diesel</option>
+              <option value="Vehicle Maintenance" {% if expense.category == "Vehicle Maintenance" %}selected{% endif %}>Vehicle Maintenance &amp; Servicing</option>
+              <option value="Vehicle Tyres" {% if expense.category == "Vehicle Tyres" %}selected{% endif %}>Vehicle Tyres &amp; Tubes</option>
+              <option value="Vehicle License & Renewal" {% if expense.category == "Vehicle License & Renewal" %}selected{% endif %}>Vehicle License &amp; Renewal Papers</option>
+              <option value="Driver / Delivery Allowance" {% if expense.category == "Driver / Delivery Allowance" %}selected{% endif %}>Driver / Delivery Allowance</option>
+              <option value="Tea & Breakfast" {% if expense.category == "Tea & Breakfast" %}selected{% endif %}>Tea, Breakfast &amp; Refreshments</option>
+              <option value="Office Supplies & Electricity" {% if expense.category == "Office Supplies & Electricity" %}selected{% endif %}>Office Supplies &amp; Electricity</option>
+              <option value="Chanda / Local Donation" {% if expense.category == "Chanda / Local Donation" %}selected{% endif %}>Chanda / Local Donation</option>
+              <option value="Miscellaneous Repair" {% if expense.category == "Miscellaneous Repair" %}selected{% endif %}>Miscellaneous Repair</option>
+            </optgroup>
+            {% if categories %}
+            <optgroup label="Other Existing Categories">
+              {% for c in categories %}
+                {% if c != "Vehicle Fuel / Diesel" and c != "Vehicle Maintenance" and c != "Vehicle Tyres" and c != "Vehicle License & Renewal" and c != "Driver / Delivery Allowance" and c != "Tea & Breakfast" and c != "Office Supplies & Electricity" and c != "Chanda / Local Donation" and c != "Miscellaneous Repair" %}
+                  <option value="{{ c }}" {% if expense.category == c %}selected{% endif %}>{{ c }}</option>
+                {% endif %}
+              {% endfor %}
+            </optgroup>
+            {% endif %}
+            <option value="__other__">+ Other (Type Custom Category)</option>
+          </select>
+
+          <!-- Custom Category Text Field -->
+          <div id="customCategoryWrapper" class="hidden">
+            <input type="text" name="custom_category" id="customCategoryInput" placeholder="Enter custom category name" class="custom-input border-indigo-300 bg-indigo-50/20" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Amount & Reference Number -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="input-label">Amount (₹) <span class="text-rose-500">*</span></label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+            <input type="number" step="0.01" min="0.01" name="amount" value="{{ expense.amount }}" required class="custom-input pl-8 font-black text-slate-800 text-base" />
+          </div>
+        </div>
+
+        <div>
+          <label class="input-label">Bill / Slip / Vehicle No. <span class="text-slate-400 font-normal">(Optional)</span></label>
+          <input type="text" name="reference_no" value="{{ expense.reference_no|default:'' }}" placeholder="e.g. WB-29-XXXX or Fuel Slip #104" class="custom-input" />
+        </div>
+      </div>
+
+      <!-- Row 4: Description -->
+      <div>
+        <label class="input-label">Particulars / Remarks <span class="text-slate-400 font-normal">(Optional Details)</span></label>
+        <textarea name="description" rows="3" class="w-full p-3 text-xs sm:text-sm border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition resize-y" placeholder="Add specific notes...">{{ expense.description|default:'' }}</textarea>
+      </div>
+
+      <!-- Buttons -->
+      <div class="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
+        <a href="{% url 'operational_expenses_history' %}" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition">
+          Cancel
+        </a>
+        <button type="submit" class="btn-submit px-6 py-2.5 rounded-xl text-xs font-black flex items-center gap-2">
+          <i class="fa-solid fa-check"></i>
+          <span>Update Expense</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function toggleCustomCategory(value) {
+  const wrapper = document.getElementById('customCategoryWrapper');
+  const input = document.getElementById('customCategoryInput');
+  if (value === '__other__') {
+    wrapper.classList.remove('hidden');
+    input.required = true;
+    input.focus();
+  } else {
+    wrapper.classList.add('hidden');
+    input.required = false;
+  }
+}
+</script>
+{% endblock %}
