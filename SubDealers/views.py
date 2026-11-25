@@ -13,6 +13,7 @@ from django.db.models.functions import ExtractMonth, ExtractYear
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.core.paginator import Paginator
 
 from employees.models import Employee
@@ -1680,7 +1681,11 @@ def edit_invoice(request, invoice_id):
                 if not invoice_date_raw:
                     raise ValueError("Invoice date is required.")
 
-                invoice.invoice_date = invoice_date_raw
+                parsed_date = parse_date(invoice_date_raw) if isinstance(invoice_date_raw, str) else invoice_date_raw
+                if not parsed_date:
+                    raise ValueError("Invalid invoice date format.")
+
+                invoice.invoice_date = parsed_date
                 invoice.save()
 
                 employee_ids = request.POST.getlist("employee_ids")
@@ -1689,31 +1694,64 @@ def edit_invoice(request, invoice_id):
                 else:
                     invoice.employees.clear()
 
-                # Map old DAC quantities per subdealer on this invoice before modification
+                # Map what was ACTUALLY debited in the DAC ledger for this invoice per subdealer.
+                # If an invoice was previously saved without DAC entries (or a subdealer was added
+                # without DAC entries), their actual debited quantity is 0 so the missing debit is created.
+                existing_dac_entries = DACEntry.objects.filter(
+                    Q(description__contains=invoice.invoice_number)
+                ).select_related("subdealer")
+
+                actual_debited_map = {}
+                for de in existing_dac_entries:
+                    if de.transaction_type == "DR":
+                        actual_debited_map[de.subdealer] = (
+                            actual_debited_map.get(de.subdealer, Decimal("0"))
+                            + Decimal(de.transaction_quantity)
+                        )
+                    elif de.transaction_type == "CR":
+                        actual_debited_map[de.subdealer] = (
+                            actual_debited_map.get(de.subdealer, Decimal("0"))
+                            - Decimal(de.transaction_quantity)
+                        )
+
                 old_sub_dac_qtys = {}
+                for sub, actual_debited in actual_debited_map.items():
+                    old_sub_dac_qtys[sub] = max(Decimal("0"), actual_debited)
+
                 for old_item in invoice.line_items.filter(product__dac_applicable=True):
-                    old_sub_dac_qtys[old_item.subdealer] = (
-                        old_sub_dac_qtys.get(old_item.subdealer, Decimal("0"))
-                        + Decimal(old_item.quantity)
-                    )
+                    if old_item.subdealer not in old_sub_dac_qtys:
+                        old_sub_dac_qtys[old_item.subdealer] = Decimal("0")
 
-                # Revert inventory stock and cylinder due counts from existing line items
+                # Revert inventory stock and cylinder due counts by aggregating across line items
+                product_qty_revert = {}
+                cyl_due_revert = {}
                 for old_item in invoice.line_items.select_related("product", "subdealer").all():
-                    if old_item.product:
-                        old_item.product.product_quantity += old_item.quantity
-                        old_item.product.in_stock = old_item.product.product_quantity > 0
-                        old_item.product.save(update_fields=["product_quantity", "in_stock"])
+                    if old_item.product_id:
+                        product_qty_revert[old_item.product_id] = (
+                            product_qty_revert.get(old_item.product_id, 0) + old_item.quantity
+                        )
+                    if old_item.due_cyl and old_item.subdealer_id and old_item.product_id:
+                        key = (old_item.subdealer_id, old_item.product_id)
+                        cyl_due_revert[key] = (
+                            cyl_due_revert.get(key, 0) + old_item.due_cyl
+                        )
 
-                        if old_item.due_cyl:
-                            try:
-                                cyl_info = Cylender_information.objects.get(
-                                    Subdealer=old_item.subdealer,
-                                    product=old_item.product,
-                                )
-                                cyl_info.due_cylender_qty = max(0, cyl_info.due_cylender_qty - old_item.due_cyl)
-                                cyl_info.save(update_fields=["due_cylender_qty"])
-                            except Cylender_information.DoesNotExist:
-                                pass
+                for prod_id, revert_qty in product_qty_revert.items():
+                    prod = ProductInventory.objects.get(id=prod_id)
+                    prod.product_quantity += revert_qty
+                    prod.in_stock = prod.product_quantity > 0
+                    prod.save(update_fields=["product_quantity", "in_stock"])
+
+                for (sub_id, prod_id), due_qty in cyl_due_revert.items():
+                    try:
+                        cyl_info = Cylender_information.objects.get(
+                            Subdealer_id=sub_id,
+                            product_id=prod_id,
+                        )
+                        cyl_info.due_cylender_qty = max(0, cyl_info.due_cylender_qty - due_qty)
+                        cyl_info.save(update_fields=["due_cylender_qty"])
+                    except Cylender_information.DoesNotExist:
+                        pass
 
                 invoice.line_items.all().delete()
                 invoice.expenses.all().delete()
@@ -1994,6 +2032,10 @@ def edit_invoice(request, invoice_id):
 
         except Exception as exc:
             messages.error(request, f"Could not update invoice: {str(exc)}")
+            try:
+                invoice.refresh_from_db()
+            except Exception:
+                pass
 
     context = {
         "subdealers": subdealers,
@@ -2005,7 +2047,11 @@ def edit_invoice(request, invoice_id):
         "invoice_json": json.dumps(
             {
                 "invoice_number": invoice.invoice_number,
-                "invoice_date": invoice.invoice_date.strftime("%Y-%m-%d"),
+                "invoice_date": (
+                    invoice.invoice_date.strftime("%Y-%m-%d")
+                    if hasattr(invoice.invoice_date, "strftime")
+                    else str(invoice.invoice_date)
+                ),
             }
         ),
         "line_items_json": json.dumps(line_items_data),
