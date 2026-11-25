@@ -21,6 +21,7 @@ from SubDealers.models import (
     DailyInvoiceLineItem,
 )
 from UserDAC.models import DACEntry
+from employees.models import OperationalExpense
 
 
 def monthly_summary(request):
@@ -53,6 +54,8 @@ def monthly_summary(request):
         "subdealer",
     )
 
+    op_expenses = OperationalExpense.objects.all()
+
     # ==========================================================
     # Apply Filters
     # ==========================================================
@@ -70,6 +73,10 @@ def monthly_summary(request):
             entry_date__year=year_filter,
         )
 
+        op_expenses = op_expenses.filter(
+            expense_date__year=year_filter,
+        )
+
     if month_filter:
         invoices = invoices.filter(
             invoice_date__month=month_filter,
@@ -82,6 +89,18 @@ def monthly_summary(request):
         dac_entries = dac_entries.filter(
             entry_date__month=month_filter,
         )
+
+        op_expenses = op_expenses.filter(
+            expense_date__month=month_filter,
+        )
+
+    total_op_expenses = op_expenses.aggregate(
+        total=Coalesce(
+            Sum("amount"),
+            Decimal("0.00"),
+            output_field=DecimalField(),
+        )
+    )["total"]
 
     # ==========================================================
     # KPI Cards
@@ -386,6 +405,32 @@ def monthly_summary(request):
     }
 
     # ==========================================================
+    # Monthly Operational Expense Summary
+    # ==========================================================
+
+    monthly_op_qs = OperationalExpense.objects.all()
+    if year_filter:
+        monthly_op_qs = monthly_op_qs.filter(expense_date__year=year_filter)
+    if month_filter:
+        monthly_op_qs = monthly_op_qs.filter(expense_date__month=month_filter)
+
+    monthly_op_summary = (
+        monthly_op_qs.annotate(
+            year=ExtractYear("expense_date"),
+            month=ExtractMonth("expense_date"),
+        )
+        .values("year", "month")
+        .annotate(
+            total=Coalesce(
+                Sum("amount"),
+                Decimal("0.00"),
+                output_field=DecimalField(),
+            )
+        )
+    )
+    op_lookup = {(row["year"], row["month"]): row["total"] for row in monthly_op_summary}
+
+    # ==========================================================
     # Build Monthly Table
     # ==========================================================
 
@@ -413,6 +458,7 @@ def monthly_summary(request):
     month_keys.update(due_lookup)
     month_keys.update(dac_lookup)
     month_keys.update(mismatch_lookup)
+    month_keys.update(op_lookup)
 
     for key in sorted(month_keys):
         year, month = key
@@ -427,6 +473,11 @@ def monthly_summary(request):
                 "revenue": Decimal("0.00"),
             },
         )
+
+        base_expenses = row["expenses"]
+        op_expense = op_lookup.get(key, Decimal("0.00"))
+        combined_expenses = base_expenses + op_expense
+        combined_revenue = row["subtotal"] - combined_expenses
 
         due = due_lookup.get(
             key,
@@ -462,8 +513,8 @@ def monthly_summary(request):
                 "invoice_count": row["invoice_count"],
                 "cylinders": cylinders,
                 "subtotal": row["subtotal"],
-                "expenses": row["expenses"],
-                "revenue": row["revenue"],
+                "expenses": combined_expenses,
+                "revenue": combined_revenue,
                 "due_amount": due.get(
                     "due_amount",
                     Decimal("0.00"),
@@ -488,9 +539,9 @@ def monthly_summary(request):
 
         chart_sales.append(float(row["subtotal"]))
 
-        chart_expenses.append(float(row["expenses"]))
+        chart_expenses.append(float(combined_expenses))
 
-        chart_revenue.append(float(row["revenue"]))
+        chart_revenue.append(float(combined_revenue))
 
         chart_cylinders.append(cylinders)
 
@@ -703,7 +754,8 @@ def monthly_summary(request):
     # ===========================================================
 
     gross_profit = profit_summary["total_profit"] or Decimal("0.00")
-    net_profit = gross_profit - invoice_summary["total_expenses"]
+    total_deductions = invoice_summary["total_expenses"] + total_op_expenses
+    net_profit = gross_profit - total_deductions
 
     verification_pending = payment_summary["pending_count"]
 
@@ -718,6 +770,9 @@ def monthly_summary(request):
     dashboard_highlights = {
         "average_invoice_value": average_invoice_value,
         "average_cylinder_invoice": average_cylinder_invoice,
+        "gross_profit": gross_profit,
+        "total_deductions": total_deductions,
+        "total_op_expenses": total_op_expenses,
         "net_profit": net_profit,
         "verification_pending": verification_pending,
         "partial_payment": partial_payment,
@@ -735,6 +790,9 @@ def monthly_summary(request):
         "due_summary": due_summary,
         "mismatch_summary": mismatch_summary,
         "dac_summary": dac_summary,
+        "gross_profit": gross_profit,
+        "total_op_expenses": total_op_expenses,
+        "total_deductions": total_deductions,
         "selected_year": year_filter,
         "selected_month": month_filter,
         "page_type": "monthly_summary",

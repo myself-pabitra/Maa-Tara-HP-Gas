@@ -274,8 +274,8 @@
     <div class="stat-card">
       <div>
         <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Total Deductions</div>
-        <div class="text-2xl font-extrabold text-rose-600 inr-amt" data-amount="{{ invoice_summary.total_expenses|floatformat:2 }}">₹{{ invoice_summary.total_expenses|floatformat:2|intcomma }}</div>
-        <div class="text-[11px] text-rose-500 mt-0.5 font-medium">Trip &amp; operating costs</div>
+        <div class="text-2xl font-extrabold text-rose-600 inr-amt" data-amount="{{ total_deductions|floatformat:2 }}">₹{{ total_deductions|floatformat:2|intcomma }}</div>
+        <div class="text-[11px] text-rose-500 mt-0.5 font-medium" title="Trip other_expense: ₹{{ invoice_summary.total_expenses|floatformat:2 }} | Operational: ₹{{ total_op_expenses|floatformat:2 }}">Trip: ₹{{ invoice_summary.total_expenses|floatformat:0 }} + Ops: ₹{{ total_op_expenses|floatformat:0 }}</div>
       </div>
       <div class="w-11 h-11 rounded-xl flex items-center justify-center text-rose-600 bg-rose-50 border border-rose-100">
         <i class="fa-solid fa-receipt text-lg"></i>
@@ -286,11 +286,11 @@
     <div class="stat-card">
       <div>
         <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Estimated Net Profit</div>
-        <div class="text-2xl font-extrabold text-emerald-700 inr-amt" data-amount="{{ dashboard_highlights.net_profit|floatformat:2 }}">₹{{ dashboard_highlights.net_profit|floatformat:2|intcomma }}</div>
-        <div class="text-[11px] text-emerald-600 mt-0.5 font-medium">Gross profit minus expenses</div>
+        <div class="text-2xl font-extrabold {% if dashboard_highlights.net_profit >= 0 %}text-emerald-700{% else %}text-rose-600{% endif %} inr-amt" data-amount="{{ dashboard_highlights.net_profit|floatformat:2 }}">₹{{ dashboard_highlights.net_profit|floatformat:2|intcomma }}</div>
+        <div class="text-[11px] {% if dashboard_highlights.net_profit >= 0 %}text-emerald-600{% else %}text-rose-500{% endif %} mt-0.5 font-medium">Gross profit minus total deductions</div>
       </div>
-      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-emerald-600 bg-emerald-50 border border-emerald-100">
-        <i class="fa-solid fa-arrow-trend-up text-lg"></i>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center {% if dashboard_highlights.net_profit >= 0 %}text-emerald-600 bg-emerald-50 border border-emerald-100{% else %}text-rose-600 bg-rose-50 border border-rose-100{% endif %}">
+        <i class="fa-solid {% if dashboard_highlights.net_profit >= 0 %}fa-arrow-trend-up{% else %}fa-triangle-exclamation{% endif %} text-lg"></i>
       </div>
     </div>
 

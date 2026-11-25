@@ -4575,6 +4575,13 @@
       }
     }
   }
+  .hover\:bg-rose-100 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-rose-100);
+      }
+    }
+  }
   .hover\:bg-rose-700 {
     &:hover {
       @media (hover: hover) {

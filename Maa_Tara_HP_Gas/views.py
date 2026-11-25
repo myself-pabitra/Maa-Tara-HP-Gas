@@ -18,7 +18,7 @@ from SubDealers.models import (
     DailyInvoiceLineItem,
 )
 from UserDAC.models import DACEntry
-from employees.models import Employee
+from employees.models import Employee, OperationalExpense
 from inventory.models import ProductInventory
 from SubDealers.models import Subdealer
 from license_renewal.models import LicenseRenewal
@@ -162,7 +162,7 @@ def dashboard(request):
     )
 
     #
-    # Gross Profit & Net Profit
+    # Gross Profit, Operational Expenses & Net Profit
     #
 
     profit = line_items.aggregate(
@@ -178,7 +178,48 @@ def dashboard(request):
         )
     )
 
-    net_profit = profit["gross_profit"] - invoice_summary["total_expenses"]
+    # Filter Operational Expenses matching selected dashboard period
+    all_op_expenses = OperationalExpense.objects.all()
+    if filter_type == "date" and selected_date:
+        op_expenses = all_op_expenses.filter(expense_date=selected_date)
+    elif filter_type == "month" and selected_month:
+        m_parts = selected_month.split("-")
+        m_yr, m_num = int(m_parts[0]), int(m_parts[1])
+        op_expenses = all_op_expenses.filter(expense_date__year=m_yr, expense_date__month=m_num)
+    elif filter_type == "all":
+        op_expenses = all_op_expenses
+    else:
+        op_expenses = all_op_expenses.filter(expense_date=today)
+
+    total_op_expenses = op_expenses.aggregate(
+        total=Coalesce(Sum("amount"), Decimal("0.00"), output_field=DecimalField())
+    )["total"]
+
+    trip_expenses = invoice_summary["total_expenses"]
+    combined_total_expenses = trip_expenses + total_op_expenses
+    net_profit = profit["gross_profit"] - combined_total_expenses
+
+    # Operational Expenses Category Breakdown for Chart & Summary
+    op_expenses_by_cat_qs = (
+        op_expenses.values("category")
+        .annotate(
+            total=Coalesce(Sum("amount"), Decimal("0.00"), output_field=DecimalField()),
+            count=Count("id"),
+        )
+        .order_by("-total")
+    )
+    op_expenses_by_cat = [
+        {
+            "category_code": r["category"],
+            "category_label": r["category"] or "Other",
+            "total": r["total"],
+            "count": r["count"],
+        }
+        for r in op_expenses_by_cat_qs
+    ]
+
+    chart_op_labels = [r["category_label"] for r in op_expenses_by_cat]
+    chart_op_values = [float(r["total"]) for r in op_expenses_by_cat]
 
     #
     # Dynamic Chart Data (Day-by-Day for selected month OR 30-day window)
@@ -349,7 +390,13 @@ def dashboard(request):
         "payment_summary": payment_summary,
         "cylinder_summary": cylinder_summary,
         "gross_profit": profit["gross_profit"],
+        "trip_expenses": trip_expenses,
+        "total_op_expenses": total_op_expenses,
+        "combined_total_expenses": combined_total_expenses,
         "net_profit": net_profit,
+        "op_expenses_by_cat": op_expenses_by_cat,
+        "chart_op_labels": json.dumps(chart_op_labels),
+        "chart_op_values": json.dumps(chart_op_values),
         "stock_value": stock_value["value"],
         "low_stock": low_stock[:5],
         "out_of_stock": out_of_stock[:5],
