@@ -44,6 +44,7 @@
                     localStorage.setItem('app_theme', 'dark');
                 }
                 updateThemeToggleUI();
+                window.dispatchEvent(new CustomEvent('appThemeChanged', { detail: { isDark: !isDark } }));
             }
 
             function updateThemeToggleUI() {

@@ -210,6 +210,19 @@
   .pill-blue { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
   .pill-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
 
+  /* Primary action button */
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 14px rgba(99,102,241,.35);
+    color: #ffffff !important;
+    transition: all .2s ease;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,.45);
+    transform: translateY(-1px);
+    color: #ffffff !important;
+  }
+
   /* Marquee */
   @keyframes marquee-scroll {
     0% { transform: translateX(0); }
@@ -272,8 +285,7 @@
     </div>
     <div class="flex items-center gap-3">
       <a href="{% url 'create_daily_sell_invoice' %}" target="_blank"
-         style="background:linear-gradient(135deg,#6366f1,#4f46e5);box-shadow:0 4px 14px rgba(99,102,241,.35);"
-         class="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-95 hover:shadow-lg active:scale-95">
+         class="btn-primary inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:opacity-95 active:scale-95">
         <i class="fa-solid fa-plus text-xs"></i> Create Invoice
       </a>
     </div>
@@ -996,256 +1008,112 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Shared chart typography & defaults
-  const isDarkChart = document.documentElement.classList.contains('dark');
-  const chartGridColor = isDarkChart ? '#1e293b' : '#f1f5f9';
-
-  Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
-  Chart.defaults.font.size = 11;
-  Chart.defaults.color = isDarkChart ? '#94a3b8' : '#64748b';
-
-  // ──────────────────────────────────────────────
-  // 1. Sales Trend Line Chart
-  // ──────────────────────────────────────────────
   const salesCanvas = document.getElementById('salesChart');
-  if (salesCanvas) {
-    const salesCtx = salesCanvas.getContext('2d');
-    const salesGradient = salesCtx.createLinearGradient(0, 0, 0, 240);
-    salesGradient.addColorStop(0, 'rgba(99, 102, 241, 0.25)');
-    salesGradient.addColorStop(1, 'rgba(99, 102, 241, 0.00)');
-
-    new Chart(salesCtx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Total Sales',
-          data: rawSales,
-          borderColor: '#6366f1',
-          backgroundColor: salesGradient,
-          borderWidth: 2.5,
-          fill: true,
-          tension: 0.36,
-          pointRadius: 0,
-          pointHitRadius: 28,
-          pointHoverRadius: 6.5,
-          pointHoverBackgroundColor: '#4f46e5',
-          pointHoverBorderColor: '#ffffff',
-          pointHoverBorderWidth: 3,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
-        hover: {
-          mode: 'index',
-          intersect: false,
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            enabled: true,
-            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-            titleColor: '#94a3b8',
-            bodyColor: '#ffffff',
-            borderColor: 'rgba(255, 255, 255, 0.12)',
-            borderWidth: 1,
-            padding: { top: 10, right: 14, bottom: 10, left: 14 },
-            cornerRadius: 12,
-            titleFont: { size: 11.5, weight: '600' },
-            bodyFont: { size: 14, weight: '700' },
-            displayColors: false,
-            callbacks: {
-              title: function (items) {
-                return items[0].label;
-              },
-              label: function (context) {
-                const val = Number(context.parsed.y || 0);
-                return 'Sales: ' + formatINR(val);
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: {
-              color: '#94a3b8',
-              maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: 7
-            }
-          },
-          y: {
-            grid: { color: chartGridColor },
-            border: { dash: [4, 4], display: false },
-            ticks: {
-              color: '#94a3b8',
-              callback: function (val) {
-                if (val >= 100000) return '₹' + (val / 100000).toFixed(1) + 'L';
-                if (val >= 1000) return '₹' + (val / 1000).toFixed(0) + 'k';
-                return '₹' + val;
-              }
-            }
-          }
-        }
-      }
-    });
-  }
-
-  // ──────────────────────────────────────────────
-  // 2. Gross Profit Bar Chart
-  // ──────────────────────────────────────────────
   const profitCanvas = document.getElementById('profitChart');
-  if (profitCanvas) {
-    const profitCtx = profitCanvas.getContext('2d');
-    const profitGradient = profitCtx.createLinearGradient(0, 0, 0, 240);
-    profitGradient.addColorStop(0, 'rgba(34, 197, 94, 0.85)');
-    profitGradient.addColorStop(1, 'rgba(34, 197, 94, 0.45)');
-
-    new Chart(profitCtx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Gross Profit',
-          data: rawProfit,
-          backgroundColor: profitGradient,
-          hoverBackgroundColor: '#16a34a',
-          borderRadius: 6,
-          borderSkipped: false,
-          maxBarThickness: 16,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
-        hover: {
-          mode: 'index',
-          intersect: false,
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            enabled: true,
-            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-            titleColor: '#94a3b8',
-            bodyColor: '#ffffff',
-            borderColor: 'rgba(255, 255, 255, 0.12)',
-            borderWidth: 1,
-            padding: { top: 10, right: 14, bottom: 10, left: 14 },
-            cornerRadius: 12,
-            titleFont: { size: 11.5, weight: '600' },
-            bodyFont: { size: 14, weight: '700' },
-            displayColors: false,
-            callbacks: {
-              title: function (items) {
-                return items[0].label;
-              },
-              label: function (context) {
-                const val = Number(context.parsed.y || 0);
-                return 'Profit: ' + formatINR(val);
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: {
-              color: '#94a3b8',
-              maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: 7
-            }
-          },
-          y: {
-            grid: { color: chartGridColor },
-            border: { dash: [4, 4], display: false },
-            ticks: {
-              color: '#94a3b8',
-              callback: function (val) {
-                if (val >= 100000) return '₹' + (val / 100000).toFixed(1) + 'L';
-                if (val >= 1000) return '₹' + (val / 1000).toFixed(0) + 'k';
-                return '₹' + val;
-              }
-            }
-          }
-        }
-      }
-    });
-  }
-
-  // ──────────────────────────────────────────────
-  // 3. Category-wise Operational Expenses Pie Chart
-  // ──────────────────────────────────────────────
   const opExpenseCanvas = document.getElementById('opExpenseChart');
-  if (opExpenseCanvas) {
-    const opLabels = {{ chart_op_labels|safe }};
-    const rawOpValues = {{ chart_op_values|safe }};
 
-    if (opLabels && opLabels.length > 0) {
-      const opCtx = opExpenseCanvas.getContext('2d');
-      const palette = [
-        '#ef4444', '#f97316', '#f59e0b', '#8b5cf6',
-        '#06b6d4', '#ec4899', '#3b82f6', '#10b981', '#64748b'
-      ];
-      const colors = opLabels.map((_, i) => palette[i % palette.length]);
+  let chartSalesInstance = null;
+  let chartProfitInstance = null;
+  let chartOpExpenseInstance = null;
 
-      new Chart(opCtx, {
-        type: 'pie',
+  function initDashboardCharts() {
+    const isDarkChart = document.documentElement.classList.contains('dark');
+    const chartGridColor = isDarkChart ? '#1e293b' : '#f1f5f9';
+
+    Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = isDarkChart ? '#94a3b8' : '#64748b';
+
+    // ──────────────────────────────────────────────
+    // 1. Sales Trend Line Chart
+    // ──────────────────────────────────────────────
+    if (salesCanvas) {
+      if (chartSalesInstance) chartSalesInstance.destroy();
+      const salesCtx = salesCanvas.getContext('2d');
+      const salesGradient = salesCtx.createLinearGradient(0, 0, 0, 240);
+      if (isDarkChart) {
+        salesGradient.addColorStop(0, 'rgba(255, 120, 31, 0.28)');
+        salesGradient.addColorStop(1, 'rgba(255, 120, 31, 0.00)');
+      } else {
+        salesGradient.addColorStop(0, 'rgba(99, 102, 241, 0.25)');
+        salesGradient.addColorStop(1, 'rgba(99, 102, 241, 0.00)');
+      }
+
+      chartSalesInstance = new Chart(salesCtx, {
+        type: 'line',
         data: {
-          labels: opLabels,
+          labels: labels,
           datasets: [{
-            data: rawOpValues,
-            backgroundColor: colors,
-            borderColor: '#ffffff',
-            borderWidth: 2,
-            hoverOffset: 6,
+            label: 'Total Sales',
+            data: rawSales,
+            borderColor: isDarkChart ? '#ff781f' : '#6366f1',
+            backgroundColor: salesGradient,
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.36,
+            pointRadius: 0,
+            pointHitRadius: 28,
+            pointHoverRadius: 6.5,
+            pointHoverBackgroundColor: isDarkChart ? '#ff6a00' : '#4f46e5',
+            pointHoverBorderColor: isDarkChart ? '#0b1329' : '#ffffff',
+            pointHoverBorderWidth: 3,
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          hover: {
+            mode: 'index',
+            intersect: false,
+          },
           plugins: {
-            legend: {
-              display: true,
-              position: 'bottom',
-              labels: {
-                boxWidth: 10,
-                boxHeight: 10,
-                padding: 10,
-                color: '#475569',
-                font: { size: 11, weight: '500' }
-              }
-            },
+            legend: { display: false },
             tooltip: {
               enabled: true,
-              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              backgroundColor: isDarkChart ? 'rgba(11, 19, 41, 0.96)' : 'rgba(15, 23, 42, 0.95)',
               titleColor: '#94a3b8',
               bodyColor: '#ffffff',
-              borderColor: 'rgba(255, 255, 255, 0.12)',
+              borderColor: isDarkChart ? 'rgba(255, 120, 31, 0.3)' : 'rgba(255, 255, 255, 0.12)',
               borderWidth: 1,
               padding: { top: 10, right: 14, bottom: 10, left: 14 },
               cornerRadius: 12,
               titleFont: { size: 11.5, weight: '600' },
-              bodyFont: { size: 13, weight: '700' },
+              bodyFont: { size: 14, weight: '700' },
+              displayColors: false,
               callbacks: {
                 title: function (items) {
                   return items[0].label;
                 },
                 label: function (context) {
-                  const val = Number(context.raw || 0);
-                  const total = context.dataset.data.reduce((a, b) => a + Number(b), 0);
-                  const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
-                  return 'Spent: ' + formatINR(val) + ' (' + pct + '%)';
+                  const val = Number(context.parsed.y || 0);
+                  return 'Sales: ' + formatINR(val);
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                color: '#94a3b8',
+                maxRotation: 0,
+                autoSkip: true,
+                maxTicksLimit: 7
+              }
+            },
+            y: {
+              grid: { color: chartGridColor },
+              border: { dash: [4, 4], display: false },
+              ticks: {
+                color: '#94a3b8',
+                callback: function (val) {
+                  if (val >= 100000) return '₹' + (val / 100000).toFixed(1) + 'L';
+                  if (val >= 1000) return '₹' + (val / 1000).toFixed(0) + 'k';
+                  return '₹' + val;
                 }
               }
             }
@@ -1253,7 +1121,169 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
     }
+
+    // ──────────────────────────────────────────────
+    // 2. Gross Profit Bar Chart
+    // ──────────────────────────────────────────────
+    if (profitCanvas) {
+      if (chartProfitInstance) chartProfitInstance.destroy();
+      const profitCtx = profitCanvas.getContext('2d');
+      const profitGradient = profitCtx.createLinearGradient(0, 0, 0, 240);
+      profitGradient.addColorStop(0, isDarkChart ? 'rgba(16, 185, 129, 0.85)' : 'rgba(34, 197, 94, 0.85)');
+      profitGradient.addColorStop(1, isDarkChart ? 'rgba(16, 185, 129, 0.35)' : 'rgba(34, 197, 94, 0.45)');
+
+      chartProfitInstance = new Chart(profitCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Gross Profit',
+            data: rawProfit,
+            backgroundColor: profitGradient,
+            hoverBackgroundColor: '#10b981',
+            borderRadius: 6,
+            borderSkipped: false,
+            maxBarThickness: 16,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          hover: {
+            mode: 'index',
+            intersect: false,
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: true,
+              backgroundColor: isDarkChart ? 'rgba(11, 19, 41, 0.96)' : 'rgba(15, 23, 42, 0.95)',
+              titleColor: '#94a3b8',
+              bodyColor: '#ffffff',
+              borderColor: isDarkChart ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.12)',
+              borderWidth: 1,
+              padding: { top: 10, right: 14, bottom: 10, left: 14 },
+              cornerRadius: 12,
+              titleFont: { size: 11.5, weight: '600' },
+              bodyFont: { size: 14, weight: '700' },
+              displayColors: false,
+              callbacks: {
+                title: function (items) {
+                  return items[0].label;
+                },
+                label: function (context) {
+                  const val = Number(context.parsed.y || 0);
+                  return 'Profit: ' + formatINR(val);
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                color: '#94a3b8',
+                maxRotation: 0,
+                autoSkip: true,
+                maxTicksLimit: 7
+              }
+            },
+            y: {
+              grid: { color: chartGridColor },
+              border: { dash: [4, 4], display: false },
+              ticks: {
+                color: '#94a3b8',
+                callback: function (val) {
+                  if (val >= 100000) return '₹' + (val / 100000).toFixed(1) + 'L';
+                  if (val >= 1000) return '₹' + (val / 1000).toFixed(0) + 'k';
+                  return '₹' + val;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // ──────────────────────────────────────────────
+    // 3. Category-wise Operational Expenses Pie Chart
+    // ──────────────────────────────────────────────
+    if (opExpenseCanvas) {
+      const opLabels = {{ chart_op_labels|safe }};
+      const rawOpValues = {{ chart_op_values|safe }};
+
+      if (opLabels && opLabels.length > 0) {
+        if (chartOpExpenseInstance) chartOpExpenseInstance.destroy();
+        const opCtx = opExpenseCanvas.getContext('2d');
+        const palette = [
+          '#ef4444', '#f97316', '#f59e0b', '#8b5cf6',
+          '#06b6d4', '#ec4899', '#3b82f6', '#10b981', '#64748b'
+        ];
+        const colors = opLabels.map((_, i) => palette[i % palette.length]);
+
+        chartOpExpenseInstance = new Chart(opCtx, {
+          type: 'pie',
+          data: {
+            labels: opLabels,
+            datasets: [{
+              data: rawOpValues,
+              backgroundColor: colors,
+              borderColor: isDarkChart ? '#0f172a' : '#ffffff',
+              borderWidth: 2,
+              hoverOffset: 6,
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                  boxWidth: 10,
+                  boxHeight: 10,
+                  padding: 10,
+                  color: isDarkChart ? '#cbd5e1' : '#475569',
+                  font: { size: 11, weight: '500' }
+                }
+              },
+              tooltip: {
+                enabled: true,
+                backgroundColor: isDarkChart ? 'rgba(11, 19, 41, 0.96)' : 'rgba(15, 23, 42, 0.95)',
+                titleColor: '#94a3b8',
+                bodyColor: '#ffffff',
+                borderColor: isDarkChart ? 'rgba(255, 120, 31, 0.3)' : 'rgba(255, 255, 255, 0.12)',
+                borderWidth: 1,
+                padding: { top: 10, right: 14, bottom: 10, left: 14 },
+                cornerRadius: 12,
+                titleFont: { size: 11.5, weight: '600' },
+                bodyFont: { size: 13, weight: '700' },
+                callbacks: {
+                  title: function (items) {
+                    return items[0].label;
+                  },
+                  label: function (context) {
+                    const val = Number(context.raw || 0);
+                    const total = context.dataset.data.reduce((a, b) => a + Number(b), 0);
+                    const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                    return 'Spent: ' + formatINR(val) + ' (' + pct + '%)';
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
   }
+
+  initDashboardCharts();
+  window.addEventListener('appThemeChanged', initDashboardCharts);
 });
 </script>
 {% endblock js %}

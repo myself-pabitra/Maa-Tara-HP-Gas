@@ -409,6 +409,12 @@ html.dark .sd-code-badge {
   color: #ff9142 !important;
 }
 
+html.dark .sd-stock-badge {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
 html.dark .sd-no-result {
   color: #64748b !important;
 }
@@ -489,44 +495,64 @@ html.dark .bg-indigo-100 {
 html.dark .pill-ok,
 html.dark .pill-emerald,
 html.dark .bg-emerald-50,
-html.dark .bg-emerald-100,
-html.dark .text-emerald-700,
-html.dark .text-emerald-800 {
+html.dark .bg-emerald-100 {
   background-color: rgba(16, 185, 129, 0.15) !important;
   color: #34d399 !important;
   border-color: rgba(16, 185, 129, 0.3) !important;
 }
 
+html.dark .text-emerald-600,
+html.dark .text-emerald-700,
+html.dark .text-emerald-800 {
+  color: #34d399 !important;
+}
+
 html.dark .pill-err,
 html.dark .pill-rose,
 html.dark .bg-rose-50,
-html.dark .bg-rose-100,
-html.dark .text-rose-700,
-html.dark .text-rose-800 {
+html.dark .bg-rose-100 {
   background-color: rgba(244, 63, 94, 0.15) !important;
   color: #fb7185 !important;
   border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+html.dark .text-rose-600,
+html.dark .text-rose-700,
+html.dark .text-rose-800 {
+  color: #fb7185 !important;
 }
 
 html.dark .pill-warn,
 html.dark .pill-amber,
 html.dark .bg-amber-50,
 html.dark .bg-amber-100,
-html.dark .bg-yellow-50,
-html.dark .text-amber-800,
-html.dark .text-amber-900 {
+html.dark .bg-yellow-50 {
   background-color: rgba(245, 158, 11, 0.15) !important;
   color: #fbbf24 !important;
   border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+html.dark .text-amber-700,
+html.dark .text-amber-800,
+html.dark .text-amber-900 {
+  color: #fbbf24 !important;
 }
 
 html.dark .pill-blue,
 html.dark .pill-sky,
 html.dark .bg-blue-50,
 html.dark .bg-sky-50,
-html.dark .bg-sky-100,
-html.dark .text-sky-900 {
+html.dark .bg-sky-100 {
   background-color: rgba(56, 189, 248, 0.15) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+html.dark .text-sky-700,
+html.dark .text-sky-800,
+html.dark .text-sky-900 {
+  color: #38bdf8 !important;
+}
   color: #38bdf8 !important;
   border-color: rgba(56, 189, 248, 0.3) !important;
 }
@@ -799,11 +825,83 @@ html.dark .marquee-container {
   border-color: #1e293b !important;
 }
 
+html.dark .marquee-container div[class*="from-slate-50"][class*="bg-gradient-to-r"] {
+  background: linear-gradient(to right, #0d1527, transparent) !important;
+}
+
+html.dark .marquee-container div[class*="from-slate-50"][class*="bg-gradient-to-l"] {
+  background: linear-gradient(to left, #0d1527, transparent) !important;
+}
+
 html.dark .marquee-track span {
   color: #ff9142 !important;
 }
 
-/* ── 18. Strict Print Isolation ── */
+/* ── 18. Dashboard Specific Refinements ── */
+/* Expiring Papers alert card gradient */
+html.dark .dash-card.border-l-rose-500 {
+  background: linear-gradient(to right, rgba(244, 63, 94, 0.12), rgba(245, 158, 11, 0.06), #0f172a) !important;
+}
+
+/* Period filter tab pills */
+html.dark .dash-card div.inline-flex.bg-slate-100 {
+  background-color: #0b1329 !important;
+  border-color: #1e293b !important;
+}
+html.dark .filter-tab-pill {
+  color: #94a3b8 !important;
+}
+html.dark .filter-tab-pill:hover {
+  color: #f8fafc !important;
+  background-color: #172647 !important;
+}
+html.dark .filter-tab-pill.bg-white,
+html.dark input.filter-mode-radio:checked + .filter-tab-pill {
+  background: linear-gradient(135deg, #ff7a18 0%, #ea580c 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.4) !important;
+}
+
+/* Stat mini icons with inline pastel styles */
+html.dark .stat-mini div[style*="background:#eef2ff"] {
+  background: rgba(99, 102, 241, 0.18) !important;
+  color: #a5b4fc !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+}
+html.dark .stat-mini div[style*="background:#dcfce7"] {
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #6ee7b7 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+html.dark .stat-mini div[style*="background:#dbeafe"] {
+  background: rgba(59, 130, 246, 0.18) !important;
+  color: #93c5fd !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+}
+html.dark .stat-mini div[style*="background:#fef3c7"] {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fcd34d !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+html.dark .stat-mini:hover {
+  background-color: #15223c !important;
+}
+
+/* Active period badge */
+html.dark div[class*="bg-indigo-50"] strong {
+  color: #ff9142 !important;
+}
+html.dark div[class*="bg-indigo-50"] i {
+  color: #ff781f !important;
+}
+
+/* Date / Month input native picker dark mode */
+html.dark input[type="date"],
+html.dark input[type="month"] {
+  color-scheme: dark;
+}
+
+/* ── 19. Strict Print Isolation ── */
 @media print {
   html.dark,
   html.dark body,
